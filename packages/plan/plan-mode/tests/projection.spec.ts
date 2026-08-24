@@ -1,10 +1,9 @@
 /**
  * The `plan` projection unit (session-projection RFC's complete example): a
- * event fold over the session log. `command/run` records named `plan` with
- * recorded input set the candidate target (`off` → false, anything else →
- * true); `command/done` keeps successful candidates and drops failures;
- * `plan/mode` commits and clears a selection. `view` reports pending only while
- * an outstanding selection differs from the logged state.
+ * double-event fold over the session log. `command/run` records named `plan`
+ * with recorded input set the wanted target (`off` → false, anything else
+ * → true); `plan/mode` commits and clears it. `view` reports pending only
+ * while an outstanding selection differs from the logged state.
  * Pending is thereby a pure replay quantity — a cold fold answers it without
  * the service's in-memory intent. Composition without plan-mode has no `plan`
  * key; unloading the fiber removes it (HMR safety).
@@ -48,20 +47,13 @@ async function harness(withPlanMode: boolean): Promise<Bench> {
 }
 
 /** Append one logged /plan selection record (the executor's command/run shape). */
-function runPlanCommand(session: Session, args: string, index: number): CommandId {
-  const commandId = CommandId(`plan-proj-${String(index)}`)
+function runPlanCommand(session: Session, args: string, index: number): void {
   session.append('command/run', {
-    commandId,
+    commandId: CommandId(`plan-proj-${String(index)}`),
     name: 'plan',
     args,
     source: { kind: 'user' },
   })
-  return commandId
-}
-
-/** Append the paired settlement for one projected plan command. */
-function settlePlanCommand(session: Session, commandId: CommandId, kind: 'success' | 'error'): void {
-  session.append('command/done', { commandId, kind })
 }
 
 /** Commit one plan/mode flip inside an open turn (the invariant's turn-enclosure rule). */
@@ -79,20 +71,12 @@ describe('plan projection unit', () => {
 
   it('a logged /plan selection reads pending until plan/mode records it', async () => {
     const bench = await harness(true)
-    const commandId = runPlanCommand(bench.session, '', 0)
+    runPlanCommand(bench.session, '', 0)
     expect(bench.values().plan).toEqual({ active: false, pending: true })
-    settlePlanCommand(bench.session, commandId, 'success')
+    // A repeated identical selection returns the same state reference (no frame).
+    runPlanCommand(bench.session, '', 1)
     expect(bench.values().plan).toEqual({ active: false, pending: true })
     commitPlanMode(bench.session, true, 0)
-    expect(bench.values().plan).toEqual({ active: true, pending: false })
-  })
-
-  it('drops a plan selection when its command settles with an error', async () => {
-    const bench = await harness(true)
-    commitPlanMode(bench.session, true, 0)
-    const commandId = runPlanCommand(bench.session, 'off', 0)
-    expect(bench.values().plan).toEqual({ active: true, pending: true })
-    settlePlanCommand(bench.session, commandId, 'error')
     expect(bench.values().plan).toEqual({ active: true, pending: false })
   })
 
@@ -144,7 +128,7 @@ describe('plan projection unit', () => {
     // memory involved, the fold alone answers {active:false, pending:true}.
     const cold = await harness(true)
     for (const event of bench.session.events) {
-      if (event.type === 'command/run' || event.type === 'command/done' || event.type === 'plan/mode') {
+      if (event.type === 'command/run' || event.type === 'plan/mode') {
         cold.session.append(event.type, event.data)
       }
     }

@@ -8,6 +8,18 @@ import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
 import type { ContextPressureProjection, TokenUsageProjection } from './projection.ts'
 import { foldSurfaceProjection } from './surface-projection.ts'
+import type { ShadowPriceClaim } from './surface-projection.ts'
+
+interface UsageSample {
+  turn: number
+  step: number
+  buckets: TokenUsageProjection
+}
+
+interface TokenUsageState {
+  totals: TokenUsageProjection
+  last: UsageSample | null
+}
 
 const zeroBuckets = (): TokenUsageProjection => ({
   uncachedInputTokens: 0,
@@ -47,30 +59,13 @@ const projectionSchema = z.object({
   cacheWriteTokens: z.number().int().nonnegative(),
 }).strict()
 
-/**
- * The token-usage unit's state schema — the one definition of the state
- * shape; the state type is inferred from it.
- */
-const tokenUsageStateSchema = z.object({
-  totals: projectionSchema,
-  last: z.object({
-    turn: z.number().int().nonnegative(),
-    step: z.number().int().nonnegative(),
-    buckets: projectionSchema,
-  }).nullable(),
-}).strict()
-
-type TokenUsageState = z.infer<typeof tokenUsageStateSchema>
-
-const pressureSchema: z.ZodType<ContextPressureProjection> = z.object({
+// Cast for the optional values: under exactOptionalPropertyTypes zod infers
+// `number | undefined` where the interface declares absent-or-number fields.
+const pressureSchema = z.object({
   pressureTokens: z.number().int().nonnegative().optional(),
   projectedTokens: z.number().int().nonnegative().optional(),
   contextWindow: z.number().int().positive().optional(),
-}).strict().transform(({ pressureTokens, projectedTokens, contextWindow }) => ({
-  ...pressureTokens === undefined ? {} : { pressureTokens },
-  ...projectedTokens === undefined ? {} : { projectedTokens },
-  ...contextWindow === undefined ? {} : { contextWindow },
-}))
+}).strict() as unknown as z.ZodType<ContextPressureProjection>
 
 /** Prompt-side pressure of one request: input plus cache traffic, no output. */
 const pressureFrom = (usage: TokenUsage): number =>
@@ -84,27 +79,20 @@ const usageOf = (event: SessionEvent): TokenUsage | undefined =>
       ? event.data.usage
       : undefined
 
-declare module '@deepseek-ai/dsh-session-projection/types' {
-  interface SessionProjectionStateMap {
-    tokenUsage: TokenUsageState
-    contextPressure: ContextPressureState
-  }
+/**
+ * Context-occupancy state: the two independent last-wins records plus the
+ * O(1) running surface total needed to carry the newest sample forward.
+ */
+interface ContextPressureState {
+  contextWindow?: number
+  pressureTokens?: number
+  /** Running heuristic total over the current surface ({@link foldSurfaceProjection}). */
+  surfaceTokens: number
+  /** {@link surfaceTokens} at the newest usage sample; absent until one lands. */
+  sampledSurfaceTokens?: number
+  /** Shadow price armed by the immediately preceding metering event. */
+  claim?: ShadowPriceClaim
 }
-
-/** The context-pressure state schema and source of its inferred type. */
-const contextPressureStateSchema = z.object({
-  contextWindow: z.number().int().positive().optional(),
-  pressureTokens: z.number().int().nonnegative().optional(),
-  surfaceTokens: z.number().int().nonnegative(),
-  sampledSurfaceTokens: z.number().int().nonnegative().optional(),
-  claim: z.object({
-    start: z.number().int().nonnegative(),
-    end: z.number().int().nonnegative(),
-    tokens: z.number().int().nonnegative(),
-  }).optional(),
-}).strict()
-
-type ContextPressureState = z.infer<typeof contextPressureStateSchema>
 
 /**
  * Token-meter's session projection unit.
@@ -116,10 +104,10 @@ type ContextPressureState = z.infer<typeof contextPressureStateSchema>
  * that usage reports for one turn/step are adjacent: once a later step begins,
  * a legal log never reports usage for an earlier step again.
  */
-export const tokenUsageProjectionDefinition = {
+export const tokenUsageProjectionDefinition:
+ProjectionDefinition<'tokenUsage', TokenUsageState> = {
   key: 'tokenUsage',
-  stateVersion: 1,
-  stateSchema: tokenUsageStateSchema,
+  schema: projectionSchema,
   init: () => ({ totals: zeroBuckets(), last: null }),
   apply: (state, event) => {
     let turn: number
@@ -147,8 +135,9 @@ export const tokenUsageProjectionDefinition = {
       last: { turn, step, buckets },
     }
   },
-  wire: { viewSchema: projectionSchema, view: state => state.totals },
-} satisfies ProjectionDefinition<'tokenUsage', TokenUsageState>
+  view: state => state.totals,
+  stateVersion: 1,
+}
 
 /**
  * Token-meter's context-occupancy projection unit.
@@ -171,10 +160,10 @@ export const tokenUsageProjectionDefinition = {
  * BEFORE the same event joins the surface, so an `assistant/message` anchors
  * against the surface its own request saw.
  */
-export const contextPressureProjectionDefinition = {
+export const contextPressureProjectionDefinition:
+ProjectionDefinition<'contextPressure', ContextPressureState> = {
   key: 'contextPressure',
-  stateVersion: 4,
-  stateSchema: contextPressureStateSchema,
+  schema: pressureSchema,
   init: () => ({ surfaceTokens: 0 }),
   apply: (state, event) => {
     const fold = foldSurfaceProjection(state.claim, event)
@@ -206,14 +195,12 @@ export const contextPressureProjectionDefinition = {
     const { claim: _expired, ...withoutClaim } = next
     return fold.claim === undefined ? withoutClaim : { ...withoutClaim, claim: fold.claim }
   },
-  wire: {
-    viewSchema: pressureSchema,
-    view: ({ contextWindow, pressureTokens, surfaceTokens, sampledSurfaceTokens }) => ({
-      ...contextWindow === undefined ? {} : { contextWindow },
-      ...pressureTokens === undefined ? {} : { pressureTokens },
-      ...pressureTokens === undefined || sampledSurfaceTokens === undefined
-        ? {}
-        : { projectedTokens: Math.max(0, pressureTokens + surfaceTokens - sampledSurfaceTokens) },
-    }),
-  },
-} satisfies ProjectionDefinition<'contextPressure', ContextPressureState>
+  view: ({ contextWindow, pressureTokens, surfaceTokens, sampledSurfaceTokens }) => ({
+    ...contextWindow === undefined ? {} : { contextWindow },
+    ...pressureTokens === undefined ? {} : { pressureTokens },
+    ...pressureTokens === undefined || sampledSurfaceTokens === undefined
+      ? {}
+      : { projectedTokens: Math.max(0, pressureTokens + surfaceTokens - sampledSurfaceTokens) },
+  }),
+  stateVersion: 4,
+}

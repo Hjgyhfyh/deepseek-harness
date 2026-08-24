@@ -10,35 +10,22 @@ import { canonicalHeader } from '@deepseek-ai/dsh-session'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
 import { estimateSystemTokens, estimateToolsTokens } from './estimate.ts'
 import { foldSurfaceProjection } from './surface-projection.ts'
-// Import for the `contextBreakdown` SessionProjectionStateMap key merge.
+import type { ShadowPriceClaim } from './surface-projection.ts'
+// Import for the `contextBreakdown` SessionProjectionMap key merge.
 import type {} from './projection.ts'
 
-declare module '@deepseek-ai/dsh-session-projection/types' {
-  interface SessionProjectionStateMap {
-    contextBreakdown: ContextBreakdownState
-  }
+interface ContextBreakdownState {
+  systemTokens: number
+  toolsTokens: number
+  messageTokens: number
+  /** Shadow price armed by the immediately preceding metering event. */
+  claim?: ShadowPriceClaim
 }
 
-/** Non-negative integer token count (the shared figure shape). */
-const tokenCount = z.number().int().nonnegative()
-
-/** The context-breakdown state schema and source of its inferred type. */
-const contextBreakdownStateSchema = z.object({
-  systemTokens: tokenCount,
-  toolsTokens: tokenCount,
-  messageTokens: tokenCount,
-  claim: z.object({
-    start: tokenCount,
-    end: tokenCount,
-    tokens: tokenCount,
-  }).optional(),
-}).strict()
-type ContextBreakdownState = z.infer<typeof contextBreakdownStateSchema>
-
 const breakdownSchema = z.object({
-  systemTokens: tokenCount,
-  toolsTokens: tokenCount,
-  messageTokens: tokenCount,
+  systemTokens: z.number().int().nonnegative(),
+  toolsTokens: z.number().int().nonnegative(),
+  messageTokens: z.number().int().nonnegative(),
 }).strict()
 
 /**
@@ -52,10 +39,10 @@ const breakdownSchema = z.object({
  * state is a fixed handful of numbers, so the persisted checkpoint stays
  * O(1) over the session's life.
  */
-export const contextBreakdownProjectionDefinition = {
+export const contextBreakdownProjectionDefinition:
+ProjectionDefinition<'contextBreakdown', ContextBreakdownState> = {
   key: 'contextBreakdown',
-  stateVersion: 2,
-  stateSchema: contextBreakdownStateSchema,
+  schema: breakdownSchema,
   init: () => ({ systemTokens: 0, toolsTokens: 0, messageTokens: 0 }),
   apply: (state, event) => {
     const fold = foldSurfaceProjection(state.claim, event)
@@ -78,8 +65,6 @@ export const contextBreakdownProjectionDefinition = {
       ...fold.claim === undefined ? {} : { claim: fold.claim },
     }
   },
-  wire: {
-    viewSchema: breakdownSchema,
-    view: ({ systemTokens, toolsTokens, messageTokens }) => ({ systemTokens, toolsTokens, messageTokens }),
-  },
-} satisfies ProjectionDefinition<'contextBreakdown', ContextBreakdownState>
+  view: ({ systemTokens, toolsTokens, messageTokens }) => ({ systemTokens, toolsTokens, messageTokens }),
+  stateVersion: 2,
+}

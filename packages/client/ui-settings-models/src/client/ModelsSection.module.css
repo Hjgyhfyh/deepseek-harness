@@ -462,9 +462,24 @@
 
 .modelRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(96px, 0.55fr) auto auto;
   align-items: center;
   gap: 6px;
+}
+
+/* Inline context-window cell: the label rides above a compact input so the
+   user sets a model's context without opening Capacities. */
+.capacityCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.capacityInput {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
 }
 
 /* Square, label-free affordances: the row's own inputs carry the meaning, so
@@ -516,6 +531,11 @@
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
+}
+
+/* Compact label-over-input pair used inside a model row (context window). */
+.modelFieldInline {
+  min-width: 0;
 }
 
 .modelEmpty {
@@ -642,12 +662,6 @@ select.input {
      ui-theme styles/scrollbar.css for the contract). */
   --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
-}
-
-.candidateActions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 6px;
 }
 
 .candidateList {

@@ -9,7 +9,7 @@ import SystemPrompt, { AssembleContext, PromptAssembly, renderContextSnapshot, r
  * their own sections; the built-ins' behavior is pinned by its own describe.
  */
 const BUILT_IN = ['harness:identity', 'deployment:persona']
-const IDENTITY = 'You are an AI agent powered by DeepSeek Harness.'
+const IDENTITY = 'You are an AI agent powered by Mako Harness.'
 function contributed(assembly: PromptAssembly): PromptAssembly['sections'] {
   return assembly.sections.filter(section => !BUILT_IN.includes(section.name))
 }
@@ -18,14 +18,14 @@ describe('SystemPrompt', () => {
   describe('built-in sections', () => {
     it('registers the harness identity and the configured deployment persona', async () => {
       const ctx = new Context()
-      await ctx.plugin(SystemPrompt, { persona: 'You are DeepSeek Harness.' })
+      await ctx.plugin(SystemPrompt, { persona: 'You are Mako Harness.' })
 
       const assembly = await ctx.systemPrompt.assemble()
       expect(assembly.sections.map(s => s.name)).toEqual([
         'harness:identity',
         'deployment:persona',
       ])
-      expect(renderPrompt(assembly)).toBe(`${IDENTITY}\n\nYou are DeepSeek Harness.`)
+      expect(renderPrompt(assembly)).toBe(`${IDENTITY}\n\nYou are Mako Harness.`)
       // The names are reserved by the plugin — one owner per section.
       expect(() => ctx.systemPrompt.section({ name: 'deployment:persona', order: 0, text: 'imposter' }))
         .toThrow('prompt section "deployment:persona" is already registered')
@@ -79,7 +79,7 @@ describe('SystemPrompt', () => {
 
   it('assembles sections in order with context-resolved text and collected tools', async () => {
     const ctx = new Context()
-    await ctx.plugin(SystemPrompt, { persona: 'You are DeepSeek Harness.' })
+    await ctx.plugin(SystemPrompt, { persona: 'You are Mako Harness.' })
 
     ctx.systemPrompt.section({ name: 'cwd', order: 20, text: () => 'cwd: /tmp' })
     ctx.systemPrompt.section({ name: 'rules', order: 10, text: 'Be precise.' })
@@ -89,15 +89,14 @@ describe('SystemPrompt', () => {
 
     const assembly = await ctx.systemPrompt.assemble()
     expect(assembly.sections.map(s => s.name)).toEqual(['harness:identity', 'deployment:persona', 'rules', 'cwd'])
-    expect(assembly.sections.map(s => s.text)).toEqual([IDENTITY, 'You are DeepSeek Harness.', 'Be precise.', 'cwd: /tmp'])
-    expect(assembly.contexts).toEqual([
-      { name: 'earlier', text: 'context 1' },
-      { name: 'later', text: 'context 2' },
-    ])
+    expect(assembly.sections.map(s => s.text)).toEqual([IDENTITY, 'You are Mako Harness.', 'Be precise.', 'cwd: /tmp'])
+    // The built-in clock rides the context snapshot ahead of user contexts.
+    expect(assembly.contexts.map(c => c.name)).toEqual(['harness:clock', 'earlier', 'later'])
+    expect(assembly.contexts[0]!.text).toMatch(/^Current date: \d{4}-\d{2}-\d{2} \(\w+\)\. Current local time: \d{2}:\d{2} \(UTC[+-]\d{2}:\d{2}\)\.$/)
     expect(assembly.tools).toEqual([{ name: 'echo', description: 'echo back', parameters: {} }])
     expect(assembly.variables).toEqual({})
-    expect(renderPrompt(assembly)).toBe(`${IDENTITY}\n\nYou are DeepSeek Harness.\n\nBe precise.\n\ncwd: /tmp`)
-    expect(renderContextSnapshot(assembly)).toBe('Current runtime context. This snapshot supersedes earlier runtime-context snapshots.\n\ncontext 1\n\ncontext 2')
+    expect(renderPrompt(assembly)).toBe(`${IDENTITY}\n\nYou are Mako Harness.\n\nBe precise.\n\ncwd: /tmp`)
+    expect(renderContextSnapshot(assembly)).toContain('context 1\n\ncontext 2')
   })
 
   it('resolves section text providers against the assemble context, at each assemble call', async () => {
@@ -129,12 +128,13 @@ describe('SystemPrompt', () => {
 
     const before = await ctx.systemPrompt.assemble()
     expect(contributed(before)).toHaveLength(1)
-    expect(before.contexts).toHaveLength(1)
+    // The service-owned clock rides every assembly alongside user contexts.
+    expect(before.contexts.map(c => c.name)).toEqual(['harness:clock', 'scoped-context'])
     expect(before.variables).toEqual({ scoped_var: 'v' })
     await fiber.dispose()
     const assembly = await ctx.systemPrompt.assemble()
     expect(contributed(assembly)).toHaveLength(0)
-    expect(assembly.contexts).toHaveLength(0)
+    expect(assembly.contexts.map(c => c.name)).toEqual(['harness:clock'])
     // The built-ins belong to the service fiber, so they survive the plugin's disposal.
     expect(assembly.sections.map(s => s.name)).toEqual(BUILT_IN)
     expect(assembly.tools).toHaveLength(0)
@@ -168,7 +168,9 @@ describe('SystemPrompt', () => {
       .toThrow('prompt context "policy" is already registered')
     expect(() => ctx.systemPrompt.context({ name: 'bad', order: Number.NaN, text: 'x' }))
       .toThrow('prompt context "bad" order must be a finite number')
-    expect((await ctx.systemPrompt.assemble()).contexts).toEqual([{ name: 'policy', text: 'first' }])
+    // Nothing leaked past the built-in clock; the failed registrations left no trace.
+    expect((await ctx.systemPrompt.assemble()).contexts.filter(c => c.name !== 'harness:clock'))
+      .toEqual([{ name: 'policy', text: 'first' }])
   })
 
   it('rolls back a section when a system-prompt/change listener throws (P1-1)', async () => {
@@ -328,7 +330,9 @@ describe('SystemPrompt', () => {
     const second = await ctx.systemPrompt.assemble()
     expect(second.sections.map(section => section.name)).toEqual(['harness:identity', 'deployment:persona', 'base'])
     expect(second.sections[0]!.text).toBe(IDENTITY)
-    expect(second.contexts).toEqual([])
+    // The mutated context does not leak; the service-owned clock re-renders fresh.
+    expect(second.contexts.map(c => c.name)).toEqual(['harness:clock'])
+    expect(second.contexts[0]!.text).not.toContain('mutated')
     expect(second.tools).toEqual([{ name: 't', description: 'tool', parameters: { type: 'object', properties: {} } }])
   })
 
@@ -347,13 +351,21 @@ describe('SystemPrompt', () => {
 
   it('filters empty context, interpolates variables, and returns empty without active context', async () => {
     const ctx = new Context()
-    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(SystemPrompt, { includeRuntimeContext: false })
     ctx.systemPrompt.context({ name: 'empty', order: 0, text: '' })
     expect(renderContextSnapshot(await ctx.systemPrompt.assemble())).toBe('')
+    expect((await ctx.systemPrompt.assemble()).contexts.map(c => c.name)).toEqual([])
+  })
+
+  it('keeps the built-in clock in the snapshot alongside user contexts (runtime context on)', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SystemPrompt)
+    expect(renderContextSnapshot(await ctx.systemPrompt.assemble()))
+      .toMatch(/^Current runtime context\. This snapshot supersedes earlier runtime-context snapshots\.\n\nCurrent date: /)
     ctx.systemPrompt.variable('mode', () => 'read-only')
     ctx.systemPrompt.context({ name: 'policy', order: 1, text: 'Mode: {{mode}}.' })
     expect(renderContextSnapshot(await ctx.systemPrompt.assemble()))
-      .toBe('Current runtime context. This snapshot supersedes earlier runtime-context snapshots.\n\nMode: read-only.')
+      .toMatch(/Current date: .+\n\nMode: read-only\.$/)
   })
 
   it('attributes context interpolation failures to the contributing context', () => {

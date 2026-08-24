@@ -8,16 +8,35 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import {
-  HoverCard, IconArchiveOutline20, IconBranchOutline16, IconEditOutline16,
+  HoverCard, IconArchiveOutline20, IconBranchOutline16, IconChevronDownOutline14,
+  IconChevronUpOutline14, IconEditOutline16,
   IconEllipsisOutline16, IconFolderClose16, IconFolderOpen16, IconPlusOutline16,
   IconTrashOutline16, IconTriangleRightFill14, Menu, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
-import { abbreviateHomePath } from '@deepseek-ai/dsh-client-runtime/client'
 import type { WorkspaceBrowserProps } from '../contract/slots.ts'
 import type { GroupNode, SearchResultNode, SessionNode } from '../tree.ts'
 import { relativeTime } from '../tree.ts'
 import css from './Rows.module.css'
+
+/**
+ * Pin glyph (14px, solid style so it survives small sizes): an upright
+ * pushpin — rounded cap, flared skirt, and blunt needle — drawn as one
+ * filled silhouette; the primitives package carries no pin icon today.
+ */
+function IconPinFill16({ className }: { className?: string | undefined }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
+      {/* Cap */}
+      <rect x="4.75" y="1.5" width="6.5" height="3.25" rx="1.4" fill="currentColor" />
+      {/* Skirt + needle as one silhouette */}
+      <path
+        d="M5 4.5h6l.9 4.2c.12.55-.3 1.05-.86 1.05H8.75v4.5c0 .41-.34.75-.75.75s-.75-.34-.75-.75V9.75H4.96c-.56 0-.98-.5-.86-1.05Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
 
 /** The standard locale seat, prop-passed from the browser root. */
 type RowTranslate = WorkspaceBrowserProps['t']
@@ -51,7 +70,7 @@ function createdLabel(createdAt: number, t: RowTranslate): string {
   return t('hover.created', { time: `${date} ${pad2(d.getHours())}:${pad2(d.getMinutes())}` })
 }
 
-/** Hover-card body: workspace title, display directory path, absolute creation time. */
+/** Hover-card body: workspace title, full directory path, absolute creation time. */
 function WorkspaceHoverContent({ label, cwd, createdAt, t }: {
   label: string
   cwd: string | undefined
@@ -105,11 +124,10 @@ function rowHalf(e: { clientY: number; currentTarget: HTMLElement }): 'before' |
  * @param props.onToggle - expand/collapse the group.
  * @param props.onCreate - start a frontend Session inside this Workspace.
  * @param props.drag - optional workspace-row drag wiring.
- * @param props.home - host account home for POSIX hover-path abbreviation.
  * @param props.t - the browser root's locale seat.
  * @returns the row element.
  */
-export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, home, t }: {
+export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, t }: {
   group: GroupNode
   onToggle: () => void
   onCreate: () => void
@@ -117,8 +135,6 @@ export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, home,
   actions?: { rename: () => void; delete: () => void } | undefined
   /** Present only for real Workspace rows in the grouped view. */
   drag?: WorkspaceRowDragProps | undefined
-  /** Host account home; POSIX home-rooted hover paths display as `~`. */
-  home?: string | undefined
   t: RowTranslate
 }) {
   const row = group
@@ -200,12 +216,7 @@ export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, home,
   return (
     <HoverCard
       anchor={ownRow}
-      content={<WorkspaceHoverContent
-        label={row.label}
-        cwd={row.cwd === undefined ? undefined : abbreviateHomePath(row.cwd, home)}
-        createdAt={row.createdAt}
-        t={t}
-      />}
+      content={<WorkspaceHoverContent label={row.label} cwd={row.cwd} createdAt={row.createdAt} t={t} />}
       disabled={menuOpen}
       copyText={row.cwd}
       copyLabel={t('copy')}
@@ -222,6 +233,8 @@ function assertNever(value: never): never {
 interface SessionStatus {
   state: StateDotState
   label: string
+  /** Live worker count for the ×N badge (subagents); absent = no badge. */
+  count?: number | undefined
 }
 
 /**
@@ -242,6 +255,9 @@ function sessionStatuses(
           : 'status.subagentsRunning.other',
         { n: node.runningSubagentCount },
       ),
+      // Every running descendant gets its own chase dot; the badge shows the
+      // count so a glance reads "three workers live" without opening anything.
+      count: node.runningSubagentCount,
     }
   let pending: SessionStatus | undefined
   switch (node.pendingInteraction) {
@@ -268,13 +284,19 @@ function sessionStatuses(
   return [{ state: 'done', label: t('status.idle') }]
 }
 
-/** Primary status dot plus every status's screen-reader label, shared by the search and session rows. */
+/** One dot per live status — each keeps its own chase animation — plus the
+ * ×N worker badge on counted statuses; labels stay screen-reader only. */
 function SessionStatusDots({ statuses }: { statuses: readonly [SessionStatus, ...SessionStatus[]] }) {
   return (
     <>
-      <StateDot state={statuses[0].state} />
-      {statuses.map(status => (
-        <span className={css.visuallyHidden} key={status.label}>{status.label}</span>
+      {statuses.map((status, index) => (
+        <span className={css.statusBadge} key={`${String(index)}-${status.label}`}>
+          <StateDot state={status.state} />
+          {status.count !== undefined && status.count > 1
+            ? <span className={css.statusCount} aria-hidden="true">×{status.count}</span>
+            : null}
+          <span className={css.visuallyHidden}>{status.label}</span>
+        </span>
       ))}
     </>
   )
@@ -359,7 +381,7 @@ export function SearchResultItem({ result, currentId, onOpen, t }: {
  * @param props.t - the browser root's locale seat.
  * @returns the session row.
  */
-export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork, onArchive, drag, flat = false, t }: {
+export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork, onArchive, onTogglePin, onMovePinned, pinnedSiblings, drag, flat = false, t }: {
   node: SessionNode
   currentId: string | undefined
   now: number
@@ -370,6 +392,15 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
   onFork: (id: SessionNode['id']) => void
   /** Archive this session (row menu action; commits without a dialog). */
   onArchive: (id: SessionNode['id']) => void
+  /** Pin or unpin this session (row menu action). */
+  onTogglePin: (id: SessionNode['id'], pinned: boolean) => void
+  /**
+   * Move this pinned row within the pinned band: `null` anchors to the very
+   * top, an id anchors directly above that pinned row.
+   */
+  onMovePinned?: ((id: SessionNode['id'], anchorId: string | null) => void) | undefined
+  /** All currently pinned rows in band order (menu needs sibling anchors). */
+  pinnedSiblings?: readonly string[] | undefined
   /** Present only on draggable rows (workspace-group sessions outside search). */
   drag?: RowDragProps | undefined
   /** The row is rendered without a parent Workspace header. */
@@ -387,6 +418,21 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
   // touches the session log, so it is not styled as destructive and needs no
   // confirmation dialog.
   const sessionMenuItems = [
+    node.pinned
+      ? { id: 'unpin', label: t('menu.unpin'), icon: <IconPinFill16 /> }
+      : { id: 'pin', label: t('menu.pin'), icon: <IconPinFill16 /> },
+    // Ordering inside the pinned band: hide when the row is the sole pin or
+    // already at that edge (the item would be a no-op).
+    ...(node.pinned && onMovePinned !== undefined && pinnedSiblings !== undefined
+      ? [
+        ...(pinnedSiblings.length > 1 && pinnedSiblings[0] !== node.id
+          ? [{ id: 'pin-up', label: t('menu.pinUp'), icon: <IconChevronUpOutline14 /> }]
+          : []),
+        ...(pinnedSiblings.length > 1 && pinnedSiblings[pinnedSiblings.length - 1] !== node.id
+          ? [{ id: 'pin-down', label: t('menu.pinDown'), icon: <IconChevronDownOutline14 /> }]
+          : []),
+      ]
+      : []),
     { id: 'rename', label: t('rename'), icon: <IconEditOutline16 /> },
     { id: 'fork', label: t('menu.fork'), icon: <IconBranchOutline16 /> },
     // 20-native glyph in the menu's 16px icon slot (Menu.module.css .itemIcon).
@@ -436,6 +482,8 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
           {showStatus && <SessionStatusDots statuses={statuses} />}
         </span>
       )}
+      {/* Pinned rows lead their section; the glyph marks why. */}
+      {!flat && node.pinned && <IconPinFill16 className={css.pinGlyph} />}
       <span className={css.title}>{title}</span>
       {/* A blank New Session row is a provisional placeholder: nothing has
           happened in it yet, so a "now" timestamp and the row verbs
@@ -450,6 +498,19 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
             items={sessionMenuItems}
             onSelect={(id) => {
               setMenuOpen(false)
+              if (id === 'pin') onTogglePin(node.id, true)
+              if (id === 'unpin') onTogglePin(node.id, false)
+              if (id === 'pin-up' && onMovePinned !== undefined && pinnedSiblings !== undefined) {
+                const at = pinnedSiblings.indexOf(node.id)
+                const above = pinnedSiblings[Math.max(0, at - 1)]
+                if (at > 0 && above !== undefined) onMovePinned(node.id, above)
+                else if (at === 0) onMovePinned(node.id, null)
+              }
+              if (id === 'pin-down' && onMovePinned !== undefined && pinnedSiblings !== undefined) {
+                const at = pinnedSiblings.indexOf(node.id)
+                const below = pinnedSiblings[at + 1]
+                if (below !== undefined) onMovePinned(node.id, below)
+              }
               if (id === 'rename') onRename(node.id, row.title)
               if (id === 'fork') onFork(node.id)
               if (id === 'archive') onArchive(node.id)

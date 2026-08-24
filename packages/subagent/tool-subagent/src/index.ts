@@ -142,25 +142,18 @@ function stopReasonError(result: SubagentResult): string | undefined {
 }
 
 /**
- * Append provider-authored failure detail and the child's preserved partial
- * answer to a stop-reason error, keeping diagnostic text separate from the
- * child's assistant output.
+ * Append the child's preserved partial answer to a stop-reason error so a
+ * truncated or cancelled child's real text still reaches the parent model.
  * @param error - the stop-reason headline.
- * @param result - the child's terminal result.
- * @returns the headline, diagnostic, and partial text that are present.
+ * @param output - the child's selected output (`SubagentResult.output`).
+ * @returns the headline, extended with the partial text when any exists.
  */
-function withDiagnosticAndPartialText(error: string, result: SubagentResult): string {
-  const diagnostic = result.diagnostic === undefined
-    ? ''
-    : `\nDiagnostic: ${result.diagnostic}`
-  const text = result.output
+function withPartialText(error: string, output: ContentBlock[]): string {
+  const text = output
     .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
     .map(block => block.text)
     .join('')
-  const partial = text.length === 0
-    ? ''
-    : `\nPartial output before the run ended:\n${text}`
-  return `${error}${diagnostic}${partial}`
+  return text.length === 0 ? error : `${error}\nPartial output before the run ended:\n${text}`
 }
 
 type ForegroundToolResult = {
@@ -180,7 +173,7 @@ async function settleForegroundRun(run: SubagentRun): Promise<ForegroundToolResu
       if (error !== undefined) {
         // The registry converts this throw to isError; partial output is not
         // success, but the preserved partial answer still reaches the parent.
-        throw new Error(withDiagnosticAndPartialText(error, result))
+        throw new Error(withPartialText(error, result.output))
       }
       return {
         kind: 'foreground',

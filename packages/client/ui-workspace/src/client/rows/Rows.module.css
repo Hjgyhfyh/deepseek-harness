@@ -127,12 +127,39 @@
 
 .slot {
   flex: none;
-  width: 16px;
+  min-width: 16px;
   height: 20px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 2px;
   color: var(--dsw-alias-label-tertiary);
+}
+
+/* Pinned-session glyph between the status slot and the title. */
+.pinGlyph {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-left: -2px;
+  color: var(--dsw-alias-brand-primary);
+}
+
+/* One live status per dot (each keeps its own chase animation), with an
+   optional ×N worker count. The slot no longer clips: a session running +
+   three subagents shows four dots plus the badge. */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.statusCount {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--dsh-state-ongoing, var(--dsw-static-deepseek-450));
 }
 
 .visuallyHidden {

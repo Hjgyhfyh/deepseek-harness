@@ -529,12 +529,7 @@ describe('worktree-local Lefthook installer', { timeout: 30_000 }, () => {
     const lockPath = installLockPath(fixture)
     const runningPath = join(hooksPath(fixture, fixture.main), '.fake-lefthook-running')
     const install = runInstaller(fixture, fixture.main, { DSH_TEST_LEFTHOOK_DELAY_MS: '250' })
-    try {
-      await waitForPath(runningPath)
-    } catch (error) {
-      await install
-      throw error
-    }
+    await waitForPath(runningPath)
     const replacementRecord = 'replacement owner\n'
     writeFileSync(lockPath, replacementRecord)
 

@@ -306,13 +306,12 @@ export class SessionTitleService extends Service {
     // string clients list rows read. The unit child activates only when a
     // projection registry is composed (headless assemblies stay unaffected).
     ctx.inject(['sessionProjections'], (projectionCtx) => {
-      const titleSchema = zod.union([zod.string().min(1), zod.null()])
       projectionCtx.sessionProjections.register<'title', string | null>({
         key: 'title',
-        stateSchema: titleSchema,
+        schema: zod.union([zod.string().min(1), zod.null()]),
         init: () => null,
         apply: (state, event) => (event.type === 'session/title' ? event.data.title : state),
-        wire: { viewSchema: titleSchema, view: state => state },
+        view: state => state,
         stateVersion: 1,
       })
     })

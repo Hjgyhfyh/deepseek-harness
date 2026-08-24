@@ -30,6 +30,10 @@ export interface SessionNode {
   /** Finished running while not selected and not yet opened (the green "done" reminder dot). */
   completed: boolean
   updatedAt: number
+  /** User-pinned: the row leads its section ahead of the live band. */
+  pinned: boolean
+  /** Rank of a pinned row inside the pinned band (lower leads); absent when unpinned. */
+  pinnedOrder?: number | undefined
 }
 
 /** Session order selected by the Workspace browser. */
@@ -80,6 +84,10 @@ export interface TreeView {
   expandedGroups: readonly string[]
   /** Browser-local order for Sessions without a backing Workspace account. */
   ungroupedOrder?: readonly string[]
+  /** Registry-global pinned Session ids (render bands, not membership). */
+  pinnedSessionIds?: readonly string[]
+  /** User-arranged order inside the pinned band (missing ids trail by pin recency). */
+  pinnedOrder?: readonly string[]
 }
 
 interface Group {
@@ -101,6 +109,30 @@ export function workspaceLabel(cwd: string | undefined): string {
   if (cwd === undefined || cwd === '') return UNGROUPED_LABEL
   const base = cwd.replace(/[/\\]+$/, '').split(/[/\\]/).pop()
   return base !== undefined && base !== '' ? base : cwd
+}
+
+/**
+ * Render bands over one section's stored order: pinned rows first (in the
+ * user's arranged pinned order), then the live band (running now — own or
+ * descendant activity), then everything else. Bands reorder presentation
+ * only; stored orders, drag accounts, and Host order stay untouched. Stable
+ * within a band (Array.sort is stable).
+ * @param sessions - the section's summaries in stored order.
+ * @param live - ids with own or running-descendant activity.
+ * @param pinned - registry-global pinned id set.
+ * @param pinnedRank - rank of an id inside the pinned band; lower leads.
+ * @returns summaries reordered into the three bands (stable within bands).
+ */
+export function bandOrder(
+  sessions: readonly SessionSummary[],
+  live: ReadonlySet<string>,
+  pinned: ReadonlySet<string>,
+  pinnedRank: (id: string) => number = () => 0,
+): SessionSummary[] {
+  const bandOf = (s: SessionSummary): number => pinned.has(s.id)
+    ? 0x100000 + pinnedRank(s.id)
+    : live.has(s.id) ? 0x200000 : 0x300000
+  return [...sessions].sort((a, b) => bandOf(a) - bandOf(b))
 }
 
 /** Recency comparator: newest first, id as the deterministic tiebreak (ids are unique per group). */
@@ -214,6 +246,8 @@ function groupByWorkspace(
 function sessionNode(
   s: SessionSummary,
   descendants: ReadonlyMap<SessionId, SubagentDescendantSummary>,
+  pinned: ReadonlySet<string>,
+  pinnedRank: (id: string) => number,
 ): SessionNode {
   return {
     id: s.id,
@@ -223,8 +257,50 @@ function sessionNode(
     runningSubagentCount: descendants.get(s.id)?.runningCount ?? 0,
     completed: s.completed === true,
     updatedAt: s.updatedAt,
+    pinned: pinned.has(s.id),
+    ...(pinned.has(s.id) ? { pinnedOrder: pinnedRank(s.id) } : {}),
     ...(s.pendingInteraction === undefined ? {} : { pendingInteraction: s.pendingInteraction }),
   }
+}
+
+/**
+ * Rank lookup inside the pinned band: arranged ids lead in their stored
+ * sequence, unarranged ids trail in pin recency (most recent last).
+ * @param pinnedSessionIds - registry-global pin set (recency order).
+ * @param pinnedOrder - user-arranged sequence inside the band.
+ * @returns a rank function; lower value leads.
+ */
+export function pinnedRanker(
+  pinnedSessionIds: readonly string[],
+  pinnedOrder: readonly string[] | undefined,
+): (id: string) => number {
+  const known = new Set(pinnedSessionIds)
+  const seen = new Set<string>()
+  const rank = new Map<string, number>()
+  let next = 0
+  for (const id of pinnedOrder ?? []) {
+    if (!known.has(id) || seen.has(id)) continue
+    rank.set(id, next++)
+    seen.add(id)
+  }
+  for (const id of pinnedSessionIds) {
+    if (seen.has(id)) continue
+    rank.set(id, next++)
+    seen.add(id)
+  }
+  return id => rank.get(id) ?? Number.MAX_SAFE_INTEGER
+}
+
+/** Ids whose own turn or an uninterrupted descendant's turn is active right now. */
+function liveSessionIds(
+  summaries: readonly SessionSummary[],
+  descendants: ReadonlyMap<SessionId, SubagentDescendantSummary>,
+): Set<string> {
+  const live = new Set<string>()
+  for (const s of summaries) {
+    if (s.running || (descendants.get(s.id)?.runningCount ?? 0) > 0) live.add(s.id)
+  }
+  return live
 }
 
 /**
@@ -238,7 +314,7 @@ function sessionNode(
  * @param list - sessions list snapshot (`current` feeds containsCurrent).
  * @param workspaces - real workspaces in stable Host order.
  * @param archivedSessionIds - registry-global archive set.
- * @param view - local expansion arrays.
+ * @param view - local expansion arrays and the global pin set.
  * @returns group sections in render order.
  */
 export function deriveGroups(
@@ -249,6 +325,8 @@ export function deriveGroups(
 ): GroupNode[] {
   const archived = new Set(archivedSessionIds)
   const expandedGroups = new Set(view.expandedGroups)
+  const pinnedSessions = new Set(view.pinnedSessionIds ?? [])
+  const rankPinned = pinnedRanker(view.pinnedSessionIds ?? [], view.pinnedOrder)
   const descendants = indexSubagentDescendants(list.byId)
   const currentGroup = list.current === undefined
     ? undefined
@@ -257,6 +335,12 @@ export function deriveGroups(
   const groups: GroupNode[] = []
   for (const g of groupByWorkspace(list, workspaces, archived, view.ungroupedOrder)) {
     const expanded = expandedGroups.has(g.key)
+    // Presentation bands over the stored order: pinned leads, then sessions
+    // with live work right now, then the rest in stored order. The stored
+    // order itself (drag/manual/Host account) is never rewritten here.
+    const ordered = expanded
+      ? bandOrder(g.sessions, liveSessionIds(g.sessions, descendants), pinnedSessions, rankPinned)
+      : g.sessions
     groups.push({
       key: g.key,
       workspaceId: g.workspaceId,
@@ -266,7 +350,7 @@ export function deriveGroups(
       sessionCount: g.sessions.length,
       expanded,
       containsCurrent: g.key === currentGroup,
-      sessions: expanded ? g.sessions.map(session => sessionNode(session, descendants)) : [],
+      sessions: expanded ? ordered.map(session => sessionNode(session, descendants, pinnedSessions, rankPinned)) : [],
     })
   }
   return groups
@@ -279,13 +363,18 @@ export function deriveGroups(
  * (see {@link deriveSearchResults}).
  * @param list - sessions list snapshot.
  * @param archivedSessionIds - registry-global archive set.
+ * @param pinnedSessionIds - registry-global pin set (render bands).
  * @returns flat rows in render order.
  */
 export function deriveFlat(
   list: SessionListState,
   archivedSessionIds: readonly SessionId[],
+  pinnedSessionIds: readonly string[] = [],
+  pinnedOrder?: readonly string[],
 ): SessionNode[] {
   const archived = new Set(archivedSessionIds)
+  const pinnedSessions = new Set(pinnedSessionIds)
+  const rankPinned = pinnedRanker(pinnedSessionIds, pinnedOrder)
   const descendants = indexSubagentDescendants(list.byId)
   const rows: SessionSummary[] = []
   for (const id of list.ids) {
@@ -294,7 +383,8 @@ export function deriveFlat(
     rows.push(s)
   }
   rows.sort(byRecency)
-  return rows.map(session => sessionNode(session, descendants))
+  return bandOrder(rows, liveSessionIds(rows, descendants), pinnedSessions, rankPinned)
+    .map(session => sessionNode(session, descendants, pinnedSessions, rankPinned))
 }
 
 /** Relative-time bucket of a session row's trailing label. */

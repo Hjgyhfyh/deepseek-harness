@@ -6,6 +6,7 @@
  */
 
 import { EventEmitter } from 'node:events'
+import { extname } from 'node:path'
 import type {
   SpawnedProcess,
   SpawnOptions,
@@ -13,9 +14,10 @@ import type {
 import {
   scrubbedParentEnv,
   type SubprocessHandle,
-  type SubprocessOutcome,
   type SubprocessSpawnSpec,
 } from '@deepseek-ai/dsh-subprocess'
+
+const WINDOWS_BATCH_EXECUTABLE_ENV = 'DSH_CLAUDE_CODE_EXECUTABLE'
 
 function thrown(value: unknown): Error {
   /* v8 ignore next -- the subprocess seam rejects with Error. */
@@ -41,22 +43,33 @@ export function sdkEnvironmentOverlay(
  * Translate one official SDK spawn request to the shared process owner.
  * @param options - command, arguments, workspace, environment, and forwarded signal from the SDK.
  * @param graceMs - process-tree termination grace.
+ * @param platform - host platform selecting the Windows batch-shim boundary.
  * @returns the fully explicit shared subprocess request.
+ * @remarks The batch-shim path quotes only the resolved executable. The pinned SDK
+ * supplies fixed flag arguments without cmd metacharacters; cmd reparses that tail.
  */
 export function claudeSpawnSpec(
   options: SpawnOptions,
   graceMs: number,
+  platform: NodeJS.Platform = process.platform,
 ): SubprocessSpawnSpec {
   if (options.cwd === undefined || options.cwd.length === 0) {
     throw new Error('subagent-claude-code: SDK spawn request omitted its workspace')
   }
+  const extension = extname(options.command).toLowerCase()
+  const batchShim = platform === 'win32' && (extension === '.cmd' || extension === '.bat')
+  const env = sdkEnvironmentOverlay(options.env)
+  const argv = batchShim
+    ? ['cmd.exe', '/d', '/v:off', '/s', '/c', `%${WINDOWS_BATCH_EXECUTABLE_ENV}%`, ...options.args]
+    : [options.command, ...options.args]
+  if (batchShim) env[WINDOWS_BATCH_EXECUTABLE_ENV] = `"${options.command}"`
   return {
-    argv: [options.command, ...options.args],
+    argv,
     cwd: options.cwd,
     stdio: { stdin: 'pipe', stdout: 'pipe', stderr: 'inherit' },
     graceMs,
     signal: options.signal,
-    env: sdkEnvironmentOverlay(options.env),
+    env,
   }
 }
 
@@ -68,7 +81,8 @@ export class ManagedClaudeCodeProcess implements SpawnedProcess {
   readonly stdin
   readonly stdout
   private readonly events = new EventEmitter()
-  private outcomeValue: SubprocessOutcome | undefined
+  private exitCodeValue: number | null = null
+  private signalCodeValue: NodeJS.Signals | null = null
   private killRequested = false
 
   /**
@@ -84,7 +98,8 @@ export class ManagedClaudeCodeProcess implements SpawnedProcess {
     this.events.on('error', () => {})
     void child.done.then(
       (outcome) => {
-        this.outcomeValue = outcome
+        this.exitCodeValue = outcome.exitCode
+        this.signalCodeValue = outcome.signal
         this.events.emit('exit', outcome.exitCode, outcome.signal)
       },
       (error: unknown) => {
@@ -100,17 +115,12 @@ export class ManagedClaudeCodeProcess implements SpawnedProcess {
 
   /** Direct-child exit code, or null while running or after signal exit. */
   get exitCode(): number | null {
-    return this.outcomeValue?.exitCode ?? null
+    return this.exitCodeValue
   }
 
   /** Direct-child terminating signal, if any. */
   get signalCode(): NodeJS.Signals | null {
-    return this.outcomeValue?.signal ?? null
-  }
-
-  /** Exact managed-process outcome after exit, or undefined while running. */
-  get outcome(): SubprocessOutcome | undefined {
-    return this.outcomeValue
+    return this.signalCodeValue
   }
 
   /**
@@ -121,7 +131,8 @@ export class ManagedClaudeCodeProcess implements SpawnedProcess {
   kill(_signal: NodeJS.Signals): boolean {
     if (
       this.killRequested
-      || this.outcomeValue !== undefined
+      || this.exitCodeValue !== null
+      || this.signalCodeValue !== null
     ) {
       return false
     }

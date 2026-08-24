@@ -20,13 +20,9 @@
 - text: Stopped
 - button "Copy":
   - img
-- button "Good response":
-  - img
-- button "Bad response":
-  - img
 - button "Branch into a new conversation":
   - img
-- text: {{clock}} Ran for {{duration}} TTFT {{duration}}
+- text: {{clock}} Ran for {{duration}}
 - button "2 queued messages" [expanded]
 - list:
   - listitem:
@@ -36,7 +32,7 @@
     - tooltip "Edit queued message"
     - button "Remove queued message":
       - img
-    - button "Steer queued message" [disabled]:
+    - button "Send now" [disabled]:
       - img
   - listitem:
     - text: Queue item preserved after stop
@@ -44,7 +40,7 @@
       - img
     - button "Remove queued message":
       - img
-    - button "Steer queued message" [disabled]:
+    - button "Send now" [disabled]:
       - img
 - textbox "Message the agent"
 - button "Commands":
@@ -54,4 +50,4 @@
   - text: DeepSeek-V4-Flash
   - img
 - button "Send message" [disabled]
-- text: 1 turns · 1 steps LLM {{duration}} TTFT avg {{duration}}
+- text: 1 turns · 1 steps

@@ -35,7 +35,7 @@
 - button "Clear goal":
   - img
 - button "2 queued messages"
-- textbox "Cmd/Ctrl+Enter steers all queued messages"
+- textbox "Cmd/Ctrl+Enter sends all queued messages now"
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write

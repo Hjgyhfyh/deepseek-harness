@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
 import { createSnapshotStore, type SessionListState, type WorkspaceListState } from '@deepseek-ai/dsh-client-runtime/client'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { EnterBehaviorRow } from '../src/client/settings/EnterBehaviorRow.tsx'
@@ -49,19 +49,19 @@ describe('EnterBehaviorRow', () => {
     expect(screen.getByRole('button', { name: /Queue/ }).getAttribute('aria-expanded')).toBe('false')
   })
 
-  it('selects Steer, follows later preference changes, and closes outside', () => {
+  it('selects Send now, follows later preference changes, and closes outside', () => {
     const b = mount()
     const trigger = screen.getByRole('button', { name: /Queue/ })
     fireEvent.click(trigger)
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Steer' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Send now' }))
     expect(b.setBusyEnter).toHaveBeenCalledWith('steer')
-    expect(screen.getByRole('button', { name: /Steer/ })).toBeDefined()
+    expect(screen.getByRole('button', { name: /Send now/ })).toBeDefined()
 
     act(() => { b.policy.setBusyEnter('queue') })
     const queueTrigger = screen.getByRole('button', { name: /Queue/ })
     fireEvent.click(queueTrigger)
-    expect(screen.getByRole('menuitem', { name: 'Steer' })).toBeDefined()
+    expect(screen.getByRole('menuitem', { name: 'Send now' })).toBeDefined()
     fireEvent.pointerDown(document.body)
-    expect(screen.queryByRole('menuitem', { name: 'Steer' })).toBeNull()
+    expect(screen.queryByRole('menuitem', { name: 'Send now' })).toBeNull()
   })
 })

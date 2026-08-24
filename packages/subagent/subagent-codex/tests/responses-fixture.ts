@@ -17,7 +17,6 @@ interface RecordedResponsesRequest {
 /** Behavior consumed by one Responses request. */
 export type ResponsesBehavior =
   | { readonly kind: 'complete'; readonly text: string }
-  | { readonly kind: 'error'; readonly status: number; readonly message: string }
   | {
     readonly kind: 'functionCall'
     readonly name: string
@@ -274,11 +273,6 @@ export async function startResponsesFixture(
       if (behavior.kind === 'advertisedFunctionCall' && advertisedCall === undefined) {
         response.writeHead(500, { 'content-type': 'application/json' })
         response.end(JSON.stringify({ error: { message: 'none of the fixture function calls was advertised' } }))
-        return
-      }
-      if (behavior.kind === 'error') {
-        response.writeHead(behavior.status, { 'content-type': 'application/json' })
-        response.end(JSON.stringify({ error: { message: behavior.message } }))
         return
       }
       response.writeHead(200, {

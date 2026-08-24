@@ -14,9 +14,13 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-subagent'
+import type {} from '@deepseek-ai/dsh-agent'
 
 export const name = 'tool-subagent-control'
-export const inject = ['tools', 'subagents']
+export const inject = ['tools', 'subagents', 'agents']
+
+/** How long deliver:"now" waits for the interrupted turn to settle before degrading to the queued path. */
+const NOW_SETTLE_TIMEOUT_MS = 10_000
 
 /**
  * Register the `send_message` and `interrupt_agent` tools.
@@ -26,11 +30,12 @@ export function apply(ctx: Context): void {
   ctx.tools.register(defineTool({
     name: 'send_message',
     description:
-      'Send a message to a background subagent by its subagent id, continuing the same conversation. It '
-      + 'becomes the subagent\'s next turn: if it is still working, the message waits until its current turn '
-      + 'finishes, so it cannot redirect work already underway. This call returns no answer from the '
-      + 'subagent — only confirmation that the message was delivered — so use it to give it more work. A '
-      + 'failure means the message was NOT delivered.',
+      'Send a message to a background subagent by its subagent id, continuing the same conversation. '
+      + 'By default it becomes the subagent\'s next turn: if it is still working, the message waits until its '
+      + 'current turn finishes. With deliver "now" the subagent\'s current turn is interrupted first and your '
+      + 'message runs immediately, so you can redirect work already underway without waiting for completion. '
+      + 'This call returns no answer from the subagent — only confirmation that the message was delivered — so '
+      + 'use it to give it more work. A failure means the message was NOT delivered.',
     parameters: {
       subagent_id: {
         type: 'string',
@@ -42,6 +47,13 @@ export function apply(ctx: Context): void {
         required: true,
         description: 'The message to deliver to the subagent.',
       },
+      deliver: {
+        type: 'string',
+        enum: ['queued', 'now'],
+        description:
+          'Delivery mode. "queued" (default) parks the message as the subagent\'s next turn after its current '
+          + 'turn finishes. "now" interrupts the running turn and delivers immediately.',
+      },
     },
     output: {
       schema: {
@@ -49,11 +61,14 @@ export function apply(ctx: Context): void {
         additionalProperties: false,
         properties: {
           messageId: { type: 'string', required: true },
+          delivered: { type: 'string', enum: ['queued', 'now'], required: true },
         },
       },
-      render: (args, _value) => [{
+      render: (args, value) => [{
         type: 'text',
-        text: `message queued as the next turn for subagent ${args.subagent_id}`,
+        text: value.delivered === 'now'
+          ? `delivered immediately (running turn interrupted) to subagent ${args.subagent_id}`
+          : `message queued as the next turn for subagent ${args.subagent_id}`,
       }],
     },
     async execute(args, exec) {
@@ -61,6 +76,32 @@ export function apply(ctx: Context): void {
       if (!parent) {
         // Parent authority requires an exact live calling agent.
         throw new Error('send_message requires a calling agent (exec.agent was undefined)')
+      }
+      let delivered: 'queued' | 'now' = args.deliver === 'now' ? 'now' : 'queued'
+      if (delivered === 'now') {
+        // Immediate delivery: stop the in-flight turn (inbox preserved), let
+        // the driver settle (bounded — a stuck child degrades to the queued
+        // path), then admit the message as a waking turn. An idle or
+        // already-finished target makes the interrupt a no-op and the
+        // delivery keeps its ordinary cold-resume/wake semantics.
+        ctx.subagents.interrupt(SessionId(args.subagent_id), { kind: 'ancestor', agent: parent })
+        const target = ctx.agents.get(SessionId(args.subagent_id))
+        if (target !== undefined) {
+          // Bounded settle wait: whenIdle on success, the caller signal or the
+          // timeout cap as the degradation paths (the message then parks like
+          // any queued follow-up instead of blocking this tool).
+          const settled = Promise.withResolvers<undefined>()
+          const settle = (): void => { settled.resolve(undefined) }
+          const timer = setTimeout(settle, NOW_SETTLE_TIMEOUT_MS)
+          exec.signal.addEventListener('abort', settle, { once: true })
+          try {
+            await Promise.race([target.whenIdle().then(settle), settled.promise])
+            delivered = target.status === 'idle' ? 'now' : 'queued'
+          } finally {
+            clearTimeout(timer)
+            exec.signal.removeEventListener('abort', settle)
+          }
+        }
       }
       const message: ContentBlock[] = [{ type: 'text', text: args.message }]
       const messageId = await ctx.subagents.followup(
@@ -72,7 +113,7 @@ export function apply(ctx: Context): void {
           signal: exec.signal,
         },
       )
-      return { messageId }
+      return { messageId, delivered }
     },
   }))
 

@@ -2,7 +2,7 @@
   - navigation "Session hierarchy":
     - button "Ask a research subagent to"
     - text: /
-    - 'button "Switch subagent: event-sourcing researcher"': event-sourcing researcher
+    - button "event-sourcing researcher" [disabled]
   - img
   - text: Standard mode
   - button "Session log":

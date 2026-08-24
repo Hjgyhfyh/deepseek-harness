@@ -398,10 +398,9 @@ describe('typert loader', () => {
 
     await ctx.loader.create({ name: '@fixture/steady-failure' })
     await ctx.loader.await()
-    // The failing contributor's error is reported on the post-await flush.
-    await vi.waitFor(() => {
-      expect(logged).toHaveBeenCalledWith(expect.objectContaining({ message: 'register failed' }))
-    }, { timeout: 10_000 })
+    await new Promise(resolve => setTimeout(resolve, 20))
+
+    expect(logged).toHaveBeenCalledWith(expect.objectContaining({ message: 'register failed' }))
     expect(ctx.typert.getPackage('@fixture/steady-failure')).toBeUndefined()
   })
 })

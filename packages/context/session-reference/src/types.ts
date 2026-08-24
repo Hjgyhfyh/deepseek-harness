@@ -1,13 +1,7 @@
-/**
- * Public session-reference request, candidate, and preparation records.
- * Imports stay on type-only subpaths so generated Remote clients can consume
- * this module without Host runtime code.
- * @module @deepseek-ai/dsh-session-reference/types
- */
+/** Public session-reference request, candidate, and preparation records. */
 
-import type { UserMessage } from '@deepseek-ai/dsh-llm/message'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm/types'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { ContentBlock } from '@deepseek-ai/dsh-llm'
+import type { SessionId, UserMessage } from '@deepseek-ai/dsh-session'
 
 /** Durable source session, cited event seqs, and snapshot facts for prepared cross-session context. */
 export interface SessionReferenceSource {
@@ -53,12 +47,6 @@ export interface SessionReferenceCandidate {
   cwd?: string
   /** Source session creation time in Unix epoch milliseconds. */
   createdAt: number
-}
-
-/** One discovery candidate carrying its canonical prompt mention. */
-export interface SessionReferenceMentionCandidate extends SessionReferenceCandidate {
-  /** Canonical `@[label](dsh-session:…)` mention serialized into the prompt draft. */
-  mention: string
 }
 
 /** Direct message content and optional referenced-session context. */

@@ -10,14 +10,9 @@
  * See `docs/i18n/README.md` for the owning contract.
  */
 
-import { existsSync, globSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, globSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve, sep } from 'node:path'
-import {
-  gitBlobHash,
-  gitIndexPaths,
-  readGitIndexBlob,
-  storeGitBlob,
-} from './translation-pairing-git.ts'
+import { gitBlobHash, readGitIndexBlob, storeGitBlob } from './translation-pairing-git.ts'
 import {
   parseTranslationPairingRecord,
   renderTranslationPairingRecord,
@@ -25,23 +20,17 @@ import {
 } from './translation-pairing-record.ts'
 import {
   languageSwitcherTargets,
+  linksTo,
   parseTranslationMarkdown,
   parseTranslationPairingCliArgs,
   parseTranslationPairingManifest,
   partitionGeneratedRegions,
   requiresSourceLanguageSwitcher,
-  isTranslationPairingManifestExcluded,
   isTranslationScopeFile,
   TRANSLATION_SCOPE_GLOB_EXCLUDES,
-  translationPairSourcePredicate,
   translationStructureDiff,
   translationStructureSignature,
 } from './translation-pairing.ts'
-import {
-  hasLanguageSwitcher,
-  normalizeTranslationMarkdownLinks,
-  translationLinkLocaleViolations,
-} from './translation-links.ts'
 
 const root = resolve(import.meta.dirname, '..')
 let request: ReturnType<typeof parseTranslationPairingCliArgs>
@@ -54,7 +43,6 @@ try {
 const listMode = request.mode === 'list'
 const writeMode = request.mode === 'write'
 const indexMode = request.input === 'index'
-const indexFiles = indexMode ? gitIndexPaths(root) : undefined
 
 const contentCache = new Map<string, Buffer | undefined>()
 
@@ -62,17 +50,15 @@ const contentCache = new Map<string, Buffer | undefined>()
 function readRepositoryFile(file: string): Buffer | undefined {
   if (contentCache.has(file)) return contentCache.get(file)
   const content = indexMode
-    ? indexFiles?.has(file) ? readGitIndexBlob(root, file)?.content : undefined
-    : existsSync(join(root, file)) && statSync(join(root, file)).isFile()
-      ? readFileSync(join(root, file))
-      : undefined
+    ? readGitIndexBlob(root, file)?.content
+    : existsSync(join(root, file)) ? readFileSync(join(root, file)) : undefined
   contentCache.set(file, content)
   return content
 }
 
 /** Whether one path exists in the selected content plane. */
 function repositoryFileExists(file: string): boolean {
-  return indexMode ? indexFiles?.has(file) === true : readRepositoryFile(file) !== undefined
+  return readRepositoryFile(file) !== undefined
 }
 
 /** Discover source Markdown and pairing sidecars before applying the corpus predicate. */
@@ -88,7 +74,6 @@ if (manifestContent === undefined) {
   throw new Error('scripts/translation-pairing.manifest.json is missing from the selected content plane')
 }
 const manifest = parseTranslationPairingManifest(manifestContent.toString('utf8'))
-const isTranslationPairSource = translationPairSourcePredicate(manifest)
 
 /**
  * An excluded entry ending in `/` excludes the whole directory. The trailing
@@ -97,7 +82,7 @@ const isTranslationPairSource = translationPairSourcePredicate(manifest)
  * manifest must keep their trailing slash.
  */
 function isExcluded(file: string): boolean {
-  return isTranslationPairingManifestExcluded(file, manifest)
+  return manifest.excluded.some(entry => (entry.endsWith('/') ? file.startsWith(entry) : file === entry))
 }
 
 // Enumerate the scope once: the whole corpus, or exactly the named pairs'
@@ -245,83 +230,40 @@ for (const source of [...pairAnchors].sort()) {
     continue
   }
 
-  const sourceText = sourceContent.toString('utf8')
-  const zhText = zhContent.toString('utf8')
-  const sourceSwitcherTargets = languageSwitcherTargets(source)
-  const zhSwitcherTargets = languageSwitcherTargets(zh)
-  for (const violation of [
-    ...translationLinkLocaleViolations(sourceText, {
-      repoRoot: root,
-      sourcePath: source,
-      isTranslationPairSource,
-      repositoryFileExists,
-    }, zhSwitcherTargets),
-    ...translationLinkLocaleViolations(zhText, {
-      repoRoot: root,
-      sourcePath: zh,
-      isTranslationPairSource,
-      repositoryFileExists,
-    }, sourceSwitcherTargets),
-  ]) {
-    errors.push(`${violation.sourcePath}:${violation.line}: link target ${JSON.stringify(violation.url)} uses the wrong locale; expected ${JSON.stringify(violation.expectedUrl)}`)
-    state.set(source, 'out-of-sync')
-  }
-
-  // Generated regions must remain byte-identical after paired document paths
-  // are normalized to one semantic target. The structural signature below
-  // compares their contents again as part of the whole document; this named
-  // check rejects any prose, ordering, code, marker, or non-locale URL drift.
+  // Generated regions are language-invariant: the exact same generator output
+  // (markers included) must appear in both sides, in the same order. The
+  // structural signature below compares the region content again as part of
+  // the whole document; this dedicated check exists to name the divergence
+  // precisely and to reject a region grammar violation on either side.
   let sourceRegions: { regions: string[]; stripped: string }
   let zhRegions: { regions: string[]; stripped: string }
   try {
-    sourceRegions = partitionGeneratedRegions(sourceText)
-    zhRegions = partitionGeneratedRegions(zhText)
+    sourceRegions = partitionGeneratedRegions(sourceContent.toString('utf8'))
+    zhRegions = partitionGeneratedRegions(zhContent.toString('utf8'))
   } catch (error) {
     errors.push(`${source} ↔ ${zh}: ${error instanceof Error ? error.message : String(error)}`)
     state.set(source, 'out-of-sync')
     continue
   }
-  const normalizedSourceRegions = sourceRegions.regions.map(region => normalizeTranslationMarkdownLinks(region, {
-    repoRoot: root,
-    sourcePath: source,
-    isTranslationPairSource,
-    repositoryFileExists,
-  }))
-  const normalizedZhRegions = zhRegions.regions.map(region => normalizeTranslationMarkdownLinks(region, {
-    repoRoot: root,
-    sourcePath: zh,
-    isTranslationPairSource,
-    repositoryFileExists,
-  }))
-  if (normalizedSourceRegions.length !== normalizedZhRegions.length
-    || normalizedSourceRegions.some((region, index) => region !== normalizedZhRegions[index])) {
-    errors.push(`${source} ↔ ${zh}: generated regions differ beyond paired-document locale paths — regenerate both sides`)
+  if (sourceRegions.regions.length !== zhRegions.regions.length
+    || sourceRegions.regions.some((region, index) => region !== zhRegions.regions[index])) {
+    errors.push(`${source} ↔ ${zh}: generated regions differ between the pair — regenerate (the generator writes both sides byte-identically)`)
     state.set(source, 'out-of-sync')
   }
 
-  const sourceTree = parseTranslationMarkdown(sourceText)
-  const zhTree = parseTranslationMarkdown(zhText)
-  if (!hasLanguageSwitcher(zhTree, zhText, sourceSwitcherTargets)) {
+  const sourceTree = parseTranslationMarkdown(sourceContent.toString('utf8'))
+  const zhTree = parseTranslationMarkdown(zhContent.toString('utf8'))
+  const sourceSwitcherTargets = languageSwitcherTargets(source)
+  const zhSwitcherTargets = languageSwitcherTargets(zh)
+  if (!linksTo(zhTree, sourceSwitcherTargets)) {
     errors.push(`${zh}: missing language switcher — no link to ${basename(source)}`)
   }
-  if (requiresSourceLanguageSwitcher(source) && !hasLanguageSwitcher(sourceTree, sourceText, zhSwitcherTargets)) {
+  if (requiresSourceLanguageSwitcher(source) && !linksTo(sourceTree, zhSwitcherTargets)) {
     errors.push(`${source}: missing language switcher — no link back to ${basename(zh)}`)
   }
   for (const divergence of translationStructureDiff(
-    translationStructureSignature(sourceTree, zhSwitcherTargets, {
-      repoRoot: root,
-      sourcePath: source,
-      isTranslationPairSource,
-      repositoryFileExists,
-      markdown: sourceText,
-    }),
-    translationStructureSignature(zhTree, sourceSwitcherTargets, {
-      repoRoot: root,
-      sourcePath: zh,
-      isTranslationPairSource,
-      repositoryFileExists,
-      markdown: zhText,
-    }),
+    translationStructureSignature(sourceTree, zhSwitcherTargets),
+    translationStructureSignature(zhTree, sourceSwitcherTargets),
   )) {
     errors.push(`${source} ↔ ${zh}: ${divergence}`)
   }

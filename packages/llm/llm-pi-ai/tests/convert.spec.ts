@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { AttachmentId, ImageVariantId } from '@deepseek-ai/dsh-attachment'
-import type { AttachmentStore, ImageAttachmentRef, ImageRequestPolicy, RequestImageAttachment } from '@deepseek-ai/dsh-attachment'
+import { AttachmentId } from '@deepseek-ai/dsh-attachment'
+import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
 import { createUserMessage, CallId, CONTEXT_WINDOW_EXCEEDED_CODE, EMPTY_RESPONSE_CODE, createMessage } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock, StreamChunk } from '@deepseek-ai/dsh-llm'
 import type { AssistantMessage, AssistantMessageEvent, Usage } from '@earendil-works/pi-ai'
@@ -43,29 +43,6 @@ async function collect(stream: AsyncIterable<StreamChunk>): Promise<StreamChunk[
   return out
 }
 
-function requestVersion(ref: ImageAttachmentRef): RequestImageAttachment {
-  return {
-    variantId: ImageVariantId(`sha256:${'e'.repeat(64)}`),
-    attachment: ref,
-    data: Uint8Array.of(1, 2, 3),
-    mediaType: ref.mediaType,
-    bytes: 3,
-    width: ref.width,
-    height: ref.height,
-    depth: 'uchar',
-    space: 'srgb',
-    hasAlpha: true,
-  }
-}
-
-function attachmentStore(readImageRequest: (
-  ref: ImageAttachmentRef,
-  policy: ImageRequestPolicy,
-  signal?: AbortSignal,
-) => Promise<RequestImageAttachment>): AttachmentStore {
-  return { readImageRequest } as unknown as AttachmentStore
-}
-
 describe('toPiContext', () => {
   it('maps system prompt, user text, and tools', () => {
     const context = toPiContext({
@@ -99,9 +76,7 @@ describe('toPiContext', () => {
       width: 1,
       height: 1,
     }
-    const readImageRequest = vi.fn((value: ImageAttachmentRef, _policy: ImageRequestPolicy) => (
-      Promise.resolve(requestVersion(value))
-    ))
+    const readImage = vi.fn().mockResolvedValue({ ref: attachment, data: Uint8Array.of(1, 2, 3) })
     const context = await toPiContext({
       provider: 'openai',
       model: 'gpt-4.1',
@@ -109,18 +84,13 @@ describe('toPiContext', () => {
         content: [{ type: 'text', text: 'describe' }, { type: 'image', attachment }],
         source: { kind: 'plugin', plugin: 'test' },
       })],
-    }, attachmentStore(readImageRequest))
+    }, { readImage } as unknown as AttachmentStore)
 
-    expect(readImageRequest).toHaveBeenCalledWith(
-      attachment,
-      { maxPixels: 2048 * 2048, maxBytes: 1024 * 1024 },
-      undefined,
-    )
+    expect(readImage).toHaveBeenCalledWith(attachment)
     expect(context.messages[0]).toEqual({
       role: 'user',
       content: [
         { type: 'text', text: 'describe' },
-        { type: 'text', text: expect.stringContaining(`Image ${attachment.attachmentId}`) as string },
         { type: 'image', data: 'AQID', mimeType: 'image/png' },
       ],
       timestamp: 0,
@@ -135,9 +105,7 @@ describe('toPiContext', () => {
       width: 1,
       height: 1,
     }
-    const readImageRequest = vi.fn((value: ImageAttachmentRef, _policy: ImageRequestPolicy) => (
-      Promise.resolve(requestVersion(value))
-    ))
+    const readImage = vi.fn().mockResolvedValue({ ref: attachment, data: Uint8Array.of(1, 2, 3) })
     const context = await toPiContext({
       provider: 'openai',
       model: 'gpt-4.1',
@@ -161,7 +129,7 @@ describe('toPiContext', () => {
         }],
         source: { kind: 'plugin', plugin: 'test' },
       })],
-    }, attachmentStore(readImageRequest))
+    }, { readImage } as unknown as AttachmentStore)
 
     expect(context.messages).toEqual([{
       role: 'toolResult',
@@ -170,7 +138,6 @@ describe('toPiContext', () => {
       content: [
         { type: 'text', text: 'before' },
         { type: 'text', text: 'middle' },
-        { type: 'text', text: expect.stringContaining(`Image ${attachment.attachmentId}`) as string },
         { type: 'image', data: 'AQID', mimeType: 'image/png' },
         { type: 'text', text: 'after' },
       ],
@@ -812,16 +779,6 @@ describe('mapStopReason / mapUsage', () => {
       stopReason: 'error',
       errorMessage: 'HTTP 400: invalid input: temperature exceeds maximum allowed value',
     }))).toMatchObject({ kind: 'error', failure: { code: 'INVALID_REQUEST' } })
-    expect(mapStopReason(assistant({ stopReason: 'error', errorMessage: 'HTTP 413: Payload Too Large' })))
-      .toMatchObject({ kind: 'error', failure: { code: 'INVALID_REQUEST' } })
-    expect(mapStopReason(assistant({
-      stopReason: 'error',
-      errorMessage: 'Failed to buffer the request body: length limit exceeded',
-    }))).toMatchObject({ kind: 'error', failure: { code: 'INVALID_REQUEST' } })
-    expect(mapStopReason(assistant({
-      stopReason: 'error',
-      errorMessage: 'vector length limit exceeded',
-    }))).toMatchObject({ kind: 'error', failure: { code: 'PI_AI_ERROR' } })
   })
 
   it.each([

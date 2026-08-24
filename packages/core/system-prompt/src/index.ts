@@ -184,7 +184,7 @@ function compareToolNames(a: ToolSchema, b: ToolSchema): number {
 
 /** Plugin config: the deployment-authored fragment of the system prompt (see {@link Config.persona} for its contract). */
 export interface Config {
-  /** Include the fixed DeepSeek Harness identity before the deployment persona (default true). */
+  /** Include the fixed Mako Harness identity before the deployment persona (default true). */
   includeHarnessIdentity?: boolean
   /** Include dynamic runtime-context snapshots in model history (default true). */
   includeRuntimeContext?: boolean
@@ -358,9 +358,25 @@ export class SystemPrompt extends Service {
       this.section({
         name: 'harness:identity',
         order: -100,
-        text: 'You are an AI agent powered by DeepSeek Harness.',
+        text: 'You are an AI agent powered by Mako Harness.',
       })
     }
+    // Live clock, re-rendered on every request so agents never guess the date
+    // or drift mid-session. Rides the runtime-context snapshot (suppressed
+    // together with it); English + numeric keeps rendering deterministic.
+    this.context({
+      name: 'harness:clock',
+      order: -90,
+      text: () => {
+        const now = new Date()
+        const pad2 = (v: number): string => String(v).padStart(2, '0')
+        const weekday = now.toLocaleDateString('en-US', { weekday: 'long' })
+        const zone = Number.isFinite(now.getTimezoneOffset())
+          ? `UTC${now.getTimezoneOffset() <= 0 ? '+' : '-'}${pad2(Math.floor(Math.abs(now.getTimezoneOffset()) / 60))}:${pad2(Math.abs(now.getTimezoneOffset()) % 60)}`
+          : 'UTC'
+        return `Current date: ${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} (${weekday}). Current local time: ${pad2(now.getHours())}:${pad2(now.getMinutes())} (${zone}).`
+      },
+    })
     this.section({
       name: PERSONA_SECTION,
       order: PERSONA_ORDER,

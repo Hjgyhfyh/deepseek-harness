@@ -100,17 +100,20 @@ async function waitNoActivation(ctx: Context, childId: SessionId): Promise<void>
 }
 
 describe('dsh-tool-subagent-control', () => {
-  it('registers send_message once, globally, with the two required parameters', async () => {
+  it('registers send_message once, globally, with queue/now delivery parameters', async () => {
     const { ctx } = await setup([])
     const schemas = ctx.tools.schemas().filter(schema => schema.name === 'send_message')
     expect(schemas).toHaveLength(1)
     const props = (schemas[0]!.parameters as { properties?: Record<string, unknown> }).properties ?? {}
-    expect(Object.keys(props).sort()).toEqual(['message', 'subagent_id'])
+    expect(Object.keys(props).sort()).toEqual(['deliver', 'message', 'subagent_id'])
+    expect((props.deliver as { enum?: string[] }).enum).toEqual(['queued', 'now'])
     // The continuable path has no Task, so the schema must not promise one.
     expect(schemas[0]!.description).not.toContain('job_output')
     expect(schemas[0]!.description).not.toContain('job id')
-    // Follow-up ordering is model-visible: it cannot redirect the open turn.
+    // Follow-up ordering is model-visible: the default parks behind the open turn…
     expect(schemas[0]!.description).toContain('next turn')
+    // …and the explicit "now" mode advertises the interrupt-first redirect.
+    expect(schemas[0]!.description).toContain('"now"')
   })
 
   it('cold-resumes a settled child and reports the queued next turn', async () => {
@@ -167,6 +170,74 @@ describe('dsh-tool-subagent-control', () => {
     expect(prompts).toEqual(['long work', 'also consider Y'])
   })
 
+  it('deliver "now" interrupts the running turn and runs the message immediately', async () => {
+    const releaseFirst = Promise.withResolvers<undefined>()
+    const adapter = new GatedAdapter([
+      { chunks: textResponse('held'), gate: releaseFirst.promise },
+      { chunks: textResponse('redirected answer') },
+    ])
+    const { ctx, parent } = await setupWith(adapter)
+    const started = await ctx.subagents.startContinuable({
+      provider: 'spawn',
+      label: 'long work',
+      request: { prompt: [{ type: 'text', text: 'long work' }], parent },
+      signal: testToolSignal,
+    })
+    await vi.waitFor(() => { expect(adapter.requests).toHaveLength(1) })
+    const child = ctx.agents.get(started.childId)!
+    const cancelSpy = vi.spyOn(child, 'cancel')
+
+    const pending = callTool(ctx, 'send_message', {
+      subagent_id: started.childId,
+      message: 'drop that, do this instead',
+      deliver: 'now',
+    }, parent)
+
+    // The tool waits for the interrupted driver to settle, so unblock the held
+    // model stream once the cancel has landed, then collect the delivery.
+    await vi.waitFor(() => { expect(cancelSpy).toHaveBeenCalledExactlyOnceWith({ kind: 'parent' }, { keepInbox: true }) })
+    releaseFirst.resolve(undefined)
+    const result = await pending
+    expect(result.isError, text(result)).toBe(false)
+    expect(text(result)).toBe(`delivered immediately (running turn interrupted) to subagent ${started.childId}`)
+
+    // The redirected prompt becomes the very next model request — no waking
+    // send needed, nothing parked behind the interrupted turn.
+    await waitNoActivation(ctx, started.childId)
+    const loaded = await ctx.sessionPersistence.load(started.childId)
+    const prompts = loaded.events.flatMap(event => event.type === 'user/message' && event.data.source.kind !== 'plugin'
+      ? event.data.content.flatMap(block => block.type === 'text' ? [block.text] : [])
+      : [])
+    expect(prompts).toEqual(['long work', 'drop that, do this instead'])
+    expect(adapter.requests).toHaveLength(2)
+  })
+
+  it('deliver "now" on a settled child cold-resumes it immediately as delivered now', async () => {
+    const { ctx, parent } = await setup([textResponse('first answer'), textResponse('second answer')])
+    const started = await ctx.subagents.startContinuable({
+      provider: 'spawn',
+      label: 'settled child',
+      request: { prompt: [{ type: 'text', text: 'child task' }], parent },
+      signal: testToolSignal,
+    })
+    await waitNoActivation(ctx, started.childId)
+
+    const result = await callTool(ctx, 'send_message', {
+      subagent_id: started.childId,
+      message: 'and now this',
+      deliver: 'now',
+    }, parent)
+
+    expect(result.isError, text(result)).toBe(false)
+    expect(text(result)).toBe(`delivered immediately (running turn interrupted) to subagent ${started.childId}`)
+    await waitNoActivation(ctx, started.childId)
+    const loaded = await ctx.sessionPersistence.load(started.childId)
+    const prompts = loaded.events.flatMap(event => event.type === 'user/message' && event.data.source.kind !== 'plugin'
+      ? event.data.content.flatMap(block => block.type === 'text' ? [block.text] : [])
+      : [])
+    expect(prompts).toEqual(['child task', 'and now this'])
+  })
+
   it('reports a delivery failure as an errored, not-delivered result', async () => {
     const { ctx, parent } = await setup([])
     const result = await callTool(ctx, 'send_message', {
@@ -219,7 +290,7 @@ describe('dsh-tool-subagent-control', () => {
   it('has the namespace-plugin export shape (no stray default)', () => {
     expect('default' in tool).toBe(false)
     expect(tool.name).toBe('tool-subagent-control')
-    expect(tool.inject).toEqual(['tools', 'subagents'])
+    expect(tool.inject).toEqual(['tools', 'subagents', 'agents'])
     expect(typeof tool.apply).toBe('function')
   })
 })

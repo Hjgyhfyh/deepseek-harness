@@ -46,30 +46,20 @@
             - img
           - textbox "模型 ID 2":
             - /placeholder: 模型 ID
-            - text: deepseek-v4-flash-vision-exp
+            - text: private-preview
           - textbox "显示名称 2":
             - /placeholder: 显示名称
-            - text: DeepSeek-V4-Flash-Vision-Exp
-          - button "容量 2":
+            - text: Private Preview
+          - button "容量 2" [expanded]:
             - img
           - button "删除模型 2":
             - img
-          - textbox "模型 ID 3":
-            - /placeholder: 模型 ID
-            - text: private-preview
-          - textbox "显示名称 3":
-            - /placeholder: 显示名称
-            - text: Private Preview
-          - button "容量 3" [expanded]:
-            - img
-          - button "删除模型 3":
-            - img
           - text: 上下文窗口
-          - textbox "上下文窗口 3":
+          - textbox "上下文窗口 2":
             - /placeholder: 1M
             - text: "131072"
           - text: 最大输出 token 数
-          - textbox "最大输出 token 数 3":
+          - textbox "最大输出 token 数 2":
             - /placeholder: 256K
             - text: 64K
           - button "添加模型":

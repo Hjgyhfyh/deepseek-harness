@@ -317,6 +317,28 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
                       update(index, 'name', event.target.value === '' ? undefined : event.target.value)
                     }}
                   />
+                  <label
+                    className={`${styles['modelFieldInline']} ${styles['capacityCell']}`}
+                    title={`${props.t('contextWindow')} — ${props.t('contextWindowPlaceholder')}`}
+                  >
+                    <span className={styles['modelFieldLabel']}>{props.t('contextWindow')}</span>
+                    <input
+                      className={`${styles['input']} ${styles['capacityInput']}`}
+                      type="text"
+                      inputMode="numeric"
+                      value={capacityText(model, index, 'contextWindow')}
+                      placeholder={props.defaultContextWindow === undefined
+                        ? props.t('contextWindowPlaceholder')
+                        : formatCapacity(props.defaultContextWindow)}
+                      aria-label={`${props.t('contextWindow')} ${String(index + 1)}`}
+                      disabled={props.disabled}
+                      onChange={(event) => {
+                        setEditing(current => new Map(current).set(`${String(index)}:contextWindow`, event.target.value))
+                        update(index, 'contextWindow', parseCapacity(event.target.value))
+                      }}
+                      onBlur={() => { settleCapacity(index, 'contextWindow') }}
+                    />
+                  </label>
                   <button
                     type="button"
                     className={styles['iconButton']}
@@ -341,7 +363,8 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
                 {expanded.has(index)
                   ? (
                     <div className={styles['modelAdvanced']}>
-                      {capacityField(model, index, 'contextWindow', props.defaultContextWindow)}
+                      {/* Context window lives on the row itself; the fold keeps
+                          only the rarely-touched output cap. */}
                       {capacityField(model, index, 'maxTokens', props.defaultMaxTokens)}
                     </div>
                   )

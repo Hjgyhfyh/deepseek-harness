@@ -48,8 +48,7 @@ PLATFORMS = load_platforms()
 
 
 def runtime_suffixes(executable_name: str) -> tuple[str, ...]:
-    suffixes = ("", "-rg")
-    return (*suffixes, "-spawn-helper") if "-macos-" in executable_name else suffixes
+    return ("", "-spawn-helper") if "-macos-" in executable_name else ("",)
 
 
 def main() -> None:

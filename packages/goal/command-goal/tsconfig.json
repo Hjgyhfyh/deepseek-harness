@@ -18,9 +18,6 @@
       "path": "../../interaction/commands"
     },
     {
-      "path": "../../llm/llm"
-    },
-    {
       "path": "../goal"
     },
     {

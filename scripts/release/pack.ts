@@ -46,7 +46,6 @@ function main(): void {
   const root = process.cwd()
   const destination = resolve(root, values.out ?? DEFAULT_OUTPUT)
   const members = family.publishOrder(family.members(root)).order
-  family.verifyBuildArtifacts(root)
   family.verifyVersions(members)
 
   rmSync(destination, { recursive: true, force: true })

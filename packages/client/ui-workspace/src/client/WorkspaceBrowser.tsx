@@ -9,7 +9,7 @@
  * menu in between; the flow and its error dialog live in WorkspacePicker
  * (same package — direct composition, no slot between them).
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
   Button, IconCloseFill14, IconPersonalizationOutline16,
@@ -20,7 +20,7 @@ import type {
 } from '@deepseek-ai/dsh-client-runtime/client'
 import type { WorkspaceBrowserProps } from './contract/slots.ts'
 import type { SessionNode, SessionOrderBy } from './tree.ts'
-import { deriveFlat, deriveGroups, deriveSearchResults, UNGROUPED_KEY } from './tree.ts'
+import { deriveFlat, deriveGroups, deriveSearchResults, pinnedRanker, UNGROUPED_KEY } from './tree.ts'
 import { ProjectRowItem, SearchResultItem, SessionNodeItem } from './rows/Rows.tsx'
 import { FLAT_SESSION_ORDER_KEY } from './stores.ts'
 import { WorkspacePickFlow } from './WorkspacePicker.tsx'
@@ -218,8 +218,6 @@ type SessionTreeProps = Pick<
   'useSessions' | 'startSession' | 'open' | 'forkSession'
   | 'insertWorkspaceBefore' | 'insertSessionBefore' | 't'
 > & {
-  /** Host account home for POSIX hover-path abbreviation. */
-  home?: string | undefined
   workspaces: readonly WorkspaceView[]
   /** Explicit persisted zero-or-five-session state by Workspace group. */
   groupExpansion: Readonly<Record<string, boolean>>
@@ -233,6 +231,14 @@ type SessionTreeProps = Pick<
   syncSessionOrderAccount: (accountKey: string, order: string[], updatedAt: Record<string, number>) => void
   /** Apply a drag to one shared order. */
   setSessionOrder: (accountKey: string, order: string[]) => void
+  /** Registry-global pinned Session ids (render bands + row glyph). */
+  pinnedSessionIds: readonly string[]
+  /** User-arranged order inside the pinned band (missing ids trail by pin recency). */
+  pinnedOrder: readonly string[]
+  /** Toggle one Session's pin. */
+  onTogglePin: (sessionId: SessionNode['id'], pinned: boolean) => void
+  /** Reorder one pinned row within the pinned band. */
+  onMovePinned: (sessionId: SessionNode['id'], anchorId: string | null) => void
   /** Registry-global archive set (hidden rows). */
   archivedSessionIds: readonly SessionNode['id'][]
   /** Open the browser-owned rename dialog for a real Workspace group. */
@@ -253,7 +259,8 @@ function SessionTree({
   onRenameRequest, onDeleteRequest, onSessionRename, onSessionArchive,
   insertWorkspaceBefore, insertSessionBefore, orderBy,
   groupExpansion, setGroupExpanded,
-  sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, home, t,
+  sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, t,
+  pinnedSessionIds, pinnedOrder, onTogglePin, onMovePinned,
 }: SessionTreeProps) {
   const list = useSessions(s => s)
   const current = list.current
@@ -326,8 +333,10 @@ function SessionTree({
       ...(sessionOrderByAccount[UNGROUPED_KEY] === undefined
         ? {}
         : { ungroupedOrder: sessionOrderByAccount[UNGROUPED_KEY] }),
+      pinnedSessionIds,
+      pinnedOrder,
     }),
-    [list, orderedWorkspaces, archivedSessionIds, expandedGroups, sessionOrderByAccount],
+    [list, orderedWorkspaces, archivedSessionIds, expandedGroups, sessionOrderByAccount, pinnedSessionIds, pinnedOrder],
   )
   const now = Date.now()
   const commitSessionDrag = (activeDrag: DragState, over: NonNullable<DragState['over']>): void => {
@@ -452,7 +461,6 @@ function SessionTree({
             >
               <ProjectRowItem
                 group={group}
-                home={home}
                 t={t}
                 onToggle={() => {
                   if (group.expanded) {
@@ -519,6 +527,11 @@ function SessionTree({
                     onRename={onSessionRename}
                     onFork={forkSession}
                     onArchive={onSessionArchive}
+                    onTogglePin={onTogglePin}
+                    onMovePinned={onMovePinned}
+                    pinnedSiblings={pinnedOrder.length > 0
+                      ? pinnedOrder
+                      : pinnedSessionIds}
                     drag={dragProps}
                     t={t}
                   />
@@ -548,7 +561,8 @@ function SessionTree({
 /** The flat "In one list" body: every session is one draggable top-level row. */
 function FlatList({
   useSessions, open, forkSession, onSessionRename, onSessionArchive, archivedSessionIds,
-  orderBy, sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, t,
+  orderBy, sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder,
+  pinnedSessionIds, pinnedOrder, onTogglePin, onMovePinned, t,
 }: Pick<
   SessionTreeProps,
   | 'useSessions'
@@ -562,12 +576,16 @@ function FlatList({
   | 'sessionUpdatedAtByAccount'
   | 'syncSessionOrderAccount'
   | 'setSessionOrder'
+  | 'pinnedSessionIds'
+  | 'pinnedOrder'
+  | 'onTogglePin'
+  | 'onMovePinned'
   | 't'
 >) {
   const list = useSessions(s => s)
   const baseRows = useMemo(
-    () => deriveFlat(list, archivedSessionIds),
-    [list, archivedSessionIds],
+    () => deriveFlat(list, archivedSessionIds, pinnedSessionIds, pinnedOrder),
+    [list, archivedSessionIds, pinnedSessionIds, pinnedOrder],
   )
   const sessionIds = useMemo(() => baseRows.map(row => row.id), [baseRows])
   const previousOrderBy = useRef(orderBy)
@@ -591,12 +609,20 @@ function FlatList({
   }, [list, orderBy, sessionOrderByAccount, sessionUpdatedAtByAccount, sessionIds, syncSessionOrderAccount])
   const rows = useMemo(() => {
     const byId = new Map(baseRows.map(row => [row.id, row]))
-    return reconciledSessionOrder(sessionIds, sessionOrderByAccount[FLAT_SESSION_ORDER_KEY])
+    const ordered = reconciledSessionOrder(sessionIds, sessionOrderByAccount[FLAT_SESSION_ORDER_KEY])
       .flatMap((id) => {
         const row = byId.get(id)
         return row === undefined ? [] : [row]
       })
-  }, [baseRows, sessionOrderByAccount, sessionIds])
+    // Presentation bands over the reconciled account order: pinned rows lead
+    // in the user's arranged order, then sessions with live work right now,
+    // then the rest as arranged.
+    const rankPinned = pinnedRanker(pinnedSessionIds, pinnedOrder)
+    const bandOf = (row: SessionNode): number =>
+      // eslint-disable-next-line no-bitwise
+      (row.pinned ? 0x100000 + rankPinned(row.id) : row.running || row.runningSubagentCount > 0 ? 0x200000 : 0x300000)
+    return [...ordered].sort((a, b) => bandOf(a) - bandOf(b))
+  }, [baseRows, sessionOrderByAccount, sessionIds, pinnedSessionIds, pinnedOrder])
   const [drag, setDrag] = useState<DragState | null>(null)
   const dropCommitted = useRef(false)
   useNativeDragAcceptance(drag !== null)
@@ -635,6 +661,9 @@ function FlatList({
               onRename={onSessionRename}
               onFork={forkSession}
               onArchive={onSessionArchive}
+              onTogglePin={onTogglePin}
+              onMovePinned={onMovePinned}
+              pinnedSiblings={pinnedOrder.length > 0 ? pinnedOrder : pinnedSessionIds}
               flat
               drag={{
                 start: () => {
@@ -761,11 +790,9 @@ export function WorkspaceBrowser({
   searchSessions,
   searchResultLimit,
   useDirectoryFlow,
-  useHostDescription,
   renderSlot,
   t,
 }: WorkspaceBrowserProps) {
-  const home = useHostDescription(description => description?.home)
   const workspaces = useWorkspaces(state => state.items)
   const workspacePhase = useWorkspaces(state => state.phase)
   const archivedSessionIds = useWorkspaces(state => state.archivedSessionIds)
@@ -777,31 +804,18 @@ export function WorkspaceBrowser({
   const groupExpansion = useStore(s => s.groupExpansion)
   const sessionOrderByAccount = useStore(s => s.sessionOrderByAccount)
   const sessionUpdatedAtByAccount = useStore(s => s.sessionUpdatedAtByAccount)
-  const currentBlankSessionId = useSessions((state) => {
-    const current = state.current
-    return current !== undefined && state.byId[current]?.blank === true ? current : undefined
-  })
-  const currentBlankAccount = currentBlankSessionId === undefined
-    ? undefined
-    : (workspaces.find(workspace => workspace.sessionIds.includes(currentBlankSessionId))
-      ?.workspaceId as string | undefined) ?? UNGROUPED_KEY
-  const promotedBlank = useRef<{ sessionId: SessionId; accountKey: string } | undefined>(undefined)
-  useEffect(() => {
-    if (currentBlankSessionId === undefined || currentBlankAccount === undefined) {
-      promotedBlank.current = undefined
-      return
-    }
-    if (promotedBlank.current?.sessionId === currentBlankSessionId
-      && promotedBlank.current.accountKey === currentBlankAccount) return
-    promotedBlank.current = { sessionId: currentBlankSessionId, accountKey: currentBlankAccount }
-    for (const accountKey of new Set([currentBlankAccount, FLAT_SESSION_ORDER_KEY])) {
-      const previous = sessionOrderByAccount[accountKey] ?? []
-      actions.setSessionOrder(accountKey, [
-        currentBlankSessionId,
-        ...previous.filter(id => id !== currentBlankSessionId),
-      ])
-    }
-  }, [actions.setSessionOrder, currentBlankAccount, currentBlankSessionId, sessionOrderByAccount])
+  const pinnedSessionIds = useStore(s => s.pinnedSessionIds)
+  const pinnedOrder = useStore(s => s.pinnedOrder)
+  const onTogglePin = useCallback(
+    (sessionId: SessionNode['id'], pinned: boolean) => { actions.setPinned(sessionId as string, pinned) },
+    [actions],
+  )
+  const onMovePinned = useCallback(
+    (sessionId: SessionNode['id'], anchorId: string | null) => {
+      actions.movePinned(sessionId as string, anchorId)
+    },
+    [actions],
+  )
   useEffect(() => {
     if (workspacePhase !== 'ready') return
     actions.retainAccountKeys([
@@ -847,13 +861,8 @@ export function WorkspaceBrowser({
     searchInput.current?.focus({ preventScroll: true })
   }, [wide, searchExpanded, searchOnExpand])
 
-  // Outside-click dismissal stays off while the rail gesture is in flight
-  // (searchOnExpand): the rail click flips the shell wide and mounts this
-  // listener during its own dispatch, then keeps bubbling to document with
-  // the now-unmounted rail button as its target — outside searchRoot, so the
-  // listener would dismiss the search that click just opened.
   useEffect(() => {
-    if (!wide || !searchExpanded || searchOnExpand) return
+    if (!wide || !searchExpanded) return
     const onClick = (event: MouseEvent): void => {
       if (!(event.target instanceof Node) || searchRoot.current?.contains(event.target) === true) return
       searchInput.current?.blur()
@@ -862,7 +871,7 @@ export function WorkspaceBrowser({
     }
     document.addEventListener('click', onClick)
     return () => { document.removeEventListener('click', onClick) }
-  }, [normalizedQuery, wide, searchExpanded, searchOnExpand])
+  }, [normalizedQuery, wide, searchExpanded])
 
   useEffect(() => {
     if (normalizedQuery === '') {
@@ -1165,6 +1174,10 @@ export function WorkspaceBrowser({
                 sessionUpdatedAtByAccount={sessionUpdatedAtByAccount}
                 syncSessionOrderAccount={actions.syncSessionOrderAccount}
                 setSessionOrder={actions.setSessionOrder}
+                pinnedSessionIds={pinnedSessionIds}
+                pinnedOrder={pinnedOrder}
+                onTogglePin={onTogglePin}
+                onMovePinned={onMovePinned}
                 t={t}
               />
             )
@@ -1187,7 +1200,10 @@ export function WorkspaceBrowser({
                 insertWorkspaceBefore={insertWorkspaceBefore}
                 insertSessionBefore={insertSessionBefore}
                 orderBy={orderBy}
-                home={home}
+                pinnedSessionIds={pinnedSessionIds}
+                pinnedOrder={pinnedOrder}
+                onTogglePin={onTogglePin}
+                onMovePinned={onMovePinned}
                 t={t}
                 onRenameRequest={(workspaceId, currentTitle) => {
                   setRenameTarget({ workspaceId, currentTitle })

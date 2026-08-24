@@ -18,7 +18,6 @@ export type ConversationSessionHeaderProps = ConversationSessionHeaderSlotProps
 interface Breadcrumb {
   readonly id: SessionId
   readonly displayTitle: string
-  readonly subagent: boolean
 }
 
 const DEFAULT_VIEW_ID = 'chat'
@@ -39,11 +38,7 @@ function deriveAncestry(list: SessionListState, id: SessionId): readonly Breadcr
     seen.add(cursor)
     const summary: SessionSummary | undefined = list.byId[cursor]
     if (summary === undefined) break
-    chain.unshift({
-      id: summary.id,
-      displayTitle: summary.displayTitle,
-      subagent: summary.origin === 'subagent',
-    })
+    chain.unshift({ id: summary.id, displayTitle: summary.displayTitle })
     if (summary.origin !== 'subagent') break
     cursor = summary.parentId
   }
@@ -88,47 +83,17 @@ export function ConversationSessionHeader({
               <nav className={css.crumbs} aria-label={t('session.hierarchy')}>
                 {ancestry.map((summary, index) => {
                   const last = index === ancestry.length - 1
-                  const title = (
-                    <button
-                      type="button"
-                      className={clsx(
-                        css.crumb,
-                        summary.subagent && css.crumbSubagent,
-                        last && css.crumbCurrent,
-                      )}
-                      disabled={last}
-                      onClick={() => { open(summary.id) }}
-                    >
-                      {summary.displayTitle}
-                    </button>
-                  )
-                  const lineage = last || summary.subagent
-                  const lineageOwner = {
-                    lineageSessionId: summary.id,
-                    displayTitle: summary.displayTitle,
-                    ...last ? {} : { openTitle: () => { open(summary.id) } },
-                  }
                   return (
                     <span key={summary.id} className={css.crumbSeg}>
                       {index > 0 && <span className={css.crumbSep}>/</span>}
-                      {lineage
-                        ? summary.subagent
-                          ? renderSlot(
-                            'conversation.session.header.lineage',
-                            lineageOwner,
-                            { fallback: title },
-                          )
-                          : (
-                            <>
-                              {title}
-                              {renderSlot(
-                                'conversation.session.header.lineage',
-                                lineageOwner,
-                                { fallback: null },
-                              )}
-                            </>
-                          )
-                        : title}
+                      <button
+                        type="button"
+                        className={clsx(css.crumb, last && css.crumbCurrent)}
+                        disabled={last}
+                        onClick={() => { open(summary.id) }}
+                      >
+                        {summary.displayTitle}
+                      </button>
                     </span>
                   )
                 })}

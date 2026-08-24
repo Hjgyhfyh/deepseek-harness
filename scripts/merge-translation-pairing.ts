@@ -4,7 +4,6 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import {
   mergeTranslationPairingRecords,
-  repositoryTranslationPairSource,
   resolveTranslationPairingConflicts,
 } from './translation-pairing-merge.ts'
 
@@ -17,7 +16,7 @@ try {
     const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim()
     if (args[0] === '--resolve') {
       if (args.length !== 1) throw new Error('--resolve takes no paths; it inspects the unmerged index')
-      const resolved = resolveTranslationPairingConflicts(root, repositoryTranslationPairSource(root))
+      const resolved = resolveTranslationPairingConflicts(root)
       if (resolved.length === 0) {
         console.log('merge-translation-pairing: no unresolved pairing records')
       } else {
@@ -37,7 +36,6 @@ try {
         readFileSync(ancestorPath, 'utf8'),
         readFileSync(currentPath, 'utf8'),
         readFileSync(otherPath, 'utf8'),
-        repositoryTranslationPairSource(root),
       )
       writeFileSync(currentPath, result.record)
     }

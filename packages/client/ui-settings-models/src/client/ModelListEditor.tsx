@@ -290,18 +290,6 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     })
   }
 
-  const activeCandidates = candidates ?? []
-  const allCandidatesPicked = activeCandidates.length > 0
-    && activeCandidates.every(candidate => picked.has(candidate.id))
-
-  const toggleAllCandidates = (): void => {
-    setPicked((current) => {
-      return activeCandidates.every(candidate => current.has(candidate.id))
-        ? new Set()
-        : new Set(activeCandidates.map(candidate => candidate.id))
-    })
-  }
-
   // A route the adapter already describes answers without an endpoint; only a
   // draft with neither has nothing to ask about.
   const askable = probe.provider !== undefined || (probe.baseURL !== undefined && probe.baseURL.length > 0)
@@ -364,6 +352,22 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
               disabled={disabled}
               onChange={(event) => { patch(index, { name: event.target.value === '' ? undefined : event.target.value }) }}
             />
+            <label
+              className={`${styles['modelFieldInline']} ${styles['capacityCell']}`}
+              title={`${t('contextWindow')} — ${t('contextWindowPlaceholder')}`}
+            >
+              <span className={styles['modelFieldLabel']}>{t('contextWindow')}</span>
+              <input
+                className={`${styles['input']} ${styles['capacityInput']}`}
+                type="text"
+                inputMode="numeric"
+                value={capacityText(model, index, 'contextWindow')}
+                placeholder={CAPACITY_HINT.contextWindow}
+                aria-label={`${t('contextWindow')} ${index + 1}`}
+                disabled={disabled}
+                onChange={(event) => { editCapacity(index, 'contextWindow', event.target.value) }}
+              />
+            </label>
             <button
               type="button"
               className={styles['iconButton']}
@@ -403,19 +407,8 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
           {expanded.has(index)
             ? (
               <div className={styles['modelAdvanced']}>
-                <label className={styles['modelField']}>
-                  <span className={styles['modelFieldLabel']}>{t('modelContextWindow')}</span>
-                  <input
-                    className={styles['input']}
-                    type="text"
-                    inputMode="numeric"
-                    value={capacityText(model, index, 'contextWindow')}
-                    placeholder={CAPACITY_HINT.contextWindow}
-                    aria-label={`${t('modelContextWindow')} ${index + 1}`}
-                    disabled={disabled}
-                    onChange={(event) => { editCapacity(index, 'contextWindow', event.target.value) }}
-                  />
-                </label>
+                {/* Context window lives on the row itself; the fold keeps only
+                    the rarely-touched output cap. */}
                 <label className={styles['modelField']}>
                   <span className={styles['modelFieldLabel']}>{t('modelMaxTokens')}</span>
                   <input
@@ -457,11 +450,6 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
           </>
         )}
       >
-        <div className={styles['candidateActions']}>
-          <Button variant="ghost" size="sm" onClick={toggleAllCandidates}>
-            {t(allCandidatesPicked ? 'fetchDeselectAll' : 'fetchSelectAll')}
-          </Button>
-        </div>
         <ul className={styles['candidateList']}>
           {(candidates ?? []).map(candidate => (
             <li key={candidate.id} className={styles['candidate']}>

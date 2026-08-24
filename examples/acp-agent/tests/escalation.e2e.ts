@@ -13,7 +13,6 @@ import {
   type AgentUnderTest,
   type LaunchedAcpTestAgent,
 } from '@deepseek-ai/dsh-acp-snapshot'
-import { bwrapProfileArgs } from '@deepseek-ai/dsh-sandbox-local/src/profiles.ts'
 import { cleanupAcpExampleTest } from './cleanup.ts'
 
 /**
@@ -43,7 +42,7 @@ const AGENT: AgentUnderTest = {
 // bwrap on Linux, Seatbelt's sandbox-exec on macOS. Without one the strict
 // attempt would fail closed (SANDBOX_UNAVAILABLE) instead of producing the
 // denial this flow starts from.
-const hasBwrap = spawnSync('bwrap', [...bwrapProfileArgs({ mode: 'read-only', workspaceRoot: '/' }), '--', 'true'], {
+const hasBwrap = spawnSync('bwrap', ['--ro-bind', '/', '/', '--dev', '/dev', '--proc', '/proc', '--die-with-parent', '--', 'true'], {
   timeout: 5_000,
   stdio: 'ignore',
 }).status === 0

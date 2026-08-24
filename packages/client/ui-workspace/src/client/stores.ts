@@ -25,6 +25,10 @@ type WorkspaceViewState = {
   sessionOrderByAccount: Record<string, string[]>
   /** Last observed update timestamps per order account for one-time promotion events. */
   sessionUpdatedAtByAccount: Record<string, Record<string, number>>
+  /** Registry-global pinned Session ids; pinned rows lead their section (browser-local preference). */
+  pinnedSessionIds: string[]
+  /** User-arranged order inside the pinned band (missing ids trail by pin recency). */
+  pinnedOrder: string[]
 }
 
 /**
@@ -43,6 +47,13 @@ type WorkspaceViewActions = {
     updatedAt: Record<string, number>,
   ) => void
   setSessionOrder: (draft: WorkspaceViewState, accountKey: string, order: string[]) => void
+  /** Pin or unpin a Session (registry-global, order-preserving membership). */
+  setPinned: (draft: WorkspaceViewState, sessionId: string, pinned: boolean) => void
+  /**
+   * Move one pinned Session to sit just before another pinned anchor within
+   * the pinned band (`anchor === null` moves it to the very top).
+   */
+  movePinned: (draft: WorkspaceViewState, sessionId: string, anchorId: string | null) => void
 }
 
 /**
@@ -57,8 +68,13 @@ export function createWorkspaceViewStore(): EngineStoreHandle<WorkspaceViewState
       groupExpansion: {},
       sessionOrderByAccount: {},
       sessionUpdatedAtByAccount: {},
+      pinnedSessionIds: [],
+      pinnedOrder: [],
     }),
-    persist: 'dsh.workspace.view.v5',
+    // v7: adds pinnedOrder (manual ordering inside the pinned band);
+    // rehydration replaces the draft wholesale, so the v6 payload would
+    // leave the field undefined.
+    persist: 'dsh.workspace.view.v7',
     actions: {
       setGroupBy: (d, mode: SessionGroupBy) => { d.groupBy = mode },
       setOrderBy: (d, mode: SessionOrderBy) => { d.orderBy = mode },
@@ -74,6 +90,7 @@ export function createWorkspaceViewStore(): EngineStoreHandle<WorkspaceViewState
         d.sessionUpdatedAtByAccount = Object.fromEntries(
           Object.entries(d.sessionUpdatedAtByAccount).filter(([key]) => retained.has(key)),
         )
+        // Pins are registry-global like the archive set: never pruned here.
       },
       syncSessionOrderAccount: (d, accountKey: string, order: string[], updatedAt: Record<string, number>) => {
         d.sessionOrderByAccount[accountKey] = order
@@ -81,6 +98,38 @@ export function createWorkspaceViewStore(): EngineStoreHandle<WorkspaceViewState
       },
       setSessionOrder: (d, accountKey: string, order: string[]) => {
         d.sessionOrderByAccount[accountKey] = order
+      },
+      setPinned: (d, sessionId: string, pinned: boolean) => {
+        const set = new Set(d.pinnedSessionIds)
+        if (pinned) {
+          set.add(sessionId)
+          // A fresh pin trails the arranged band; an existing pin stays put.
+          d.pinnedOrder = d.pinnedOrder.filter(id => id !== sessionId)
+        } else {
+          set.delete(sessionId)
+          d.pinnedOrder = d.pinnedOrder.filter(id => id !== sessionId)
+        }
+        d.pinnedSessionIds = [...set]
+      },
+      movePinned: (d, sessionId: string, anchorId: string | null) => {
+        if (!d.pinnedSessionIds.includes(sessionId)) return
+        if (anchorId !== null && !d.pinnedSessionIds.includes(anchorId)) return
+        // The band's current visual order: arranged ids first (stored
+        // sequence), then unarranged ids by pin recency; the dragged row is
+        // lifted out of both.
+        const arranged = d.pinnedOrder.filter(id =>
+          id !== sessionId && d.pinnedSessionIds.includes(id))
+        const arrangedSeen = new Set(arranged)
+        const trailing = d.pinnedSessionIds.filter(id => id !== sessionId && !arrangedSeen.has(id))
+        const withoutDragged = [...arranged, ...trailing]
+        if (anchorId === null) {
+          d.pinnedOrder = [sessionId, ...withoutDragged]
+          return
+        }
+        const at = Math.max(0, withoutDragged.indexOf(anchorId))
+        const next = [...withoutDragged]
+        next.splice(at, 0, sessionId)
+        d.pinnedOrder = next
       },
     },
   })

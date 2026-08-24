@@ -26,7 +26,7 @@
       - img
     - button "Remove queued message":
       - img
-    - button "Steer queued message":
+    - button "Send now":
       - img
   - listitem:
     - textbox "Edit queued message": Edited queue item
@@ -35,7 +35,7 @@
     - tooltip "Save queued message"
     - button "Cancel editing":
       - img
-- textbox "Cmd/Ctrl+Enter steers all queued messages"
+- textbox "Cmd/Ctrl+Enter sends all queued messages now"
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write

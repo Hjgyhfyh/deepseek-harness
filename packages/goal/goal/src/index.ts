@@ -204,10 +204,10 @@ export class GoalService extends TypertRemoteService {
     ctx.inject(['sessionProjections'], (projectionCtx) => {
       projectionCtx.sessionProjections.register<'goal', GoalProjection | null>({
         key: 'goal',
-        stateSchema: goalProjectionSchema,
+        schema: goalProjectionSchema,
         init: () => null,
         apply: applyGoalProjection,
-        wire: { viewSchema: goalProjectionSchema, view: state => state },
+        view: state => state,
         stateVersion: 4,
       })
     })

@@ -12,44 +12,26 @@ import { foldSubagentDescriptor } from './descriptor.ts'
 import type { SubagentDescriptorData } from './descriptor.ts'
 import type { SubagentIdentityProjection, SubagentTimingProjection } from './projection-types.ts'
 
-/** Fold state for a subagent's latest timing snapshot. */
-export interface TimingState {
+interface TimingState {
   /** Milliseconds accumulated across completed post-descriptor turns. */
   settledMs: number
   /** Current open interval kept paired inside the fold. */
-  active?: { since: number; through: number } | undefined
+  active?: { since: number; through: number }
   /** Latest pre-descriptor turn start, promoted when the child's own descriptor arrives. */
-  pendingTurnStart?: number | undefined
+  pendingTurnStart?: number
   /** Whether the fold has crossed a descriptor in this logical log. */
   descriptorSeen: boolean
 }
 
-const activeIntervalSchema = z.object({
-  since: z.number().int().nonnegative(),
-  through: z.number().int().nonnegative(),
-}).strict()
-
-const projectionSchema: z.ZodType<SubagentTimingProjection> = z.object({
+// Zod's optional output includes explicit `undefined`; with
+// exactOptionalPropertyTypes the public interface permits omission only.
+const projectionSchema = z.object({
   settledMs: z.number().int().nonnegative(),
-  active: activeIntervalSchema.optional(),
-}).strict().transform(({ settledMs, active }) => ({
-  settledMs,
-  ...active === undefined ? {} : { active },
-}))
-
-const timingStateSchema: z.ZodType<TimingState> = z.object({
-  settledMs: z.number().int().nonnegative(),
-  active: activeIntervalSchema.optional(),
-  pendingTurnStart: z.number().int().nonnegative().optional(),
-  descriptorSeen: z.boolean(),
-}).strict()
-
-declare module '@deepseek-ai/dsh-session-projection/types' {
-  interface SessionProjectionStateMap {
-    subagentTiming: TimingState
-    subagent: IdentityState
-  }
-}
+  active: z.object({
+    since: z.number().int().nonnegative(),
+    through: z.number().int().nonnegative(),
+  }).strict().optional(),
+}).strict() as unknown as z.ZodType<SubagentTimingProjection>
 
 /**
  * Fold turn boundaries around the child's own durable descriptor.
@@ -59,9 +41,10 @@ declare module '@deepseek-ai/dsh-session-projection/types' {
  * admits only a child with exactly one descriptor in its own suffix, making
  * the final reset the child's authoritative timing origin.
  */
-export const subagentTimingProjectionDefinition = {
+export const subagentTimingProjectionDefinition:
+ProjectionDefinition<'subagentTiming', TimingState> = {
   key: 'subagentTiming',
-  stateSchema: timingStateSchema,
+  schema: projectionSchema,
   init: () => ({ descriptorSeen: false, settledMs: 0 }),
   apply: (state, event) => {
     if (event.type === 'turn/start') {
@@ -95,19 +78,16 @@ export const subagentTimingProjectionDefinition = {
     if (state.active === undefined) return state
     return { ...state, active: { ...state.active, through: event.time } }
   },
-  wire: {
-    viewSchema: projectionSchema,
-    view: state => ({
-      settledMs: state.settledMs,
-      ...(state.active === undefined ? {} : { active: state.active }),
-    }),
-  },
+  view: state => ({
+    settledMs: state.settledMs,
+    ...(state.active === undefined ? {} : { active: state.active }),
+  }),
   stateVersion: 2,
-} satisfies ProjectionDefinition<'subagentTiming', TimingState>
+}
 
 interface IdentityState {
   /** Identity from the last valid descriptor; absent before one, and after an invalid one. */
-  identity?: SubagentIdentityProjection | undefined
+  identity?: SubagentIdentityProjection
 }
 
 // The cast bridges only the optional-label arm: Zod's optional output
@@ -115,7 +95,7 @@ interface IdentityState {
 // from the public interface. The no-value state itself is the serializable
 // `null` arm — never `undefined` — so every registry read and push frame
 // survives JSON.stringify losslessly.
-const identityValueSchema = z.discriminatedUnion('mode', [
+const identitySchema = z.discriminatedUnion('mode', [
   z.object({
     mode: z.literal('one-shot'),
     label: z.string().optional(),
@@ -126,13 +106,7 @@ const identityValueSchema = z.discriminatedUnion('mode', [
     label: z.string(),
     seq: z.number().int().nonnegative(),
   }).strict(),
-]) as unknown as z.ZodType<SubagentIdentityProjection>
-
-const identitySchema = identityValueSchema.nullable()
-
-const identityStateSchema: z.ZodType<IdentityState> = z.object({
-  identity: identityValueSchema.optional(),
-}).strict()
+]).nullable() as unknown as z.ZodType<SubagentIdentityProjection | null>
 
 /** Interpret one `subagent/descriptor` event's identity; no value when the payload cannot be trusted. */
 function descriptorIdentity(event: SessionEvent): SubagentIdentityProjection | undefined {
@@ -165,17 +139,18 @@ function descriptorIdentity(event: SessionEvent): SubagentIdentityProjection | u
  * holding the earlier identity replaces it instead of keeping it stale;
  * `null` ⟺ no valid descriptor, with the causes deliberately undistinguished.
  */
-export const subagentIdentityProjectionDefinition = {
+export const subagentIdentityProjectionDefinition:
+ProjectionDefinition<'subagent', IdentityState> = {
   key: 'subagent',
-  stateSchema: identityStateSchema,
+  schema: identitySchema,
   init: () => ({}),
   apply: (state, event) => {
     if (event.type !== 'subagent/descriptor') return state
     const identity = descriptorIdentity(event)
     return identity === undefined ? {} : { identity }
   },
-  wire: { viewSchema: identitySchema, view: state => state.identity ?? null },
+  view: state => state.identity ?? null,
   // Bumped when the identity gained its `seq` field: an older checkpoint row
   // would replay into a value the schema rejects, so it must refold instead.
   stateVersion: 2,
-} satisfies ProjectionDefinition<'subagent', IdentityState>
+}
