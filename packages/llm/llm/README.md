@@ -78,6 +78,8 @@ Every adapter that puts a credential in an HTTP header judges it the same way be
 - `QUOTA_EXCEEDED_CODE` — the non-transient provider-neutral code for exhausted account quota, balance, credits, budget, or usage limits. `isQuotaExceededError(detail)` keeps those failures distinct from request-rate limits.
 - `EMPTY_RESPONSE_CODE` — the provider-neutral code both adapters use for a degenerate provider completion: a terminal `stop` that carried no content blocks at all. Classified as an error finish (not a successful empty message) because the attempt produced nothing durable; `dsh-llm-retry` retries it by default.
 - `INVALID_CREDENTIAL_CODE` — the provider-neutral code for a credential that was supplied but cannot be used: malformed rather than absent, so the fix is to correct the stored value rather than supply one — the distinction from `MISSING_CREDENTIAL`. Deliberately excluded from the default retryable set, since a malformed credential fails identically on every attempt. `assertUsableApiKey(raw, pkg, ref)` throws `LlmError` with this code, the one shared diagnosis every adapter uses for an unusable stored credential.
+- `MISSING_CREDENTIAL_CODE` — the provider-neutral code for an absent credential: the route named a provider whose key is not configured, or a gateway reported that no credential is active for that provider. Distinct from `INVALID_CREDENTIAL`: the fix is to supply a key. Deliberately excluded from the default retryable set.
+- `parseProviderRetryAfterMs(detail)` — reads a positive delay from flattened provider text such as `Try again in 60 seconds` when no HTTP `Retry-After` header survived.
 
 ### Real adapters
 

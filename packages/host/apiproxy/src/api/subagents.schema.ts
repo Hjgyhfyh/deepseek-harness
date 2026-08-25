@@ -68,6 +68,7 @@ export const subagentPromptRequestSchema = z.object({
   mode: z.literal('continuable'),
   content: z.array(contentBlockSchema),
   clientTimeZone: z.string().optional(),
+  continuation: z.literal(true).optional(),
 }) as unknown as z.ZodType<RequestPayload<'subagent.prompt'>>
 
 /** subagent.interrupt request payload. */

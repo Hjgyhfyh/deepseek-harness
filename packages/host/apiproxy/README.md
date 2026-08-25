@@ -36,7 +36,7 @@ Session titles ride the generic projection pair like every other domain — the 
 
 Session model selection is a session-domain contract. `session.models` returns the current `ModelSelection` separately from provider-grouped advisory models, exact-model reasoning metadata, and provider-local lookup failures. The selection may be absent from the groups and is never injected as a synthetic row; clients can prompt for another selection without turning the directory into a routing whitelist. `session.selectModel` validates the optional adapter-owned reasoning effort and assigns the complete selection for the next prompt assembly. Catalog membership is not validation: an adapter may resolve an unlisted model, while an unavailable provider or unsupported effort returns `model-unavailable`. `session.models` additionally reports `routable`: whether an adapter currently serves the selected provider. This is deliberately not derivable from the groups because an adapter may serve an unadvertised model. `session.prompt` refuses on the same fact with `model-unavailable` before opening a turn; a disabled composer is a client affordance, and the method remains callable.
 
-`session.prompt` and `subagent.prompt` accept optional request-local `clientTimeZone` provenance. When present, the Host validates and canonicalizes `UTC` or an IANA Area/Location before Agent entry, rejects invalid input with `invalid-time-zone`, and records the canonical value on that exact `user-rpc` message beside its `rpcId`. The value is not Session, connection, create, resume, or fork state; non-browser callers may omit it.
+`session.prompt` and `subagent.prompt` accept optional request-local `clientTimeZone` provenance. When present, the Host validates and canonicalizes `UTC` or an IANA Area/Location before Agent entry, rejects invalid input with `invalid-time-zone`, and records the canonical value on that exact `user-rpc` message beside its `rpcId`. The value is not Session, connection, create, resume, or fork state; non-browser callers may omit it. Optional `continuation: true` ignores client `content` and `followup()`s a plugin-sourced notice whose model-facing text this package owns; the Web Continue control sends that flag while the agent is idle.
 
 Pending queued input is a live control-plane contract, not conversation history. The gateway derives the complete `next-turn` queue from durable `agent/inbox/spliced` mutations and broadcasts authoritative `session/queue` snapshots after each change and on reconnect; pending `next-step` steering stays outside this Web projection. Within `next-step`, user-origin messages carry the `steering` placement while injected context (approval notices, task completion, attached snapshots) carries `context` and is not surfaced until claimed. The message-local `agent/inbox/inserted`, `claimed`, and `discarded` notifications remain available to lifecycle observers but do not build the queue view. `session.updateQueue` addresses one `MessageId`; edit and remove mutate the attached Agent through `Inbox.splice()`. A claim's pure deletion splice wins races before pre-step admission, so a later operation returns `queue-item-not-found`. `session.cancel` aborts only the active turn and preserves pending inbox work; after cancellation reaches quiescence and the closing turn flushes, AgentLoop claims the next waking message in FIFO order, and the browser never resends or promotes it. Queue operations never resume a cold session, and the client never infers retirement from turn or status events.
 
@@ -66,11 +66,25 @@ The `settings.*`, `credentials.*`, and `llm.*` domains are the configuration-pag
 
 ## Model Experience
 
-None, as the package defines the client↔host wire contract and carriers; nothing here reaches a model request.
+### Continue notice
+
+#### What the model sees
+
+When `session.prompt` or `subagent.prompt` carries `continuation: true`, the Host admits a plugin-sourced user-role notice. Client `content` is ignored. The collapsed-row summary is `Continue`.
+
+##### Continuation prompt
+
+```markdown
+Continue from where the previous reply stopped. Resume unfinished work; do not restart completed steps or repeat already delivered output.
+```
+
+#### Token effect
+
+The notice is one additional user message on the next request.
 
 #### KV Cache effect
 
-None; this package neither assembles nor sends a provider request.
+The prefix through the prior transcript is unchanged; the notice is a new suffix.
 
 ## Known Limitations and Deferred Work
 

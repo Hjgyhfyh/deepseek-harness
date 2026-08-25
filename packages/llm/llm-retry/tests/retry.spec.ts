@@ -386,7 +386,7 @@ describe('provider-routed retry policy', () => {
     const rejected = new ScriptedAdapter([
       new LlmError('wait too long', 'RATE_LIMIT', { providerRetryAfterMs: 10_001 }),
     ])
-    ;({ ctx: context } = await harness(rejected))
+    ;({ ctx: context } = await harness(rejected, { mock: normalConfig() }))
     const rejectedAgent = context.agentLoop.create(SessionId('retry-after-rejected'), { provider: 'mock', model: 'mock' })
     const rejectedIdle = waitForIdle(context, rejectedAgent)
     rejectedAgent.followup(createUserMessage({ content: [{ type: 'text', text: 'go' }], source: { kind: 'user' } }))

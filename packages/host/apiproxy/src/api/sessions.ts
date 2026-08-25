@@ -341,14 +341,21 @@ export interface SessionsApi {
    * Sends text and temporary image bytes to an ordinary session Agent after durable host admission.
    * Browser callers attach their current IANA zone;
    * the Host validates, canonicalizes, and records it on that exact user message. Omission remains
-   * valid for non-browser callers. Session-backed subagents reject with `agent-busy` and use
-   * `subagent.prompt`.
+   * valid for non-browser callers. Optional `continuation: true` admits a plugin-sourced notice
+   * that asks the model to resume, ignores `content`, and always `followup()`s. Session-backed
+   * subagents reject with `agent-busy` and use `subagent.prompt`.
    */
   prompt(request: RpcRequest<{
     sessionId: SessionId
     mode: 'queue' | 'steer'
     content: PromptContentPart[]
     clientTimeZone?: string
+    /**
+     * Admit the Host-owned continuation notice instead of `content`.
+     * The Host ignores client content and always `followup()`s; the Web
+     * Continue control sends this while the agent is idle.
+     */
+    continuation?: true
   }>):
   Promise<RpcResponse<{ accepted: true; command?: { kind: 'success'; text?: string } }>>
 

@@ -66,6 +66,8 @@ interface BenchOptions {
   }
   draft?: string
   running?: boolean
+  composerPhase?: ConversationSnapshot['composerPhase']
+  continueAgent?: () => void
   subagent?: Exclude<ConversationSnapshot['subagent'], null>
   disabled?: boolean
   inert?: boolean
@@ -103,8 +105,10 @@ function row(id: string): ConversationSnapshot['queue'][number] {
 function bench(over?: BenchOptions) {
   const sink = vi.fn()
   const lex = over?.lexicon
+  const continueAgent = over?.continueAgent ?? vi.fn()
   const session = createSnapshotStore<ConversationSnapshot>(snapshotOf({
     running: over?.running ?? false,
+    composerPhase: over?.composerPhase ?? 'active',
     subagent: over?.subagent ?? null,
     removed: over?.disabled ?? false,
     promptError: over?.promptError ?? null,
@@ -176,6 +180,7 @@ function bench(over?: BenchOptions) {
     useLexicon: bindSnapshotSelector(shell.lexicon),
     useMenuLauncher: bindSnapshotSelector(menuLauncher),
     stop,
+    continueAgent,
     command: over?.command ?? (() => Promise.resolve(true)),
     // Mirrors the real lookup chain (conversation namespace, then common).
     t: over?.t ?? makeTranslate(zh, commonZh),
@@ -198,7 +203,7 @@ function bench(over?: BenchOptions) {
   )!
   const interruptButton = view.container.querySelector<HTMLButtonElement>('button[aria-label="停止生成"]')
   return {
-    view, textarea, button, interruptButton, props, sink, shell, wiring: shell, session, stop, removeImage, slotCalls,
+    view, textarea, button, interruptButton, props, sink, shell, wiring: shell, session, stop, continueAgent, removeImage, slotCalls,
     menuLauncher,
     steerQueue: over?.steerQueue,
   }
@@ -620,6 +625,26 @@ describe('Enter semantics', () => {
 })
 
 describe('running and lock semantics', () => {
+  it('idle Continue admits the Host resume notice without sending the draft', () => {
+    const continueAgent = vi.fn()
+    const { view, sink } = bench({ draft: '未发送草稿', continueAgent })
+    const button = view.getByRole('button', { name: '继续' }) as HTMLButtonElement
+    expect(button.disabled).toBe(false)
+    fireEvent.click(button)
+    expect(continueAgent).toHaveBeenCalledTimes(1)
+    expect(sink).not.toHaveBeenCalled()
+  })
+
+  it('hides Continue while the agent is running', () => {
+    const { view } = bench({ running: true })
+    expect(view.queryByRole('button', { name: '继续' })).toBeNull()
+  })
+
+  it('hides Continue on a blank session', () => {
+    const { view } = bench({ composerPhase: 'blank' })
+    expect(view.queryByRole('button', { name: '继续' })).toBeNull()
+  })
+
   it('running keeps the input free (typing + Enter queue) while the primary turns stop', () => {
     const { textarea, button, stop, sink } = bench({ running: true, draft: '排队消息' })
     expect(textarea.disabled).toBe(false)

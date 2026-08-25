@@ -239,6 +239,19 @@
   color: var(--dsw-alias-label-secondary);
 }
 
+.continue {
+  display: inline-block;
+  margin: 6px 0 0 18px;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
 .turnErrorCode {
   color: var(--dsw-alias-label-tertiary);
   font: var(--dsw-font-markdown-code-block-small);

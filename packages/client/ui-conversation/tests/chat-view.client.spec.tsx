@@ -288,6 +288,7 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
     inspectCall,
     chatScroll,
     forkAt,
+    continueAgent: vi.fn(),
     // Absent-service default; mention tests override with a real resolver.
     fileMentions: () => undefined,
     // Mirrors the real lookup chain (conversation namespace, then common).
@@ -589,6 +590,10 @@ describe('ChatView', () => {
       '本轮运行失败API key is invalidAUTH',
       '本轮运行失败plugin exploded',
     ])
+    const continues = view.getAllByRole('button', { name: '继续' })
+    expect(continues).toHaveLength(2)
+    fireEvent.click(continues[0]!)
+    expect(h.props.continueAgent).toHaveBeenCalledTimes(1)
   })
 
   it('renders the max-tokens notice with localized guidance, distinct from turn errors', () => {
@@ -596,9 +601,17 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     const statuses = view.getAllByRole('status')
     expect(statuses.map(status => status.textContent)).toEqual([
-      '已达到输出 token 上限回答被截断，已有输出保留在对话中。发送“继续”可让模型接着输出。',
+      '已达到输出 token 上限回答被截断，已有输出保留在对话中。点击「继续」可让模型接着输出。',
     ])
     expect(view.queryByText('本轮运行失败')).toBeNull()
+    fireEvent.click(view.getByRole('button', { name: '继续' }))
+    expect(h.props.continueAgent).toHaveBeenCalledTimes(1)
+  })
+
+  it('omits Continue on a running turn-error row', () => {
+    const h = makeHarness({ nodes: [user(1, 'try'), turnError(2, 'AUTH')], running: true })
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.queryByRole('button', { name: '继续' })).toBeNull()
   })
 
   it('hands the trajectory callback to the Tool seat', () => {

@@ -10,7 +10,7 @@ agent loop 已把 `max-tokens` 记录为独立的 `turn/end` 原因，但没有�
 
 ## Decision
 
-新增 `turn-max-tokens` 会话节点 Definition，匹配 `reason.kind === 'max-tokens'` 的 `turn/end`，在该轮位置生成一条持久聊天行：warning 状态的 StateDot、本地化标题，以及说明已截断输出会保留、发送“继续”可在新一轮接着输出的指引。节点只从持久会话事件推导，因此刷新、恢复和历史回放会重建出完全一致的结果。提示不显示任何 token 数字：事件本身不携带数量，提示也不得伪造提供方未报告的预算数据。
+新增 `turn-max-tokens` 会话节点 Definition，匹配 `reason.kind === 'max-tokens'` 的 `turn/end`，在该轮位置生成一条持久聊天行：warning 状态的 StateDot、本地化标题、说明已截断输出会保留的指引，以及——在 agent 空闲时——与编辑器相同的 Continue 控件。点击 Continue 会准入 [流空闲重试与空闲 Continue](2026-08-24-stream-idle-retry-and-continue.md) 所记录的 Host 续跑通知。节点只从持久会话事件推导，因此刷新、恢复和历史回放会重建出完全一致的结果。提示不显示任何 token 数字：事件本身不携带数量，提示也不得伪造提供方未报告的预算数据。
 
 渲染器与其他聊天行一样注册在按 kind 分发的 `conversation.chat.node` 槽位下，legacy chat-snapshot 投影也包含该节点。fixture 历史新增了一个 max-tokens 样本轮（72，图片轮和 todo 轮顺移为 73、74），并有一条 assembled keyless snapshot 钉住圆点状态、标题和指引文案，把 max-tokens 路由回错误样式或再次静默的回归都会改动 golden。
 
@@ -20,7 +20,7 @@ agent loop 已把 `max-tokens` 记录为独立的 `turn/end` 原因，但没有�
 
 **用 turn-tail 标记代替独立聊天行** — 否决：turn-tail 渲染的是完成轮次的收尾信息，其操作会在后续轮次折叠，而截断提示必须停留在被截断的那一轮，并且在历史中无需交互即可看到。
 
-**在提示上放继续或重试按钮** — 暂缓：恢复输出的语义尚未确定（新开一轮还是同轮续写、旧输出保留规则），issue #1522 明确把它排除在范围外；指引文字已给出安全的下一步，不必先固定一个操作契约。
+**在提示上放继续或重试按钮** — Continue 现已作为 Host 拥有的续跑通知交付；本说明仍然只拥有 `turn-max-tokens` 行。同轮拼接仍然否决：loop 已经关闭被截断的那一轮。
 
 ## Consequences
 

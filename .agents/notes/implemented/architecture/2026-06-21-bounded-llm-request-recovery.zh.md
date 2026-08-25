@@ -54,7 +54,7 @@ agent loop（智能体循环）会将终止 finish 的 `LlmFailure` 传给 `agen
 
 `agent/request-error` waterfall 携带当前 `LlmFailure`、在连续恢复序列中授权重试轮次的不可变先前失败列表，以及提供服务的注册项所携带的不可变重试策略。循环只传递而不解释该策略；它拥有连续失败历史，并在模型请求成功后清除。`dsh-llm-retry` 的 normal 策略统计由同一项确切提供方策略安排的持久重试记录，`dsh-compaction-basic` 则维护自己的上下文溢出预算。因此，暂时性失败与上下文溢出交替出现时，会各自独立消耗其有限预算；最大请求数等于 1 加上所有已加载有限预算之和。
 
-当前配置形状由[提供方策略决策](../feature/2026-07-24-provider-retry-policies.md)规定。提供方适配器会注册嵌套的 `retryPolicy`；省略时使用 normal 默认值：两次暂时性重试、500 毫秒初始延迟、10 秒延迟上限、10% 抖动，以及上述五个暂时性 code。计数与延迟边界参考了所调查实现中较保守的一端：[OpenCode 使用两次请求重试，延迟边界为 500 毫秒／10 秒](https://github.com/anomalyco/opencode/blob/9976269ab1accfc9f9dc98a4a688c516934de422/%70ackages/llm/src/route/executor.ts#L36-L39)；[Pi 将三次 agent 级重试与提供方重试分开，且提供方重试默认为零](https://github.com/earendil-works/pi/blob/3da591ab74ab9ab407e72ed882600b2c851fae21/%70ackages/coding-agent/docs/settings.md#L139-L147)；[Codex 使用有限请求／流预算以及五分钟空闲超时](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/model-provider-info/src/lib.rs#L25-L33)。10% 抖动参考 [Codex 的有界抖动](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/codex-client/src/retry.rs#L40-L47)。
+当前配置形状由[提供方策略决策](../feature/2026-07-24-provider-retry-policies.md)规定。提供方适配器会注册嵌套的 `retryPolicy`；省略时使用 normal 默认值：四次暂时性重试、500 毫秒初始延迟、120 秒延迟上限、10% 抖动，以及上述五个暂时性 code，从而遵守提供方 60 秒的 `Retry-After`。抖动与 code 集合参考所调查实现中较保守的一端：[OpenCode 使用两次请求重试，延迟边界为 500 毫秒／10 秒](https://github.com/anomalyco/opencode/blob/9976269ab1accfc9f9dc98a4a688c516934de422/%70ackages/llm/src/route/executor.ts#L36-L39)；[Pi 将三次 agent 级重试与提供方重试分开，且提供方重试默认为零](https://github.com/earendil-works/pi/blob/3da591ab74ab9ab407e72ed882600b2c851fae21/%70ackages/coding-agent/docs/settings.md#L139-L147)；[Codex 使用有限请求／流预算以及五分钟空闲超时](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/model-provider-info/src/lib.rs#L25-L33)。10% 抖动参考 [Codex 的有界抖动](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/codex-client/src/retry.rs#L40-L47)。
 
 对于预算未耗尽的合格失败，从 1 开始的暂时性重试计数使用有界指数退避。有效的 `providerRetryAfterMs` 只有在不超过 `maxDelayMs` 时才会取代指数退避；提供方延迟更长时，系统会委托给下一监听器，而不会违反提供方指令提前重试。本地退避乘以 `[1 - jitterRatio, 1 + jitterRatio]` 内的注入随机因子，并将最终值限制到 `maxDelayMs`；提供方延迟不加抖动。
 
@@ -74,7 +74,7 @@ agent-spine 演示组合包加载该插件，因此共享的 stdio/TUI、一次�
 
 ### 在能够终止停滞流的位置施加边界
 
-每个适配器都公开一个经过验证的 `streamIdleTimeoutMs` 配置字段，默认值采用上文引用的五分钟先例。该间隔不超过 Node 的最大定时器延迟，因此不会被钳制为 1 毫秒。它覆盖每个尚未完成的迭代器 `next()`：从消费方请求下一项开始，到适配器识别到提供方活动为止；消费方在两次 `next()` 调用之间花费的时间不属于提供方空闲时间。DeepSeek SSE（Server-Sent Events）注释计为传输活动，但绝不会成为 `StreamChunk` 值或会话日志事件。
+每个适配器都公开一个经过验证的 `streamIdleTimeoutMs` 配置字段，默认十五分钟。该间隔不超过 Node 的最大定时器延迟，因此不会被钳制为 1 毫秒。它覆盖每个尚未完成的迭代器 `next()`：从消费方请求下一项开始，到适配器识别到提供方活动为止；消费方在两次 `next()` 调用之间花费的时间不属于提供方空闲时间。DeepSeek SSE（Server-Sent Events）注释和 pi-ai `onPayload` 活动（包括 SSE ping）计为传输活动，但绝不会成为 `StreamChunk` 值或会话日志事件。
 
 `@deepseek-ai/dsh-timeout` 公开一个可重新布防的空闲看门狗原语。一个稳定的局部 `AbortController` 会与调用方信号融合，并在整个适配器调用期间传给传输层；每个尚未完成的 `next()` 都会布防看门狗，该调用完成时解除布防，下一次请求数据时再重新布防。带外传输活动会调用 `pulse()`，在不产生值的情况下为尚未完成的需求重新布防。超时会使用能力自身拥有的 `TimeoutReason` 中止这个稳定控制器，`finally` 则会清除定时器。适配器将自身看门狗归类为 `TIMEOUT`，将更早发生的上游中止归类为 `ABORTED`。现有的一次性 `deadline()` 不会被描述为滑动计时器。
 

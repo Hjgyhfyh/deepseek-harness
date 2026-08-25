@@ -33,3 +33,7 @@ Classification stays on message text because that is the only signal pi-ai deliv
 - A mid-stream transport drop and a pre-terminal stream truncation now carry `TRANSPORT`, so a composed `llm-retry` policy retries them by default instead of failing the turn.
 - The notice text is unchanged (`terminated` / `Anthropic stream ended before message_stop`): the cause detail is gone before the adapter sees it, so `errorChain` has nothing more to render. Only the routed `code` improved.
 - Classification remains string-matching and provider-wording-dependent: a future pi-ai release that rewords these errors would silently fall back to `PI_AI_ERROR` until the patterns are updated. The `XXX` note points at the durable fix (route on a forwarded `code`/`cause`).
+
+## Related
+
+SSE idle wording without a `timeout` token, missing-credential 404s, and stealth daily quota are classified in [stream idle retry and idle Continue](2026-08-24-stream-idle-retry-and-continue.md); this note still owns transport truncation before a terminal event.

@@ -41,11 +41,20 @@ export const EMPTY_RESPONSE_CODE = 'EMPTY_RESPONSE'
 /**
  * Canonical provider-neutral code for a credential that was supplied but
  * cannot be used — malformed rather than absent. Distinct from
- * `MISSING_CREDENTIAL` because the fix differs: correct the stored value
- * rather than supply one. Deliberately outside the default retryable set —
+ * {@link MISSING_CREDENTIAL_CODE} because the fix differs: correct the stored
+ * value rather than supply one. Deliberately outside the default retryable set —
  * a malformed credential fails identically on every attempt.
  */
 export const INVALID_CREDENTIAL_CODE = 'INVALID_CREDENTIAL'
+
+/**
+ * Canonical provider-neutral code for an absent credential: the route named a
+ * provider whose key is not configured, or the gateway reported that no
+ * credential is active for that provider. Distinct from
+ * {@link INVALID_CREDENTIAL_CODE} because the fix is to supply a key rather
+ * than correct a stored value. Deliberately outside the default retryable set.
+ */
+export const MISSING_CREDENTIAL_CODE = 'MISSING_CREDENTIAL'
 
 /** Structured codes and plain phrases that explicitly name a context bound being exceeded. */
 const STRUCTURED_CONTEXT_OVERFLOW = new RegExp(
@@ -97,6 +106,25 @@ export function isQuotaExceededError(detail: string): boolean {
     || /\bexceed(?:ed|s)?[\s_-]+(?:(?:your|the)[\s_-]+)?(?:current[\s_-]+)?quota\b/i.test(detail)
     || /\b(?:balance|credits?)[\s_-]+(?:exhausted|depleted)\b/i.test(detail)
     || /\bout[\s_-]+of[\s_-]+(?:credits?|budget)\b/i.test(detail)
+    || /\bfree[\s_-]*models[\s_-]*per[\s_-]*day\b/i.test(detail)
+}
+
+/**
+ * Read a provider-requested delay from flattened error text when no HTTP
+ * `Retry-After` header survived. pi-ai discards headers before the adapter
+ * sees the failure, so wording such as "Try again in 60 seconds" is the
+ * remaining instruction.
+ * @param detail - provider error code/type/message text joined into one string.
+ * @returns a positive finite delay in milliseconds, or undefined when the text
+ *   names no usable delay.
+ */
+export function parseProviderRetryAfterMs(detail: string): number | undefined {
+  const match = /try again in\s+(\d+(?:\.\d+)?)\s*seconds?\b/i.exec(detail)
+    ?? /retry(?:[\s_-]*after)?(?:\s+in)?\s+(\d+(?:\.\d+)?)\s*seconds?\b/i.exec(detail)
+    ?? /\bretry-after:\s*(\d+(?:\.\d+)?)\b/i.exec(detail)
+  if (match === null) return undefined
+  const ms = Number(match[1]) * 1_000
+  return Number.isFinite(ms) && ms > 0 ? ms : undefined
 }
 
 /**

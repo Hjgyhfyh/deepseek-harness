@@ -188,6 +188,29 @@ export class Session implements SessionFace {
    * @returns the prompt result (also mirrored into promptError on failure).
    */
   async prompt(content: PromptContentPart[], mode: 'queue' | 'steer'): Promise<RpcResult<{ accepted: true }>> {
+    return this.dispatchPrompt(content, mode, false)
+  }
+
+  /**
+   * Admit the Host-owned continuation notice (plugin-sourced, no user bubble).
+   * @returns the prompt result (also mirrored into promptError on failure).
+   */
+  async continueTurn(): Promise<RpcResult<{ accepted: true }>> {
+    return this.dispatchPrompt([], 'queue', true)
+  }
+
+  /**
+   * Shared admission for ordinary prompts and the Continue gesture.
+   * @param content - text plus browser-owned temporary image uploads; ignored when continuation is true.
+   * @param mode - queue appends after the current turn; steer interrupts it. Continuation always queues.
+   * @param continuation - when true, the Host admits its own resume notice.
+   * @returns the prompt result (also mirrored into promptError on failure).
+   */
+  private async dispatchPrompt(
+    content: PromptContentPart[],
+    mode: 'queue' | 'steer',
+    continuation: boolean,
+  ): Promise<RpcResult<{ accepted: true }>> {
     this.promptError = null
     this.lastAgentError = null
     // Synchronous, before the first await: the blank → engaging edge must be
@@ -201,9 +224,10 @@ export class Session implements SessionFace {
       if (this.address === undefined) {
         result = (await this.api.sessions.prompt({
           sessionId: this.sessionId,
-          mode,
-          content,
+          mode: continuation ? 'queue' : mode,
+          content: continuation ? [] : content,
           clientTimeZone: resolvedClientTimeZone(),
+          ...continuation ? { continuation: true as const } : {},
         })).result
       } else if (this.address.mode === 'one-shot') {
         result = {
@@ -215,7 +239,7 @@ export class Session implements SessionFace {
           },
         }
       } else {
-        if (content.some(part => part.type === 'image')) {
+        if (!continuation && content.some(part => part.type === 'image')) {
           result = {
             ok: false,
             error: {
@@ -227,10 +251,13 @@ export class Session implements SessionFace {
         } else {
           const routed = (await this.api.subagents.prompt({
             ...this.address,
-            content: content.flatMap(part => part.type === 'text'
-              ? [{ type: 'text' as const, text: part.text }]
-              : []),
+            content: continuation
+              ? []
+              : content.flatMap(part => part.type === 'text'
+                ? [{ type: 'text' as const, text: part.text }]
+                : []),
             clientTimeZone: resolvedClientTimeZone(),
+            ...continuation ? { continuation: true as const } : {},
           })).result
           result = routed.ok ? { ok: true, value: { accepted: true } } : routed
         }

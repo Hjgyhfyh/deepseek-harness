@@ -364,6 +364,8 @@ export interface ChatNodeOwnerProps {
   /** Resolve a session-authorized historical image for inline display. */
   loadImage: (attachment: ImageAttachmentRef) => Promise<string>
   fileMentions: (owner: TurnTailOwnerProps) => MarkdownFileMentions | undefined
+  /** Admit the Host-owned continuation notice; omitted when the view cannot continue. */
+  continueAgent?: () => void
 }
 
 /** Full props of one registered keyed Chat business renderer. */
@@ -509,6 +511,8 @@ export interface ComposerBarInjected {
   toggleCommandMenu: ((selection: EditSelection) => void) | undefined
   /** Cancel the in-flight turn; absent with the session. */
   stop: (() => void) | undefined
+  /** Admit the Host-owned continuation notice; absent with the session. */
+  continueAgent: (() => void) | undefined
   /**
    * Submit one slash-command line against this session's agent (the chrome
    * controls' write path — the permission chip submits `/permission <preset>`);
@@ -698,6 +702,8 @@ export interface ChatViewInjected {
   }
   /** Fork through the completed turn ending at the eligible message `seq`, then open the child. */
   forkAt: (seq: number) => void
+  /** Admit the Host-owned continuation notice for this session. */
+  continueAgent: () => void
   /**
    * Prose file-mention vocabulary for one closing message, from the optional
    * {@link ChatFileMentions} service (resolved lazily per call, so composing

@@ -85,6 +85,7 @@
 - status:
   - text: "This turn failedllm-replay: script exhausted — session requested model call #7 but its script has only 6; re-record the scenario"
   - code: UNKNOWN
+- button "Continue"
 - button "Back to bottom":
   - img
 - textbox "Message the agent"
@@ -95,5 +96,6 @@
   - text: DeepSeek-V4-Flash
   - img
 - button "0% of context used"
+- button "Continue"
 - button "Send message" [disabled]
 - text: 3 turns · 7 steps LLM {{duration}} · Tool call {{duration}} Cache hit 77% Input 66.5K tok · Output 318 tok

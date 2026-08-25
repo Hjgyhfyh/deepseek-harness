@@ -868,7 +868,7 @@ export interface Config {
   defaultContextWindow?: number
   /** Advisory models shown by discovery consumers; defaults to V4 Flash and V4 Pro. */
   models?: DeepSeekCatalogModel[]
-  /** Maximum provider idle time while one stream read is outstanding (default five minutes). */
+  /** Maximum provider idle time while one stream read is outstanding (default fifteen minutes). */
   streamIdleTimeoutMs?: number
   /** Provider-owned model-request retry policy; omission uses normal defaults. */
   retryPolicy?: RetryPolicyConfig
@@ -983,7 +983,7 @@ export interface PiAiProviderProfile {
   timeoutMs?: number
   /** WebSocket connection timeout in milliseconds. */
   websocketConnectTimeoutMs?: number
-  /** Maximum provider idle time while one stream read is outstanding. */
+  /** Maximum provider idle time while one stream read is outstanding (default fifteen minutes). */
   streamIdleTimeoutMs?: number
   /** Provider-owned model-request retry policy; omission uses normal defaults. */
   retryPolicy?: RetryPolicyConfig

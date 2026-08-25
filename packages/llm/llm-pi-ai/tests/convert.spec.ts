@@ -755,6 +755,29 @@ describe('mapStopReason / mapUsage', () => {
       .toMatchObject({ kind: 'error', failure: { code: 'AUTH' } })
     expect(mapStopReason(assistant({ stopReason: 'error', errorMessage: 'HTTP 429: rate limit' })))
       .toMatchObject({ kind: 'error', failure: { code: 'RATE_LIMIT' } })
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
+      errorMessage: "Error code: 429 - No deployments available. Try again in 60 seconds.",
+    }))).toMatchObject({
+      kind: 'error',
+      failure: { code: 'RATE_LIMIT', providerRetryAfterMs: 60_000 },
+    })
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
+      errorMessage: '404: {"message":"No active credentials for provider: openrouter","type":"invalid_request_error","code":"model_not_found"}',
+    }))).toMatchObject({ kind: 'error', failure: { code: 'MISSING_CREDENTIAL' } })
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
+      errorMessage: 'Rate limit exceeded: free-models-per-day-stealth',
+    }))).toMatchObject({ kind: 'error', failure: { code: 'QUOTA' } })
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
+      errorMessage: 'Stream produced no non-ping SSE event within 95000ms',
+    }))).toMatchObject({ kind: 'error', failure: { code: 'TIMEOUT' } })
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
+      errorMessage: 'pi-ai stream idle timeout after 300000ms',
+    }))).toMatchObject({ kind: 'error', failure: { code: 'TIMEOUT' } })
     expect(mapStopReason(assistant({ stopReason: 'error', errorMessage: 'HTTP 429: insufficient_quota' })))
       .toMatchObject({ kind: 'error', failure: { code: 'QUOTA' } })
     expect(mapStopReason(assistant({

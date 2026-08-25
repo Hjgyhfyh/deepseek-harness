@@ -114,33 +114,49 @@ function ModelRetryItem({ node, active, t }: {
 }
 
 /** Persistent, turn-positioned feedback for a terminal failure. */
-function TurnErrorItem({ node, t }: {
+function TurnErrorItem({ node, t, continueAgent }: {
   node: TurnErrorNode
   t: ChatViewSlotProps['t']
+  continueAgent?: () => void
 }) {
   return (
-    <div className={css.turnErrorRow} role="status">
-      <StateDot state="error" className={css.turnErrorDot} />
-      <div className={css.turnErrorCopy}>
-        <span className={css.turnErrorTitle}>{t('message.turnError')}</span>
-        <span className={css.turnErrorMessage}>{node.message}</span>
+    <div>
+      <div className={css.turnErrorRow} role="status">
+        <StateDot state="error" className={css.turnErrorDot} />
+        <div className={css.turnErrorCopy}>
+          <span className={css.turnErrorTitle}>{t('message.turnError')}</span>
+          <span className={css.turnErrorMessage}>{node.message}</span>
+        </div>
+        {node.code !== undefined && <code className={css.turnErrorCode}>{node.code}</code>}
       </div>
-      {node.code !== undefined && <code className={css.turnErrorCode}>{node.code}</code>}
+      {continueAgent !== undefined && (
+        <button type="button" className={css.continue} onClick={continueAgent}>
+          {t('input.continue')}
+        </button>
+      )}
     </div>
   )
 }
 
 /** Persistent, turn-positioned notice for a turn ended at the output-token cap. */
-function TurnMaxTokensItem({ t }: {
+function TurnMaxTokensItem({ t, continueAgent }: {
   t: ChatViewSlotProps['t']
+  continueAgent?: () => void
 }) {
   return (
-    <div className={css.turnErrorRow} role="status">
-      <StateDot state="warning" className={css.turnErrorDot} />
-      <div className={css.turnErrorCopy}>
-        <span className={css.maxTokensTitle}>{t('message.maxTokens')}</span>
-        <span className={css.turnErrorMessage}>{t('message.maxTokens.hint')}</span>
+    <div>
+      <div className={css.turnErrorRow} role="status">
+        <StateDot state="warning" className={css.turnErrorDot} />
+        <div className={css.turnErrorCopy}>
+          <span className={css.maxTokensTitle}>{t('message.maxTokens')}</span>
+          <span className={css.turnErrorMessage}>{t('message.maxTokens.hint')}</span>
+        </div>
       </div>
+      {continueAgent !== undefined && (
+        <button type="button" className={css.continue} onClick={continueAgent}>
+          {t('input.continue')}
+        </button>
+      )}
     </div>
   )
 }
@@ -283,13 +299,25 @@ export const RetryNodeView = memo(function RetryNodeView({ node, t }: ChatNodeVi
 })
 
 /** Terminal turn-error keyed Chat renderer. */
-export const TurnErrorNodeView = memo(function TurnErrorNodeView({ node, t }: ChatNodeViewProps<'turn-error'>) {
-  return <TurnErrorItem node={node.data} t={t} />
+export const TurnErrorNodeView = memo(function TurnErrorNodeView({
+  node, t, continueAgent, useSession,
+}: ChatNodeViewProps<'turn-error'>) {
+  const running = useSession(s => s.running) ?? false
+  return (
+    <TurnErrorItem
+      node={node.data}
+      t={t}
+      continueAgent={running ? undefined : continueAgent}
+    />
+  )
 })
 
 /** Max-tokens turn-end notice keyed Chat renderer. */
-export const TurnMaxTokensNodeView = memo(function TurnMaxTokensNodeView({ t }: ChatNodeViewProps<'turn-max-tokens'>) {
-  return <TurnMaxTokensItem t={t} />
+export const TurnMaxTokensNodeView = memo(function TurnMaxTokensNodeView({
+  t, continueAgent, useSession,
+}: ChatNodeViewProps<'turn-max-tokens'>) {
+  const running = useSession(s => s.running) ?? false
+  return <TurnMaxTokensItem t={t} continueAgent={running ? undefined : continueAgent} />
 })
 
 /** Explicit unknown-surface keyed Chat renderer. */

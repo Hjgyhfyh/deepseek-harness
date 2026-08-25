@@ -38,5 +38,6 @@
   - text: DeepSeek-V4-Flash
   - img
 - button "0% of context used"
+- button "Continue"
 - button "Send message" [disabled]
 - text: 1 turns · 1 steps LLM {{duration}} TTFT avg {{duration}} · {{throughput}} tok/s Cache hit 0% Input 256 tok · Output 16 tok

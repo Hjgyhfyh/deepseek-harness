@@ -78,6 +78,8 @@
 - `QUOTA_EXCEEDED_CODE`：帐户配额、余额、点数、预算或用量限制耗尽时使用的非暂时性提供方无关 code。`isQuotaExceededError(detail)` 使这些失败与请求速率限制保持区分。
 - `EMPTY_RESPONSE_CODE`：两个适配器都使用的提供方无关 code，用于表示退化的提供方生成结果：一个未携带任何内容块的终止 `stop`。它会被分类为错误 finish（而非成功空消息），因为尝试未产生持久内容；`dsh-llm-retry` 默认重试它。
 - `INVALID_CREDENTIAL_CODE`：已提供但无法使用的凭据所用的提供方无关 code——格式错误而非缺失，修复方式是改正已存储的值，而不是补充一个凭据，这正是它与 `MISSING_CREDENTIAL` 的区别。它被刻意排除在默认可重试集合之外：格式错误的凭据每次尝试都会以同样方式失败。`assertUsableApiKey(raw, pkg, ref)` 会以该 code 抛出 `LlmError`，是每个适配器判定已存储凭据不可用时共用的诊断。
+- `MISSING_CREDENTIAL_CODE`：缺失凭据所用的提供方无关 code：路由点名了一个未配置密钥的提供方，或网关报告该提供方没有活动凭据。它与 `INVALID_CREDENTIAL` 的区别是修复方式为补上密钥。它被刻意排除在默认可重试集合之外。
+- `parseProviderRetryAfterMs(detail)`：在 HTTP `Retry-After` 头未能保留时，从 `Try again in 60 seconds` 这类压扁提供方文本中读取正数延迟。
 
 ### 真实适配器
 

@@ -100,6 +100,11 @@ export interface SubagentsApi {
         content: ContentBlock[]
         /** Optional browser zone sampled for this exact human prompt. */
         clientTimeZone?: string
+        /**
+         * Admit the Host-owned continuation notice instead of `content`.
+         * The Host ignores client content.
+         */
+        continuation?: true
       }
     >,
     signal: AbortSignal,

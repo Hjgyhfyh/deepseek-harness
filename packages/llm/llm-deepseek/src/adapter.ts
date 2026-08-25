@@ -8,7 +8,7 @@
  * @module dsh-llm-deepseek/adapter
  */
 
-import { attributionHeaders, CONTEXT_WINDOW_EXCEEDED_CODE, isContextWindowExceededError, isQuotaExceededError, LlmAdapter, LlmError, ProviderRequestId, QUOTA_EXCEEDED_CODE, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
+import { attributionHeaders, CONTEXT_WINDOW_EXCEEDED_CODE, isContextWindowExceededError, isQuotaExceededError, LlmAdapter, LlmError, parseProviderRetryAfterMs, ProviderRequestId, QUOTA_EXCEEDED_CODE, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
 import type {
   GenerateOptions,
   LlmModelInfo,
@@ -86,7 +86,7 @@ export interface DeepSeekAdapterOptions {
 }
 
 /** Default maximum idle interval while an adapter stream read is outstanding. */
-export const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 300_000
+export const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 900_000
 /** Default combined request/response context capacity. */
 export const DEFAULT_CONTEXT_WINDOW = 1_000_000
 /** Default per-request output-token cap. */
@@ -334,6 +334,7 @@ export class DeepSeekAdapter extends LlmAdapter {
         // failure, so malformed gateway JSON must not mask it.
       }
       const delay = providerRetryAfterMs(response.headers.get('retry-after'))
+        ?? parseProviderRetryAfterMs(message)
       const id = requestId(response.headers)
       throw new LlmError(message, httpErrorCode(response.status, providerError), {
         status: response.status,

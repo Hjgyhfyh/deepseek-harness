@@ -10,7 +10,7 @@ The agent loop records `max-tokens` as its own `turn/end` reason, but no user su
 
 ## Decision
 
-A `turn-max-tokens` conversation node Definition matches `turn/end` with `reason.kind === 'max-tokens'` and materializes a persistent chat row at the turn position: a warning StateDot, a localized title, and guidance that the truncated output is preserved and sending "continue" resumes in a new turn. The node derives from the durable session event alone, so refresh, restore, and history replay rebuild it identically. It shows no token numbers: the event carries none, and the notice must not fabricate budget data the provider did not report.
+A `turn-max-tokens` conversation node Definition matches `turn/end` with `reason.kind === 'max-tokens'` and materializes a persistent chat row at the turn position: a warning StateDot, a localized title, guidance that the truncated output is preserved, and — while the agent is idle — the same Continue control the composer shows. Clicking Continue admits the Host-owned resume notice documented in [stream idle retry and idle Continue](2026-08-24-stream-idle-retry-and-continue.md). The node derives from the durable session event alone, so refresh, restore, and history replay rebuild it identically. It shows no token numbers: the event carries none, and the notice must not fabricate budget data the provider did not report.
 
 The renderer registers under the keyed `conversation.chat.node` seat like every chat row, and the legacy chat-snapshot contribution includes the node. The fixture history gained a max-tokens sample turn (72; the image and todo turns shifted to 73 and 74), and an assembled keyless snapshot pins the dot state, title, and hint, so a regression that routes max-tokens through the error presentation or silences it again changes a golden.
 
@@ -20,7 +20,7 @@ The renderer registers under the keyed `conversation.chat.node` seat like every 
 
 **A turn-tail marker instead of a flow row** — rejected: the tail renders closing chrome for a finished turn and its actions collapse on later turns, while the truncation notice must stay at the turn that was cut and remain visible in history without interaction.
 
-**A continue or retry action button on the notice** — deferred: resuming has open semantics (new turn versus same-turn splice, old-output retention rules) that issue #1522 explicitly leaves out of scope; guidance text carries the safe next step without committing to an action contract.
+**A continue or retry action button on the notice** — Continue now ships as the Host-owned continuation notice; this note still owns only the `turn-max-tokens` row. Same-turn splice remains rejected: the loop has already closed the truncated turn.
 
 ## Consequences
 

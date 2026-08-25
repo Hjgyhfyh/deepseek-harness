@@ -296,6 +296,7 @@ export function apply(ctx: Context): void {
             submissionPolicy.resolve(running, gesture, steeringAvailable),
           toggleCommandMenu: undefined,
           stop: undefined,
+          continueAgent: undefined,
           command: undefined,
           hooks: { notices: ABSENT_NOTICES, lexicon: ABSENT_LEXICON, menuLauncher: ABSENT_MENU_LAUNCHER },
         }
@@ -343,6 +344,11 @@ export function apply(ctx: Context): void {
         stop: () => {
           scopedConversation(sessions, sessionId).cancel().catch(() => {
             // Stop failure surfaces via snapshot.promptError; nothing to restore.
+          })
+        },
+        continueAgent: () => {
+          scopedConversation(sessions, sessionId).continue().catch(() => {
+            // Continue failure surfaces via snapshot.promptError; nothing to restore.
           })
         },
         command: async (line) => {
@@ -420,6 +426,11 @@ export function apply(ctx: Context): void {
             .catch(() => {
               // Fork or child-rename failure keeps the source view untouched.
             })
+        },
+        continueAgent: () => {
+          scopedConversation(sessions, sessionId).continue().catch(() => {
+            // Continue failure surfaces via snapshot.promptError; nothing to restore.
+          })
         },
       }
     },

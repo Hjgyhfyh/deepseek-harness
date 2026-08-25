@@ -8,6 +8,7 @@ import LlmRuntime, {
   isQuotaExceededError,
   LlmAdapter,
   LlmError,
+  parseProviderRetryAfterMs,
   ProviderRequestId,
   ReasoningEffortId,
   resolveRetryPolicy,
@@ -123,8 +124,19 @@ describe('LlmRuntime', () => {
       'out of credits',
       'OpenAI API error (429): You exceeded your current quota, please check your plan and billing details.',
     ]) expect(isQuotaExceededError(detail)).toBe(true)
+    expect(isQuotaExceededError('Rate limit exceeded: free-models-per-day-stealth')).toBe(true)
     expect(isQuotaExceededError('HTTP 429: rate limit reached')).toBe(false)
     expect(isQuotaExceededError('quota resets in one minute')).toBe(false)
+  })
+
+  it('parses flattened provider retry-after wording into milliseconds', () => {
+    expect(parseProviderRetryAfterMs(
+      "No deployments available. Try again in 60 seconds. Passed model=custom/openrouter/stealth/ox-alpha.",
+    )).toBe(60_000)
+    expect(parseProviderRetryAfterMs('retry-after: 15')).toBe(15_000)
+    expect(parseProviderRetryAfterMs('retry in 2.5 seconds')).toBe(2_500)
+    expect(parseProviderRetryAfterMs('Try again in 0 seconds')).toBeUndefined()
+    expect(parseProviderRetryAfterMs('HTTP 429: rate limit reached')).toBeUndefined()
   })
 
   it('errorChain renders the full cause chain of a wrapped transport failure', () => {
@@ -217,7 +229,7 @@ describe('LlmRuntime', () => {
     expect(ctx.llm.providerRetryPolicy('configured')).toBe(configured)
     expect(ctx.llm.providerRetryPolicy('defaulted')).toMatchObject({
       mode: 'normal',
-      maxRetries: 2,
+      maxRetries: 4,
     })
     expect(() => ctx.llm.providerRetryPolicy('missing')).toThrow(
       expect.objectContaining({ code: 'NO_ADAPTER' }),

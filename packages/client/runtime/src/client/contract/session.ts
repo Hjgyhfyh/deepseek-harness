@@ -40,6 +40,12 @@ export interface ISession {
    */
   prompt(content: PromptContentPart[], mode: 'queue' | 'steer'): Promise<RpcResult<{ accepted: true }>>
   /**
+   * Admit the Host-owned continuation notice so an idle agent resumes without
+   * a new user bubble. Failures land in promptError the same way as {@link prompt}.
+   * @returns acceptance, or the business error (also mirrored into snapshot.promptError).
+   */
+  continueTurn(): Promise<RpcResult<{ accepted: true }>>
+  /**
    * Resolve one durable image referenced by this session.
    * @param attachmentId - opaque id found in the folded session log.
    * @returns the authenticated reference and decoded bytes.

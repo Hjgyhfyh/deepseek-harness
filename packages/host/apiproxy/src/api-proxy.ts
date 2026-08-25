@@ -108,6 +108,7 @@ import {
   inspectApiRemoteSession,
 } from '@deepseek-ai/dsh-api-remotes'
 import { canOpenNativePath, openNativePath, openNativeTextFile } from './native-path-opener.ts'
+import { createAgentContinueMessage } from './agent-continue.ts'
 
 /** Page size when history is called without maxMessages. */
 const DEFAULT_MAX_MESSAGES = 50
@@ -2399,7 +2400,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
       },
 
       async prompt(request) {
-        const { sessionId, mode, content, clientTimeZone } = request.payload
+        const { sessionId, mode, content, clientTimeZone, continuation } = request.payload
         const canonicalTimeZone = clientTimeZone === undefined
           ? undefined
           : canonicalClientTimeZone(clientTimeZone)
@@ -2413,6 +2414,18 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         const resolved = await turnAgentFor<{ accepted: true }>(request, sessionId)
         if ('refused' in resolved) return resolved.refused
         const agent = resolved.agent
+        if (continuation === true) {
+          try {
+            agent.followup(createAgentContinueMessage())
+          } catch (error: unknown) {
+            return err(request, {
+              code: 'agent-busy',
+              message: 'prompt rejected',
+              details: { reason: String(error) },
+            })
+          }
+          return ok(request, { accepted: true as const })
+        }
         // Request identity and optional browser zone ride the exact durable user message.
         const source: MessageSource = {
           kind: 'user',
@@ -2675,7 +2688,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
       },
 
       async prompt(request, signal) {
-        const { parentSessionId, childSessionId, content, clientTimeZone } = request.payload
+        const { parentSessionId, childSessionId, content, clientTimeZone, continuation } = request.payload
         const canonicalTimeZone = clientTimeZone === undefined
           ? undefined
           : canonicalClientTimeZone(clientTimeZone)
@@ -2699,14 +2712,22 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         }, signal)
         if (verified.error !== undefined) return err(request, verified.error)
         try {
-          const messageId = await ctx.subagents.followup(parent, childSessionId, content, {
-            source: {
-              kind: 'user',
-              rpcId: request.rpcId,
-              ...(canonicalTimeZone === undefined ? {} : { clientTimeZone: canonicalTimeZone }),
+          const continueMessage = continuation === true ? createAgentContinueMessage() : undefined
+          const messageId = await ctx.subagents.followup(
+            parent,
+            childSessionId,
+            continueMessage === undefined ? content : continueMessage.content,
+            {
+              source: continueMessage === undefined
+                ? {
+                  kind: 'user',
+                  rpcId: request.rpcId,
+                  ...(canonicalTimeZone === undefined ? {} : { clientTimeZone: canonicalTimeZone }),
+                }
+                : continueMessage.source,
+              signal,
             },
-            signal,
-          })
+          )
           return ok(request, { messageId })
         } catch (error: unknown) {
           return subagentPromptError(request, error, signal)

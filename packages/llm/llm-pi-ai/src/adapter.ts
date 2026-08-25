@@ -96,7 +96,10 @@ function profileOptions(
     ...profile.thinkingBudgets === undefined ? {} : { thinkingBudgets: profile.thinkingBudgets },
     ...profile.cacheRetention === undefined ? {} : { cacheRetention: profile.cacheRetention },
     ...profile.transport === undefined ? {} : { transport: profile.transport },
-    ...profile.timeoutMs === undefined ? {} : { timeoutMs: profile.timeoutMs },
+    // Align the SDK read deadline with the idle watchdog. pi-ai's own default
+    // (no non-ping SSE event within 95s) is shorter than the watchdog and
+    // would fail a long think that only emits pings.
+    timeoutMs: profile.timeoutMs ?? profile.streamIdleTimeoutMs,
     ...profile.websocketConnectTimeoutMs === undefined ? {} : { websocketConnectTimeoutMs: profile.websocketConnectTimeoutMs },
     // The agent recovery layer owns visible attempts; one adapter call is one SDK attempt.
     maxRetries: 0,
@@ -324,6 +327,9 @@ export class PiAiAdapter extends LlmAdapter {
         ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
         ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },
         signal: watchdog.signal,
+        // SSE pings and other payloads that never become StreamChunks still
+        // count as provider activity for the idle watchdog.
+        onPayload: () => { watchdog.pulse() },
         // Profile headers are deployment-owned; attribution names are
         // Harness-owned and therefore win collisions.
         headers: requestHeaders(profile.headers),

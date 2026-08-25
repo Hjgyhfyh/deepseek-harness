@@ -482,6 +482,39 @@ describe('prompt and cancel errors', () => {
     })
   })
 
+  it('admits a Host continuation notice through session.prompt with empty content', async () => {
+    const { api, session } = makeSession()
+    const result = await session.continueTurn()
+    expect(result.ok).toBe(true)
+    expect(api.callsOf('session.prompt')).toMatchObject([{
+      sessionId: SID,
+      mode: 'queue',
+      content: [],
+      continuation: true,
+      clientTimeZone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }])
+  })
+
+  it('routes an addressed-child Continue through subagent.prompt', async () => {
+    const api = new FakeApiClient()
+    const session = new Session(SID, api, fakeRemote(), {
+      address: { parentSessionId: PARENT, childSessionId: SID, mode: 'continuable' },
+      parentAvailable: true,
+    })
+    await session.open()
+    const result = await session.continueTurn()
+    expect(result).toEqual({ ok: true, value: { accepted: true } })
+    expect(api.callsOf('subagent.prompt')).toEqual([
+      {
+        parentSessionId: PARENT, childSessionId: SID, mode: 'continuable',
+        content: [],
+        continuation: true,
+        clientTimeZone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+    ])
+    expect(api.callsOf('session.prompt')).toEqual([])
+  })
+
   it('lands an interrupt business failure in promptError with op=stop', async () => {
     const api = new FakeApiClient()
     api.onSubagentInterrupt = () => Promise.resolve(err({

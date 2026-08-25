@@ -5,6 +5,10 @@ import { SubagentError } from '@deepseek-ai/dsh-subagent'
 import { RpcId } from '../src/api/rpc.ts'
 import type { RpcRequest } from '../src/api/rpc.ts'
 import { createApiProxy } from '../src/api-proxy.ts'
+import {
+  AGENT_CONTINUE_PLUGIN, AGENT_CONTINUE_PROMPT, AGENT_CONTINUE_SUMMARY,
+  createAgentContinueMessage,
+} from '../src/agent-continue.ts'
 
 const sid = (value: string): SessionId => value as SessionId
 const PARENT = sid('parent')
@@ -276,6 +280,37 @@ describe('subagent gateway', () => {
       content,
       { source: { kind: 'user', rpcId: RpcId('subagent-rpc') }, signal },
     )
+  })
+
+  it('admits the Host continuation notice and ignores client content', async () => {
+    const { api, parent, followup } = bench()
+    const signal = new AbortController().signal
+    const notice = createAgentContinueMessage()
+    const response = await api.subagents.prompt(request({
+      parentSessionId: PARENT,
+      childSessionId: CHILD,
+      mode: 'continuable',
+      content: [{ type: 'text' as const, text: 'typed continue' }],
+      continuation: true as const,
+    }), signal)
+    expect(response.result).toMatchObject({
+      ok: true, value: { messageId: 'message-1' },
+    })
+    expect(followup).toHaveBeenCalledWith(
+      parent,
+      CHILD,
+      notice.content,
+      {
+        source: {
+          kind: 'plugin',
+          plugin: AGENT_CONTINUE_PLUGIN,
+          form: 'notice',
+          summary: AGENT_CONTINUE_SUMMARY,
+        },
+        signal,
+      },
+    )
+    expect(notice.content).toEqual([{ type: 'text', text: AGENT_CONTINUE_PROMPT }])
   })
 
   it('canonicalizes browser-zone provenance before delivering a child prompt', async () => {

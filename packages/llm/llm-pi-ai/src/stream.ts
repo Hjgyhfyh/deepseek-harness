@@ -8,7 +8,11 @@
  * @module dsh-llm-pi-ai/stream
  */
 
-import { CallId, CONTEXT_WINDOW_EXCEEDED_CODE, EMPTY_RESPONSE_CODE, isContextWindowExceededError, isQuotaExceededError, LlmError, QUOTA_EXCEEDED_CODE } from '@deepseek-ai/dsh-llm'
+import {
+  CallId, CONTEXT_WINDOW_EXCEEDED_CODE, EMPTY_RESPONSE_CODE, isContextWindowExceededError,
+  isQuotaExceededError, LlmError, MISSING_CREDENTIAL_CODE, parseProviderRetryAfterMs,
+  QUOTA_EXCEEDED_CODE,
+} from '@deepseek-ai/dsh-llm'
 import type { FinishReason, StreamChunk, TokenUsage } from '@deepseek-ai/dsh-llm'
 import { isContextOverflow } from '@earendil-works/pi-ai'
 import type { AssistantMessage, AssistantMessageEvent, Usage as PiUsage } from '@earendil-works/pi-ai'
@@ -38,10 +42,14 @@ export function mapUsage(usage: PiUsage): TokenUsage {
 // us capture the cause ourselves), classify on `code`/`cause` instead of text.
 function classifyPiAiError(message: string): string {
   if (/\b(?:401|403)\b/.test(message)) return 'AUTH'
+  if (/no active credentials for provider\b/i.test(message)) return MISSING_CREDENTIAL_CODE
   if (isQuotaExceededError(message)) return QUOTA_EXCEEDED_CODE
   if (/\b429\b|rate.?limit/i.test(message)) return 'RATE_LIMIT'
   if (/\b400\b|invalid.?request/i.test(message)) return 'INVALID_REQUEST'
   if (/\b5\d\d\b/.test(message)) return 'SERVER'
+  // pi-ai / gateway idle watchdogs often say "no non-ping SSE event within
+  // 95000ms" with no "timeout" token; those are stalled streams, not PI_AI_ERROR.
+  if (/no non-ping SSE event|SSE event within \d+\s*ms|\bstream idle\b/i.test(message)) return 'TIMEOUT'
   if (/\btime(?:d)?\s*out\b|timeout/i.test(message)) return 'TIMEOUT'
   // A stream truncated before the provider's terminal event: each pi-ai provider
   // throws its own wording when the wire closes mid-response without a terminal
@@ -107,7 +115,15 @@ export function mapStopReason(message: AssistantMessage, contextWindow?: number)
     }
     case 'error': {
       const text = message.errorMessage ?? 'pi-ai stream error'
-      return { kind: 'error', failure: { message: text, code: classifyPiAiError(text) } }
+      const retryAfter = parseProviderRetryAfterMs(text)
+      return {
+        kind: 'error',
+        failure: {
+          message: text,
+          code: classifyPiAiError(text),
+          ...retryAfter === undefined ? {} : { providerRetryAfterMs: retryAfter },
+        },
+      }
     }
   }
 }

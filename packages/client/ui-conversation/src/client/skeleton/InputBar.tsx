@@ -46,7 +46,7 @@ export type InputBarProps = ComposerBarProps
 
 export function InputBar({
   useSession, useInput, inputActions, keyboard, addImages, removeImage, draftImages,
-  resolveSubmitMode, toggleCommandMenu, stop, command, t,
+  resolveSubmitMode, toggleCommandMenu, stop, continueAgent, command, t,
   renderSlot, useNotices, useLexicon, useMenuLauncher,
   useProjection, sessionId, variant, disabled: inert = false, blocked,
   workspacePickerOpen = false, onRequestWorkspace,
@@ -60,6 +60,7 @@ export function InputBar({
   const running = useSession(s => s.running) ?? false
   const subagent = useSession(s => s.subagent) ?? null
   const removed = useSession(s => s.removed) ?? false
+  const composerPhase = useSession(s => s.composerPhase) ?? 'blank'
   // Plan mode swaps the textarea placeholder (the projection is the folded
   // host value; owner-prop placeholders — hero, session-unavailable — win).
   const planActive = useProjection('plan', plan => plan !== undefined && (plan.pending ? !plan.active : plan.active))
@@ -565,6 +566,8 @@ export function InputBar({
   const primaryStops = running && subagent === null
   const interruptible = running && continuable
   const primaryLabel = primaryStops ? t('input.stop') : t('input.send')
+  const showContinue = !running && live && !locked && !machineBusy
+    && (composerPhase === 'active' || composerPhase === 'engaging')
   const onPrimary = (): void => {
     if (primaryStops) {
       stop?.()
@@ -788,6 +791,20 @@ export function InputBar({
             {rightItems}
             {renderSlot('conversation.input.model', { locked: modelSeatLocked })}
             <ContextMeter useProjection={useProjection} t={t} />
+            {showContinue && (
+              <Tooltip label={t('input.continue')} side="top" delayMs={500}>
+                <button
+                  type="button"
+                  className={css.continue}
+                  aria-label={t('input.continue')}
+                  disabled={continueAgent === undefined}
+                  onMouseDown={keepFocus}
+                  onClick={() => { continueAgent?.() }}
+                >
+                  {t('input.continue')}
+                </button>
+              </Tooltip>
+            )}
             {busyDeliverable && (
               <Tooltip label={t('input.queue')} side="top" delayMs={500}>
                 <button

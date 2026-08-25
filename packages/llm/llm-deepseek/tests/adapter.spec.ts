@@ -393,6 +393,8 @@ describe('DeepSeekAdapter against a mock server', () => {
     expect(httpErrorCode(429, { code: 'insufficient_quota', message: 'account credits exhausted' }))
       .toBe(QUOTA_EXCEEDED_CODE)
     expect(httpErrorCode(429, { message: 'request rate limit exceeded' })).toBe('RATE_LIMIT')
+    expect(httpErrorCode(429, { message: 'Rate limit exceeded: free-models-per-day-stealth' }))
+      .toBe(QUOTA_EXCEEDED_CODE)
   })
 
   it('keeps the status-line message for JSON error bodies without a message', async () => {

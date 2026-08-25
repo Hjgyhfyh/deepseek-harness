@@ -37,6 +37,7 @@
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img
+- button "Continue"
 - button "Send message" [disabled]
 - text: Details
 - button "Close details"

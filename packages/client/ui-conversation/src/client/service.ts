@@ -40,6 +40,11 @@ export interface IConversation {
    */
   send(text: string): Promise<void>
   /**
+   * Admit the Host-owned continuation notice on the caller scope's session.
+   * @returns completion; business failures reject (and land in promptError).
+   */
+  continue(): Promise<void>
+  /**
    * Apply one edit, remove, or strict steer operation to a pending queue occurrence.
    * @param itemId - agent-owned inbox occurrence identity.
    * @param action - requested queue operation.
@@ -130,6 +135,16 @@ export class ConversationController extends Service implements IConversation {
     const session = this.scopedSession('send')
     const result = await session.prompt([{ type: 'text', text }], 'queue')
     if (!result.ok) throw new Error(`conversation.send failed: ${result.error.code}: ${result.error.message}`)
+  }
+
+  /**
+   * Admit the Host-owned continuation notice so an idle agent resumes.
+   * Failures land in promptError the same way as {@link send}.
+   */
+  async continue(): Promise<void> {
+    const session = this.scopedSession('continue')
+    const result = await session.continueTurn()
+    if (!result.ok) throw new Error(`conversation.continue failed: ${result.error.code}: ${result.error.message}`)
   }
 
   /**
