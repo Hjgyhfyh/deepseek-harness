@@ -109,19 +109,19 @@ describe('PluginInventorySettingsTab', () => {
     expect(screen.getByText(en.emptySearch)).toBeTruthy()
   })
 
-  it('Escape clears a non-empty search then blurs the field', async () => {
+  it('Escape clears a non-empty search then blurs the field without yielding to Settings', async () => {
     render(<PluginInventorySettingsTab {...props(async () => SNAPSHOT)} />)
     const search = await screen.findByRole('searchbox', { name: en.search })
     fireEvent.change(search, { target: { value: 'hmr' } })
     expect(screen.getAllByRole('listitem')).toHaveLength(1)
     search.focus()
-    fireEvent.keyDown(search, { key: 'Escape' })
+    expect(fireEvent.keyDown(search, { key: 'Escape' })).toBe(false)
     expect(screen.getAllByRole('listitem')).toHaveLength(7)
     expect((search as HTMLInputElement).value).toBe('')
     expect(document.activeElement).toBe(search)
     fireEvent.keyDown(search, { key: 'Enter' })
     expect((search as HTMLInputElement).value).toBe('')
-    fireEvent.keyDown(search, { key: 'Escape' })
+    expect(fireEvent.keyDown(search, { key: 'Escape' })).toBe(false)
     expect(document.activeElement).not.toBe(search)
   })
 

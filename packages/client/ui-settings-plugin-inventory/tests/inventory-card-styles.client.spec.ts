@@ -31,4 +31,10 @@ describe('plugin inventory card keyboard chrome', () => {
     expect(declarationsFrom(css, '.card[data-open=\'true\']:has(.cardContent:focus-visible)')?.get('box-shadow')).toBe(ring)
     expect(declarationsFrom(css, '.cardContent:focus-visible')?.get('box-shadow')).toBeUndefined()
   })
+
+  it('paints the chevron secondary on hover and keyboard focus', () => {
+    const secondary = 'var(--dsw-alias-label-secondary)'
+    expect(declarationsFrom(css, '.cardContent:hover .chevron')?.get('color')).toBe(secondary)
+    expect(declarationsFrom(css, '.card:has(.cardContent:focus-visible) .chevron')?.get('color')).toBe(secondary)
+  })
 })

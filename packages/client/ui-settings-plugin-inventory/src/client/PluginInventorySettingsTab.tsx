@@ -118,8 +118,8 @@ export function PluginInventorySettingsTab({ list, t }: PluginInventorySettingsT
               onChange={(event) => { setQuery(event.currentTarget.value) }}
               onKeyDown={(event) => {
                 if (event.key !== 'Escape') return
+                event.preventDefault()
                 if (query !== '') {
-                  event.preventDefault()
                   setQuery('')
                   return
                 }

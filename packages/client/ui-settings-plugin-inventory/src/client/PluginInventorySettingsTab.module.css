@@ -136,6 +136,7 @@
   box-shadow: var(--dsw-shadow-focus-ring);
 }
 
+.cardContent:hover .chevron,
 .card:has(.cardContent:focus-visible) .chevron {
   color: var(--dsw-alias-label-secondary);
 }
