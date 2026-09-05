@@ -17,6 +17,7 @@ import { PopupSelectView } from '../src/client/PopupSelectView.tsx'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { zh } from '../src/client/locales.ts'
+import { subscribeOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 
 // The framework-injected t seat, stubbed over the zh dictionaries (the default locale).
 const t: Parameters<typeof PopupSelectView>[0]['t'] = makeTranslate(zh, commonZh)
@@ -238,6 +239,23 @@ describe('PopupSelectView', () => {
 
   it('Escape dismisses and restores composer focus', async () => {
     const { view, search, focusComposer } = await mountOpen()
+    act(() => { fireEvent.keyDown(search, { key: 'Escape' }) })
+    expect(view.container.childElementCount).toBe(0)
+    expect(focusComposer).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves the shell open when a later overlay owns Escape', async () => {
+    const { view, search, focusComposer } = await mountOpen()
+    const upper = vi.fn()
+    const release = subscribeOverlayEscape(upper)
+    try {
+      act(() => { fireEvent.keyDown(search, { key: 'Escape' }) })
+      expect(upper).toHaveBeenCalledTimes(1)
+      expect(view.container.childElementCount).not.toBe(0)
+      expect(focusComposer).not.toHaveBeenCalled()
+    } finally {
+      release()
+    }
     act(() => { fireEvent.keyDown(search, { key: 'Escape' }) })
     expect(view.container.childElementCount).toBe(0)
     expect(focusComposer).toHaveBeenCalledTimes(1)

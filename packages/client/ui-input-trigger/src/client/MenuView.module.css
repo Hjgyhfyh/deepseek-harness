@@ -60,6 +60,12 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.item.active,
+.item:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .itemIcon {
   display: inline-flex;
   flex: none;

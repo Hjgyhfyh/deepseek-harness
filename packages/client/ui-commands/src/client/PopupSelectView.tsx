@@ -12,7 +12,7 @@
 import { useEffect, useRef } from 'react'
 import { useSyncExternalStore } from 'react'
 import clsx from 'clsx'
-import { IconCheckOutline16, RiskConfirmation, useAnchoredMaxHeight } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconCheckOutline16, RiskConfirmation, useAnchoredMaxHeight, useOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { filterOptions } from './popup.ts'
 import type { PopupSelectController } from './popup.ts'
@@ -74,6 +74,12 @@ export function PopupSelectView({ popup, t }: PopupSelectViewProps) {
     if (state.open && state.confirming === null) searchRef.current?.focus()
   }, [state.open, state.confirming])
 
+  // Overlay stack, not the card keydown: a confirmation Modal (and any later
+  // dialog) must win the first Escape; the search field still bubbles here.
+  useOverlayEscape(state.open && state.confirming === null, () => {
+    popup.dismiss({ focusComposer: true })
+  })
+
   if (!state.open) return null
 
   const rows = filterOptions(state.options, state.search)
@@ -94,10 +100,6 @@ export function PopupSelectView({ popup, t }: PopupSelectViewProps) {
       case 'Enter':
         ev.preventDefault()
         void popup.select(state.active)
-        return
-      case 'Escape':
-        ev.preventDefault()
-        popup.dismiss({ focusComposer: true })
         return
       default:
     }

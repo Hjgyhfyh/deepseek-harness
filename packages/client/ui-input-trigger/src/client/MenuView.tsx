@@ -3,13 +3,14 @@
  * conversation.input.overlay anchor. Closed state renders null (the overlay
  * slot stays mounted); groups render in roster order under localized title
  * rows, pending groups as a loading row; pointer picks route back through
- * the service (combobox pattern — focus never leaves the textarea, so rows
- * are mousedown-handled and the highlight is exposed via
- * aria-activedescendant on the listbox).
+ * the service (combobox pattern — focus never leaves the textarea: option
+ * rows are `tabIndex={-1}` and mousedown-handled, and the highlight is
+ * exposed via aria-activedescendant on the listbox). Escape is the overlay
+ * stack so a later dialog wins the first key.
  */
 import { Fragment, useEffect, useRef, useSyncExternalStore } from 'react'
 import clsx from 'clsx'
-import { useAnchoredMaxHeight } from '@deepseek-ai/dsh-client-ui-primitives'
+import { useAnchoredMaxHeight, useOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import css from './MenuView.module.css'
 import type { MenuViewInjected } from './slots.ts'
@@ -63,6 +64,7 @@ export function MenuView({ menu, onPick, onDismiss, t }: MenuViewProps) {
     document.addEventListener('pointerdown', onPointerDown, true)
     return () => { document.removeEventListener('pointerdown', onPointerDown, true) }
   }, [state.open, onDismiss])
+  useOverlayEscape(state.open, onDismiss)
   if (!state.open) return null
   return (
     <div
@@ -92,6 +94,7 @@ export function MenuView({ menu, onPick, onDismiss, t }: MenuViewProps) {
                       id={optionId(group.source, index)}
                       type="button"
                       role="option"
+                      tabIndex={-1}
                       aria-selected={active}
                       className={clsx(css.item, active && css.active)}
                       // mousedown, not click: the textarea keeps focus (combobox

@@ -15,6 +15,7 @@ import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts
 import { zh } from '../src/client/locales.ts'
 import type { MenuState, TriggerHit } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 import { MenuView } from '../src/client/MenuView.tsx'
+import { subscribeOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 
 const hit: TriggerHit = {
   trigger: '/',
@@ -107,6 +108,7 @@ describe('MenuView', () => {
     expect(listbox.getAttribute('aria-activedescendant')).toBe(options[1]!.id)
     expect(options[1]!.getAttribute('aria-selected')).toBe('true')
     expect(options[0]!.getAttribute('aria-selected')).toBe('false')
+    expect(options.every(option => option.tabIndex === -1)).toBe(true)
   })
 
   it('omits aria-activedescendant without a highlight', () => {
@@ -194,5 +196,20 @@ describe('MenuView', () => {
     // fireEvent returns false when preventDefault was called.
     expect(notPrevented).toBe(false)
     expect(onPick).toHaveBeenCalledWith('command', 1)
+  })
+
+  it('Escape on document dismisses; a later overlay wins the first key', () => {
+    const { onDismiss } = mount(openState())
+    const upper = vi.fn()
+    const release = subscribeOverlayEscape(upper)
+    try {
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(upper).toHaveBeenCalledTimes(1)
+      expect(onDismiss).not.toHaveBeenCalled()
+    } finally {
+      release()
+    }
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 })
