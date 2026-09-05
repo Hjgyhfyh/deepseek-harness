@@ -1060,7 +1060,11 @@ export function WorkspaceBrowser({
                 onChange={(e) => { setQuery(sanitizeSearchQuery(e.target.value)) }}
                 onKeyDown={(e) => {
                   if (e.key !== 'Escape') return
-                  setQuery('')
+                  e.preventDefault()
+                  if (normalizedQuery !== '') {
+                    setQuery('')
+                    return
+                  }
                   setSearchExpanded(false)
                 }}
               />

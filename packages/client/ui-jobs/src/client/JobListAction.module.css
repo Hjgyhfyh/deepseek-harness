@@ -17,9 +17,14 @@
   cursor: pointer;
 }
 
-.trigger:hover,
+.trigger:hover {
+  color: var(--dsw-alias-label-secondary);
+}
+
 .trigger:focus-visible {
   color: var(--dsw-alias-label-secondary);
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .trigger svg {

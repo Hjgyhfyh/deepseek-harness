@@ -502,6 +502,22 @@ describe('WorkspaceBrowser', () => {
     expect(input.value).toBe('kept')
   })
 
+  it('Escape clears a non-empty query then collapses the empty field', () => {
+    mount()
+    const search = screen.getByRole('button', { name: '搜索会话' })
+    fireEvent.click(search)
+    const input = screen.getByPlaceholderText<HTMLInputElement>('搜索会话…')
+    fireEvent.change(input, { target: { value: 'kept' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(search.getAttribute('aria-expanded')).toBe('true')
+    expect(input.value).toBe('kept')
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(search.getAttribute('aria-expanded')).toBe('true')
+    expect(input.value).toBe('')
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(search.getAttribute('aria-expanded')).toBe('false')
+  })
+
   it('adds Host content hits with context, shows the result bound, and opens without clearing the query', async () => {
     vi.useFakeTimers()
     try {
