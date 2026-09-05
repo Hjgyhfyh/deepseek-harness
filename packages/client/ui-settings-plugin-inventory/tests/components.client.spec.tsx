@@ -95,6 +95,22 @@ describe('PluginInventorySettingsTab', () => {
     expect(screen.getByText(en.emptySearch)).toBeTruthy()
   })
 
+  it('Escape clears a non-empty search then blurs the field', async () => {
+    render(<PluginInventorySettingsTab {...props(async () => SNAPSHOT)} />)
+    const search = await screen.findByRole('searchbox', { name: en.search })
+    fireEvent.change(search, { target: { value: 'hmr' } })
+    expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    search.focus()
+    fireEvent.keyDown(search, { key: 'Escape' })
+    expect(screen.getAllByRole('listitem')).toHaveLength(7)
+    expect((search as HTMLInputElement).value).toBe('')
+    expect(document.activeElement).toBe(search)
+    fireEvent.keyDown(search, { key: 'Enter' })
+    expect((search as HTMLInputElement).value).toBe('')
+    fireEvent.keyDown(search, { key: 'Escape' })
+    expect(document.activeElement).not.toBe(search)
+  })
+
   it('shows a generic failure and retries into the empty state', async () => {
     const list = vi.fn<PluginInventorySettingsTabInjected['list']>()
       .mockRejectedValueOnce(new Error('private transport detail'))

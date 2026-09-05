@@ -116,6 +116,15 @@ export function PluginInventorySettingsTab({ list, t }: PluginInventorySettingsT
               placeholder={t('search')}
               aria-label={t('search')}
               onChange={(event) => { setQuery(event.currentTarget.value) }}
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return
+                if (query !== '') {
+                  event.preventDefault()
+                  setQuery('')
+                  return
+                }
+                event.currentTarget.blur()
+              }}
             />
           </label>
           <div className={css.catalogHeading}>
