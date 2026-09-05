@@ -6,11 +6,11 @@ Status: implemented
 
 ## Problem
 
-员工设置页把缺失或空的 `workers` 数组当成空花名册，并在删掉最后一位员工时写入 `[]`。Host 的 `applyRoster` 把同一个空数组映射成 `defaultWorkers()`，因此线上路由仍有四名员工，页面却显示没有。再添加一名员工会存下一行文档并盖掉线上默认名册。
+员工设置页把缺失或空的 `workers` 数组当成空花名册，并在删掉最后一位员工时写入 `[]`。直播坞用 `?? defaultEmployees()`，因此空数组（不像 `undefined`）把每个委派芯片藏起来。Host 的 `applyRoster` 把同一个空数组映射成 `defaultWorkers()`，线上路由仍有四名员工，设置页和坞对不上。
 
 ## Decision
 
-`EmployeesSection` 在 `workers` 缺失或为空时把 `defaultEmployees()` 记进 memo，使回退名册对当前存储快照保持稳定数组。删除最后一位员工写入该默认名册，而不是 `[]`。Host `applyRoster` 不变：空的存储数组仍变成 `defaultWorkers()`。
+`EmployeesSection` 与 `EmployeeDock` 在 `workers` 缺失或为空时把 `defaultEmployees()` 记进 memo。删除最后一位员工写入该默认名册，而不是 `[]`。Host `applyRoster` 不变：空的存储数组仍变成 `defaultWorkers()`。
 
 ## Alternatives considered
 
@@ -20,11 +20,11 @@ Status: implemented
 
 ## Consequences
 
-没有 workers 的设置文档显示并保存 Host 已经在跑的四名员工。空花名册那一行仍留给理论上 `defaultEmployees()` 为空的结果。
+没有 workers 的设置文档显示、在坞里列出并保存 Host 已经在跑的四名员工。空花名册那一行仍留给理论上 `defaultEmployees()` 为空的结果。
 
 ## Testing
 
-`packages/client/ui-botforge/tests/employees-section.client.spec.tsx` 把空存储名册钉成 `Roblox Scripter`，把删除最后一位钉成 `defaultEmployees()`。
+`packages/client/ui-botforge/tests/employees-section.client.spec.tsx` 把空存储名册钉成 `Roblox Scripter`，把删除最后一位钉成 `defaultEmployees()`。`packages/client/ui-botforge/tests/employee-dock.client.spec.tsx` 把同样的空存储名册钉成 Roblox 芯片。
 
 ## Related
 

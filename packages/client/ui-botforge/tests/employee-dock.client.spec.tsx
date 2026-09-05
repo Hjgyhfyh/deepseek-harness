@@ -206,5 +206,8 @@ describe('EmployeeDock', () => {
     } as unknown as EmployeeDockProps} />)
     expect(screen.getByRole('button', { name: '打开 Roblox Scripter' })).toBeTruthy()
     expect(screen.queryByText('totally-unknown-worker')).toBeNull()
+    cleanup()
+    renderDock({ workers: [] })
+    expect(screen.getByRole('button', { name: '打开 Roblox Scripter' })).toBeTruthy()
   })
 })

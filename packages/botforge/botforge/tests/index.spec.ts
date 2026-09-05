@@ -189,6 +189,15 @@ describe('botforge apply', () => {
     settings.commit({ workers: defaultWorkers() }, { enabled: true, name: '', systemPrompt: '' } as never)
     expect(ctx.botforge.orchestrator().name).toBe('Оркестратор')
     expect(ctx.botforge.orchestrator().mcp).toEqual([])
+    settings.commit({ workers: defaultWorkers() }, {
+      enabled: true,
+      name: 'Lead',
+      systemPrompt: 'go',
+      mcp: [{ name: 'x', command: 'npx' }],
+    } as never)
+    expect(ctx.botforge.orchestrator().mcp[0]).toEqual({
+      name: 'x', command: 'npx', args: [], env: {}, cwd: '', url: '', headers: {},
+    })
     settings.commit(undefined, undefined)
     expect(ctx.botforge.listWorkers().length).toBeGreaterThan(0)
     expect(ctx.botforge.orchestrator().enabled).toBe(true)

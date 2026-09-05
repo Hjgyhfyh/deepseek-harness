@@ -66,7 +66,13 @@ export function EmployeeDock(props: EmployeeDockProps): React.ReactNode {
   const workersSnap = useWorkers((snapshot) => snapshot)
   const orchSnap = useOrch((snapshot) => snapshot)
   const enabled = orchSnap.value?.enabled !== false
-  const workers = workersSnap.value?.workers ?? defaultEmployees()
+  const storedWorkers = workersSnap.value?.workers
+  const workers = useMemo(
+    () => (storedWorkers !== undefined && storedWorkers.length > 0
+      ? storedWorkers
+      : defaultEmployees()),
+    [storedWorkers],
+  )
   const parentId = sessions.currentAddress?.parentSessionId ?? sessions.current
 
   const items = useMemo(() => {

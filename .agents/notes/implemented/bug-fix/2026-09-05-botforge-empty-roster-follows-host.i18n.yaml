@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-botforge-empty-roster-follows-host.md
-2026-09-05-botforge-empty-roster-follows-host.md: 8d70c8b2731eeb845dd0b01ba937585dbe6c1f75
-2026-09-05-botforge-empty-roster-follows-host.zh.md: 0752ebcec0031e34a3a53981f54eadf5ae2a38f5
+2026-09-05-botforge-empty-roster-follows-host.md: a0b3184bac0310ee5e9ab8f5cf5bb0b773c541c4
+2026-09-05-botforge-empty-roster-follows-host.zh.md: 332cd2c31de714f7ef7985a99b425d00a832a046

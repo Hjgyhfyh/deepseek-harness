@@ -27,6 +27,7 @@ import {
   WorkersSectionSchema,
   defaultOrchestrator,
   defaultWorkers,
+  normalizeMcp,
   normalizeWorker,
   parseEmployeeId,
   validateWorkersSection,
@@ -200,7 +201,7 @@ function applyOrchestrator(section: BotForgeOrchestratorSection | undefined): vo
     enabled: section?.enabled !== false,
     name: section?.name || 'Оркестратор',
     systemPrompt: section?.systemPrompt || DEFAULT_ORCHESTRATOR_PROMPT,
-    mcp: section?.mcp ?? [],
+    mcp: (section?.mcp ?? []).map(normalizeMcp),
   }
 }
 
