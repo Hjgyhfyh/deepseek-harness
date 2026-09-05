@@ -121,6 +121,39 @@ describe('SearchBlock height cap', () => {
     expect(lines(view.container)).toEqual(['p1', 'p2', 'p9', 'p10'])
   })
 
+  it('Escape collapses an expanded cap and ignores a collapsed one', () => {
+    const paths = Array.from({ length: 10 }, (_v, i) => `p${i + 1}`)
+    const view = render(<SearchBlock kind="paths" truncated={false} total={10} paths={paths} maxLines={4} />)
+    const toggle = view.getByRole('button', { name: '展开其余 6 行结果' })
+    toggle.focus()
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.keyDown(toggle, { key: 'a' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(toggle)
+    const collapse = view.getByRole('button', { name: '收起结果' })
+    collapse.focus()
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    const collapsed = view.getByRole('button', { name: '展开其余 6 行结果' })
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(collapsed)
+    expect(lines(view.container)).toEqual(['p1', 'p2', 'p9', 'p10'])
+  })
+
+  it('Escape that already had default prevented leaves the cap expanded', () => {
+    const paths = Array.from({ length: 10 }, (_v, i) => `p${i + 1}`)
+    const view = render(<SearchBlock kind="paths" truncated={false} total={10} paths={paths} maxLines={4} />)
+    fireEvent.click(view.getByRole('button', { name: '展开其余 6 行结果' }))
+    const collapse = view.getByRole('button', { name: '收起结果' })
+    collapse.focus()
+    collapse.addEventListener('keydown', (event) => { event.preventDefault() }, true)
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    expect(collapse.getAttribute('aria-expanded')).toBe('true')
+    expect(lines(view.container)).toHaveLength(10)
+    expect(document.activeElement).toBe(collapse)
+  })
+
   it('counts a file header as one capped row alongside its matches', () => {
     // One file with 10 matches → 11 rows (header + 10). Cap 4: head 2, tail 2.
     const view = render(<SearchBlock kind="matches" truncated={false} total={10}

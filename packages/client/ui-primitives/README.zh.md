@@ -34,7 +34,7 @@
 
 ## 搜索结果
 
-`SearchBlock` 渲染一次已完成的搜索，并通过 `kind` 判别，由一个组件处理两种结果。`matches`（grep）将每个文件显示为粗体路径头及其 `lineNumber: line` 行，各文件组均可折叠；`paths`（glob）显示扁平的路径列表。两者都摊平成一个行列表，由高度上限对其做头尾切片（默认 16，与 `TerminalBlock` 相同的切分算法），且都不软换行：较长的匹配行或路径会横向滚动而非折行。当工具截断结果时，banner 摘要会包含截断前的总数（grep 为 `显示 X / 共 N 处匹配 · K 个文件`，glob 为 `显示 X / 共 N 个路径`），使卡片绝不把截断后的结果呈现为完整结果；无论是否触及上限或哪些组处于折叠状态，复制控件都会写入完整的结构化结果。几何结构与 `CodeBlock`/`TerminalBlock` 一致。原理：[Web 搜索卡片笔记](../../../.agents/notes/implemented/feature/2026-07-30-web-search-card.md)。
+`SearchBlock` 渲染一次已完成的搜索，并通过 `kind` 判别，由一个组件处理两种结果。`matches`（grep）将每个文件显示为粗体路径头及其 `lineNumber: line` 行，各文件组均可折叠；`paths`（glob）显示扁平的路径列表。两者都摊平成一个行列表，由高度上限对其做头尾切片（默认 16，与 `TerminalBlock` 相同的切分算法），且都不软换行：较长的匹配行或路径会横向滚动而非折行。Escape 收起已展开的上限（`preventDefault`）并把焦点留在控件上；已收起的控件忽略该键。嵌套控件已经处理过的 Escape（`defaultPrevented`）不收起上限。键盘焦点把展开控件涂成与悬停相同的次级色。当工具截断结果时，banner 摘要会包含截断前的总数（grep 为 `显示 X / 共 N 处匹配 · K 个文件`，glob 为 `显示 X / 共 N 个路径`），使卡片绝不把截断后的结果呈现为完整结果；无论是否触及上限或哪些组处于折叠状态，复制控件都会写入完整的结构化结果。几何结构与 `CodeBlock`/`TerminalBlock` 一致。原理：[Web 搜索卡片笔记](../../../.agents/notes/implemented/feature/2026-07-30-web-search-card.md)。
 
 ## Web 检索
 

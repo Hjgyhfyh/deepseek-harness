@@ -30,4 +30,4 @@ Status: implemented
 
 ## 相关
 
-[TerminalBlock 展开 Escape](2026-09-05-terminal-expand-escape.md) 和 [ReadBlock 展开 Escape](2026-09-05-read-expand-escape.md) 拥有命令输出和文件窗口上同一套模式。[浮层 Escape 栈](2026-09-05-overlay-escape-stack.md) 拥有 LIFO 浮层。[浮层 z-index 阶梯](../architecture/2026-09-05-overlay-z-index-and-motion-scale.md) 已列出 Diff 展开环。
+[TerminalBlock 展开 Escape](2026-09-05-terminal-expand-escape.md) 和 [ReadBlock 展开 Escape](2026-09-05-read-expand-escape.md) 拥有命令输出和文件窗口上同一套模式。[SearchBlock 展开 Escape](2026-09-05-search-expand-escape.md) 拥有搜索结果上同一套模式。[浮层 Escape 栈](2026-09-05-overlay-escape-stack.md) 拥有 LIFO 浮层。[浮层 z-index 阶梯](../architecture/2026-09-05-overlay-z-index-and-motion-scale.md) 已列出 Diff 展开环。

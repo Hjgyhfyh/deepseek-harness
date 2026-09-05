@@ -30,4 +30,4 @@ Keyboard users close a long file mutation with Escape and keep focus on the cap 
 
 ## Related
 
-[TerminalBlock expand Escape](2026-09-05-terminal-expand-escape.md) and [ReadBlock expand Escape](2026-09-05-read-expand-escape.md) own the same pattern on command output and file windows. [Overlay Escape stack](2026-09-05-overlay-escape-stack.md) owns LIFO overlays. [Overlay z-index ladder](../architecture/2026-09-05-overlay-z-index-and-motion-scale.md) already lists Diff expand rings.
+[TerminalBlock expand Escape](2026-09-05-terminal-expand-escape.md) and [ReadBlock expand Escape](2026-09-05-read-expand-escape.md) own the same pattern on command output and file windows. [SearchBlock expand Escape](2026-09-05-search-expand-escape.md) owns it on search results. [Overlay Escape stack](2026-09-05-overlay-escape-stack.md) owns LIFO overlays. [Overlay z-index ladder](../architecture/2026-09-05-overlay-z-index-and-motion-scale.md) already lists Diff expand rings.

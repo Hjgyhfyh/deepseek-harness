@@ -8,7 +8,7 @@
 // scrolls horizontally instead of folding. Geometry mirrors CodeBlock and
 // TerminalBlock so a search card reads as one family with them.
 
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useState, type KeyboardEvent, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { headTailCap } from './head-tail-cap.ts'
 import { useCopyFeedback } from './use-copy-feedback.ts'
@@ -183,6 +183,13 @@ export function SearchBlock(props: SearchBlockProps) {
   const { copied, onCopy } = useCopyFeedback(copyText(props))
 
   const onToggle = useCallback(() => { setExpanded(value => !value) }, [])
+  // In-flow cap disclosure: Escape only while the middle is showing, so a
+  // later dialog still wins the first key. The collapsed control ignores it.
+  const collapseFromEscape = useCallback((event: KeyboardEvent<HTMLButtonElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || !expanded) return
+    event.preventDefault()
+    setExpanded(false)
+  }, [expanded])
 
   const toggleFile = useCallback((index: number) => {
     setCollapsed((prev) => {
@@ -260,6 +267,7 @@ export function SearchBlock(props: SearchBlockProps) {
                 aria-expanded={expanded}
                 aria-label={expanded ? '收起结果' : `展开其余 ${hidden} 行结果`}
                 onClick={onToggle}
+                onKeyDown={collapseFromEscape}
               >
                 {expanded ? '收起' : `… 其余 ${hidden} 行`}
               </button>
