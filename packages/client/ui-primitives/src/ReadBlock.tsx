@@ -9,7 +9,7 @@
 // two cards collapse a long body at the same place. Colors resolve through
 // --shiki-*/--dsw-* tokens.
 
-import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import { writeClipboard } from './clipboard.ts'
 import {
@@ -103,6 +103,13 @@ export function ReadBlock({
   }, [copied, raw])
 
   const onToggle = useCallback(() => { setExpanded(value => !value) }, [])
+  // In-flow cap disclosure: Escape only while the middle is showing, so a
+  // later dialog still wins the first key. The collapsed control ignores it.
+  const collapseFromEscape = useCallback((event: KeyboardEvent<HTMLButtonElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || !expanded) return
+    event.preventDefault()
+    setExpanded(false)
+  }, [expanded])
 
   const hidden = lines.length - maxLines
   const capped = hidden > 0 && !expanded
@@ -161,6 +168,7 @@ export function ReadBlock({
             aria-expanded={expanded}
             aria-label={expanded ? '收起内容' : `展开其余 ${hidden} 行`}
             onClick={onToggle}
+            onKeyDown={collapseFromEscape}
           >
             {expanded ? '收起' : `… 其余 ${hidden} 行`}
           </button>

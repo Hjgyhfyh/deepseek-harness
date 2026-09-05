@@ -26,7 +26,7 @@
 
 ## Read 渲染
 
-`ReadBlock` 将返回的文件窗口渲染为带行号、语法高亮的代码表层：一个粗体路径（或 presenter 提供的标题）横幅加复制控件，其下是内容行，行号槽里是文件自身的行号（窗口化的 read 保留文件本身的编号，因此偏移之后的 read 从大于 1 处起始）。`totalLines` 超过窗口行数时画出 `showing N of M` 提示；超过 `maxLines`（默认 16，与 TerminalBlock 相同的切分算法）时折叠为头部切片加尾部切片，由展开按钮控制。高亮走与 `CodeBlock` 相同的 shiki 路径。原理：[Web read 卡片笔记](../../../.agents/notes/implemented/feature/2026-07-30-web-read-card.md)。
+`ReadBlock` 将返回的文件窗口渲染为带行号、语法高亮的代码表层：一个粗体路径（或 presenter 提供的标题）横幅加复制控件，其下是内容行，行号槽里是文件自身的行号（窗口化的 read 保留文件本身的编号，因此偏移之后的 read 从大于 1 处起始）。`totalLines` 超过窗口行数时画出 `showing N of M` 提示；超过 `maxLines`（默认 16，与 TerminalBlock 相同的切分算法）时折叠为头部切片加尾部切片，由展开按钮控制。Escape 收起已展开的上限（`preventDefault`）并把焦点留在控件上；已收起的控件忽略该键。嵌套控件已经处理过的 Escape（`defaultPrevented`）不收起上限。键盘焦点把展开控件涂成与悬停相同的次级色。高亮走与 `CodeBlock` 相同的 shiki 路径。原理：[Web read 卡片笔记](../../../.agents/notes/implemented/feature/2026-07-30-web-read-card.md)。
 
 ## Diff 渲染
 

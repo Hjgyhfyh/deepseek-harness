@@ -170,6 +170,37 @@ describe('ReadBlock height cap', () => {
     expect(gutters(view.container)).toEqual(['1', '2', '9', '10'])
   })
 
+  it('Escape collapses an expanded cap and ignores a collapsed one', () => {
+    const view = render(<ReadBlock label="a" lines={lines(10)} totalLines={10} maxLines={4} />)
+    const toggle = view.getByRole('button', { name: '展开其余 6 行' })
+    toggle.focus()
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.keyDown(toggle, { key: 'a' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(toggle)
+    const collapse = view.getByRole('button', { name: '收起内容' })
+    collapse.focus()
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    const collapsed = view.getByRole('button', { name: '展开其余 6 行' })
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(collapsed)
+    expect(gutters(view.container)).toEqual(['1', '2', '9', '10'])
+  })
+
+  it('Escape that already had default prevented leaves the cap expanded', () => {
+    const view = render(<ReadBlock label="a" lines={lines(10)} totalLines={10} maxLines={4} />)
+    fireEvent.click(view.getByRole('button', { name: '展开其余 6 行' }))
+    const collapse = view.getByRole('button', { name: '收起内容' })
+    collapse.focus()
+    collapse.addEventListener('keydown', (event) => { event.preventDefault() }, true)
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    expect(collapse.getAttribute('aria-expanded')).toBe('true')
+    expect(rowTexts(view.container)).toHaveLength(10)
+    expect(document.activeElement).toBe(collapse)
+  })
+
   it('renders the head slice alone when the cap leaves no tail', () => {
     const view = render(<ReadBlock label="a" lines={lines(5)} totalLines={5} maxLines={1} />)
     expect(gutters(view.container)).toEqual(['1'])
