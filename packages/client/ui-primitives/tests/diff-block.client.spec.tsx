@@ -137,6 +137,40 @@ describe('DiffBlock height cap', () => {
     render(<DiffBlock diffs={diffs} maxLines={16} />)
     expect(screen.queryByRole('button', { name: /展开其余|收起差异/ })).toBeNull()
   })
+
+  it('Escape collapses an expanded cap and ignores a collapsed one', () => {
+    // Path header plus 9 added lines = 10 rows; maxLines 4 hides 6.
+    const diffs: DiffHunk[] = [{ path: 'a.ts', oldText: null, newText: added(9) }]
+    const { container } = render(<DiffBlock diffs={diffs} maxLines={4} />)
+    const toggle = screen.getByRole('button', { name: '展开其余 6 行差异' })
+    toggle.focus()
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.keyDown(toggle, { key: 'a' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(toggle)
+    const collapse = screen.getByRole('button', { name: '收起差异' })
+    collapse.focus()
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    const collapsed = screen.getByRole('button', { name: '展开其余 6 行差异' })
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(collapsed)
+    expect(bodyRows(container)).toHaveLength(4)
+  })
+
+  it('Escape that already had default prevented leaves the cap expanded', () => {
+    const diffs: DiffHunk[] = [{ path: 'a.ts', oldText: null, newText: added(9) }]
+    const { container } = render(<DiffBlock diffs={diffs} maxLines={4} />)
+    fireEvent.click(screen.getByRole('button', { name: '展开其余 6 行差异' }))
+    const collapse = screen.getByRole('button', { name: '收起差异' })
+    collapse.focus()
+    collapse.addEventListener('keydown', (event) => { event.preventDefault() }, true)
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    expect(collapse.getAttribute('aria-expanded')).toBe('true')
+    expect(bodyRows(container)).toHaveLength(10)
+    expect(document.activeElement).toBe(collapse)
+  })
 })
 
 describe('DiffBlock copy', () => {

@@ -30,4 +30,4 @@ Keyboard users close a long file window with Escape and keep focus on the cap co
 
 ## Related
 
-[TerminalBlock expand Escape](2026-09-05-terminal-expand-escape.md) owns the same pattern on command output. [Overlay Escape stack](2026-09-05-overlay-escape-stack.md) owns LIFO overlays. [Overlay z-index ladder](../architecture/2026-09-05-overlay-z-index-and-motion-scale.md) already lists Read expand rings.
+[TerminalBlock expand Escape](2026-09-05-terminal-expand-escape.md) owns the same pattern on command output. [DiffBlock expand Escape](2026-09-05-diff-expand-escape.md) owns it on file mutations. [Overlay Escape stack](2026-09-05-overlay-escape-stack.md) owns LIFO overlays. [Overlay z-index ladder](../architecture/2026-09-05-overlay-z-index-and-motion-scale.md) already lists Read expand rings.

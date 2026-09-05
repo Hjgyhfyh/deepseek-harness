@@ -8,7 +8,7 @@
 // scrolls horizontally instead of folding. Colors resolve through --dsw-*
 // tokens; geometry mirrors CodeBlock.
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import { writeClipboard } from './clipboard.ts'
 import css from './DiffBlock.module.css'
@@ -153,6 +153,13 @@ export function DiffBlock({ diffs, maxLines = DEFAULT_DIFF_MAX_LINES, className 
   }, [copied, rows])
 
   const onToggle = useCallback(() => { setExpanded(value => !value) }, [])
+  // In-flow cap disclosure: Escape only while the middle is showing, so a
+  // later dialog still wins the first key. The collapsed control ignores it.
+  const collapseFromEscape = useCallback((event: KeyboardEvent<HTMLButtonElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || !expanded) return
+    event.preventDefault()
+    setExpanded(false)
+  }, [expanded])
 
   if (rows.length === 0) return null
 
@@ -181,6 +188,7 @@ export function DiffBlock({ diffs, maxLines = DEFAULT_DIFF_MAX_LINES, className 
             aria-expanded={expanded}
             aria-label={expanded ? '收起差异' : `展开其余 ${hidden} 行差异`}
             onClick={onToggle}
+            onKeyDown={collapseFromEscape}
           >
             {expanded ? '收起' : `… 其余 ${hidden} 行`}
           </button>
