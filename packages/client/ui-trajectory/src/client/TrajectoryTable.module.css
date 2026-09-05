@@ -745,7 +745,7 @@
 }
 
 .table tbody tr[data-collapsed-summary]:focus-visible {
-  box-shadow: inset 0 0 0 1px var(--dsw-alias-state-business-primary);
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .collapsedTurnContent {
@@ -891,6 +891,7 @@
 
 .detailsResizeHandle:focus-visible {
   outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .detailsHeader {
@@ -1529,6 +1530,7 @@
 
 .sourceBlockJumpTarget:focus-visible {
   outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .sourceBlockJumpTarget:focus-visible .sourceBlockJumpIcon {

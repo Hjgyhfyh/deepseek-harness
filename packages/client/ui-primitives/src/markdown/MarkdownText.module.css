@@ -79,7 +79,7 @@
 }
 
 .markdown a:focus-visible {
-  box-shadow: 0 0 0 2px var(--dsw-alias-state-business-primary);
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .markdown :where(ul, ol) {
@@ -258,8 +258,12 @@
 }
 
 .fileMention:hover,
-.fileMention:focus {
+.fileMention:focus-visible {
   outline: none;
   text-decoration: underline var(--dsw-alias-state-business-primary);
   text-underline-offset: 3px;
+}
+
+.fileMention:focus-visible {
+  box-shadow: var(--dsw-shadow-focus-ring);
 }

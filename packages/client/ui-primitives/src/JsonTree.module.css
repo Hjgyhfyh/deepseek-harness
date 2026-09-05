@@ -209,6 +209,7 @@
 
 .expander:focus-visible {
   outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .collapsedContent {
