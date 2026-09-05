@@ -86,11 +86,11 @@
 }
 
 /* No-workspace trigger state: dashed l4 stroke marks the card as a pick-a-
-   workspace affordance rather than a live composer; hover answers in the
-   business blue to invite the click. Native `dashed` has a fixed browser
-   pattern, so the stroke is an ::after overlay: theme-token background masked
-   by an SVG dash ring (stroke-width 2 centered on the box edge = 1px visible
-   inside), which keeps the 22px radius and both themes. */
+   workspace affordance rather than a live composer; hover, keyboard focus,
+   and an open picker answer in the business blue. Native `dashed` has a
+   fixed browser pattern, so the stroke is an ::after overlay: theme-token
+   background masked by an SVG dash ring (stroke-width 2 centered on the box
+   edge = 1px visible inside), which keeps the 22px radius and both themes. */
 .cardWorkspaceTrigger {
   border-color: transparent;
   cursor: pointer;
@@ -115,7 +115,9 @@
   pointer-events: none;
 }
 
-.cardWorkspaceTrigger:hover::after {
+.cardWorkspaceTrigger:hover::after,
+.cardWorkspaceTrigger:focus-within::after,
+.cardWorkspaceTrigger:has(textarea[aria-expanded='true'])::after {
   background: var(--dsw-alias-state-business-primary);
 }
 

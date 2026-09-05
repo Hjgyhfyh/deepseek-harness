@@ -140,7 +140,11 @@ export function ConversationRoot({
         disabled: true,
         placeholder: t('placeholder.workspace'),
         workspacePickerOpen: pickerOpen,
-        onRequestWorkspace: () => { setPickerOpen(true) },
+        // Toggle, not open-only: the card stops pointerdown so the Menu's
+        // outside-close cannot race a reopen, which also means a second
+        // click never reaches the document. The chip next to it already
+        // toggles; the dashed capsule has to match or the picker sticks.
+        onRequestWorkspace: () => { setPickerOpen(open => !open) },
       }
       : blocked
         // `blocked`, not `disabled`: the bar refuses input either way, but a

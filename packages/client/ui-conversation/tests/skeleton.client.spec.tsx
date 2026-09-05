@@ -383,6 +383,31 @@ describe('ConversationRoot resident composer', () => {
     expect(b.view.getByText('Selected Folder')).toBeTruthy()
   })
 
+  it('the dashed composer card toggles the picker the same way as the chip', () => {
+    // No owning workspace: the card is the pick target, and pointerdown is
+    // trapped on it so a second click never reaches the Menu's outside-close.
+    const b = mount(
+      conversationSnapshot({ composerPhase: 'blank', blank: true }),
+      [],
+    )
+    const card = b.view.container.querySelector('[data-composer-card]') as HTMLElement
+    const box = b.view.getByRole('textbox')
+    expect(box.getAttribute('aria-haspopup')).toBe('menu')
+    expect(box.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(card)
+    expect((b.pickerOwner() as { open: boolean }).open).toBe(true)
+    expect(box.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.click(card)
+    expect((b.pickerOwner() as { open: boolean }).open).toBe(false)
+    expect(box.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(b.view.getByRole('button', { name: '选择工作区' }))
+    expect((b.pickerOwner() as { open: boolean }).open).toBe(true)
+    fireEvent.click(card)
+    expect((b.pickerOwner() as { open: boolean }).open).toBe(false)
+  })
+
   it('settling phase: a summary that does not prove the session blank hides the composer while it opens', () => {
     const b = mount(conversationSnapshot({ composerPhase: 'blank', blank: true, openState: 'loading' }))
     const root = b.view.container.querySelector('[data-phase]')
