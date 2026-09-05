@@ -62,6 +62,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.compactionButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .compactionLeading {
   flex: none;
   display: inline-grid;

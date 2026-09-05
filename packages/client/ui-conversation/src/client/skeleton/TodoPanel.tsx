@@ -94,6 +94,7 @@ function progressLabel(todos: readonly TodoItem[], t: TodoPanelProps['t']): stri
 
 export function TodoPanel({ todos, t }: TodoPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
+  const listId = useId()
   if (todos.length === 0) return null
 
   return (
@@ -102,6 +103,7 @@ export function TodoPanel({ todos, t }: TodoPanelProps) {
         <button
           type="button"
           className={css.header}
+          aria-controls={listId}
           aria-expanded={!collapsed}
           onClick={() => { setCollapsed(v => !v) }}
         >
@@ -112,16 +114,14 @@ export function TodoPanel({ todos, t }: TodoPanelProps) {
             {collapsed ? <IconChevronUpOutline14 /> : <IconChevronDownOutline14 />}
           </span>
         </button>
-        {!collapsed && (
-          <ul className={css.list}>
-            {todos.map(item => (
-              <li key={item.content} className={css.item} data-status={item.status}>
-                <span className={css.glyph} aria-hidden><StatusGlyph status={item.status} /></span>
-                <span className={css.content}>{item.content}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul id={listId} className={css.list} hidden={collapsed}>
+          {!collapsed && todos.map(item => (
+            <li key={item.content} className={css.item} data-status={item.status}>
+              <span className={css.glyph} aria-hidden><StatusGlyph status={item.status} /></span>
+              <span className={css.content}>{item.content}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   )

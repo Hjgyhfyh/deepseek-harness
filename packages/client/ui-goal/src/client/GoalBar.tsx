@@ -38,15 +38,22 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
   const [actionError, setActionError] = useState<string | null>(null)
   const [clearedGoalId, setClearedGoalId] = useState<GoalSnapshot['id'] | null>(null)
   const pendingRef = useRef(false)
+  const restoreEditFocusRef = useRef(false)
 
   // A new goal identity (cleared/completed/replaced externally) invalidates the local edit
   // state: without the reset a surviving draft's Enter would write over the NEW goal.
   const goalId = goal?.id
   useEffect(() => {
+    restoreEditFocusRef.current = false
     setEditing(false)
     setActionError(null)
     setClearedGoalId(null)
   }, [goalId])
+
+  const leaveEdit = (): void => {
+    restoreEditFocusRef.current = true
+    setEditing(false)
+  }
 
   // React state disables the controls on the next render; the ref closes the
   // same-render window so rapid clicks cannot submit the same CAS twice.
@@ -66,7 +73,7 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
     const trimmed = draft.trim()
     if (trimmed === '') return
     const result = await runAction(() => onEdit(trimmed))
-    if (result?.ok) setEditing(false)
+    if (result?.ok) leaveEdit()
   }, [draft, onEdit, runAction])
 
   const handleClear = useCallback(async (clearedId: GoalSnapshot['id']) => {
@@ -89,7 +96,10 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
             onChange={(e) => { setDraft(e.target.value) }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') void handleEdit()
-              if (e.key === 'Escape') setEditing(false)
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                leaveEdit()
+              }
             }}
             autoFocus
           />
@@ -110,7 +120,7 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
               <button
                 type="button"
                 className={css.iconBtn}
-                onClick={() => { setEditing(false) }}
+                onClick={() => { leaveEdit() }}
                 disabled={pending}
                 aria-label={t('action.cancel')}
               >
@@ -148,6 +158,11 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
           )}
           <Tooltip label={t('action.edit')} side="bottom" delayMs={500}>
             <button
+              ref={(el) => {
+                if (el === null || !restoreEditFocusRef.current) return
+                restoreEditFocusRef.current = false
+                el.focus()
+              }}
               type="button"
               className={css.iconBtn}
               disabled={pending}

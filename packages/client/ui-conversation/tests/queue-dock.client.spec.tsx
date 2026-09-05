@@ -240,6 +240,7 @@ describe('QueueDock', () => {
         content: [{ type: 'text', text: 'after' }],
       })
     })
+    expect(document.activeElement).toBe(getByLabelText('编辑排队消息'))
   })
 
   it('cancels an edit by button or Escape without mutating the queue', () => {
@@ -254,11 +255,13 @@ describe('QueueDock', () => {
     fireEvent.change(getByLabelText('编辑排队消息'), { target: { value: 'abandoned' } })
     fireEvent.click(getByLabelText('取消编辑'))
     expect(getByText('before')).toBeTruthy()
+    expect(document.activeElement).toBe(getByLabelText('编辑排队消息'))
 
     fireEvent.click(getByLabelText('编辑排队消息'))
     fireEvent.keyDown(getByLabelText('编辑排队消息'), { key: 'Escape' })
     expect(getByText('before')).toBeTruthy()
     expect(updateQueue).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(getByLabelText('编辑排队消息'))
   })
 
   it('keeps editing during IME composition and disables a blank save', () => {

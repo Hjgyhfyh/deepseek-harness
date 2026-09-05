@@ -4,7 +4,7 @@
 // The 'conversation.input.dock' SlotMap declaration lives in
 // ../contract/slots.ts beside the other input-region slots.
 import type { Context } from '@deepseek-ai/cordis'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import {
@@ -37,10 +37,14 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
   const [busy, setBusy] = useState<QueueItemId | null>(null)
   const [collapsed, setCollapsed] = useState(true)
   const listId = useId()
+  const restoreEditId = useRef<QueueItemId | null>(null)
 
   useEffect(() => {
     if (queue.length === 0 && !collapsed) setCollapsed(true)
-    if (editing !== null && (!queueMutable || !queue.some(row => row.id === editing.id))) setEditing(null)
+    if (editing !== null && (!queueMutable || !queue.some(row => row.id === editing.id))) {
+      restoreEditId.current = null
+      setEditing(null)
+    }
   }, [collapsed, editing, queue, queueMutable])
 
   if (queue.length === 0) return null
@@ -72,7 +76,10 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
       editing.id,
       { kind: 'edit', content: [{ type: 'text', text: editing.text }] },
       t('queue.editFailed'),
-    )) setEditing(null)
+    )) {
+      restoreEditId.current = editing.id
+      setEditing(null)
+    }
   }
 
   return (
@@ -109,6 +116,8 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
                     onChange={(event) => { setEditing({ id: row.id, text: event.currentTarget.value }) }}
                     onKeyDown={(event) => {
                       if (event.key === 'Escape') {
+                        event.preventDefault()
+                        restoreEditId.current = row.id
                         setEditing(null)
                         return
                       }
@@ -141,7 +150,10 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
                           className={css.action}
                           aria-label={t('queue.cancelEdit')}
                           disabled={busy !== null}
-                          onClick={() => { setEditing(null) }}
+                          onClick={() => {
+                            restoreEditId.current = row.id
+                            setEditing(null)
+                          }}
                         >
                           <IconCloseOutline16 size={14} />
                         </button>
@@ -152,6 +164,11 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
                     <>
                       <Tooltip label={t('queue.edit')} side="bottom" delayMs={500} disabled={row.text === null}>
                         <button
+                          ref={(el) => {
+                            if (el === null || restoreEditId.current !== row.id) return
+                            restoreEditId.current = null
+                            el.focus()
+                          }}
                           type="button"
                           className={css.action}
                           aria-label={t('queue.edit')}

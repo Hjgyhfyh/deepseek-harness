@@ -49,6 +49,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .body {
   flex: 1;
   min-height: 0;

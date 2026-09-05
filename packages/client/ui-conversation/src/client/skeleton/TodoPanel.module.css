@@ -55,6 +55,12 @@
   cursor: pointer;
 }
 
+.header:focus-visible {
+  outline: none;
+  border-radius: 6px;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .lead {
   display: grid;
   flex: none;

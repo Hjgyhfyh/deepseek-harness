@@ -47,6 +47,7 @@ describe('TodoPanel', () => {
     expect(screen.getByText('任务')).toBeTruthy()
     expect(screen.getByText('1 已完成 · 1 进行中 · 1 待处理')).toBeTruthy()
     expect(screen.getByRole('button', { expanded: false })).toBeTruthy()
+    expect(document.getElementById(screen.getByRole('button', { expanded: false }).getAttribute('aria-controls')!)).toBeTruthy()
     expect(screen.queryByRole('list')).toBeNull()
   })
 

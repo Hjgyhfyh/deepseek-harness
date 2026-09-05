@@ -24,6 +24,12 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.trigger:focus-visible {
+  outline: none;
+  background: var(--dsw-alias-interactive-bg-hover);
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .track {
   fill: none;
   stroke: var(--dsw-alias-border-l3);

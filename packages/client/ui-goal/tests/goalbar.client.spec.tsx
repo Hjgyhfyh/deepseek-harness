@@ -96,6 +96,7 @@ describe('GoalBar', () => {
     fireEvent.keyDown(box, { key: 'Enter' })
     expect(actions.onEdit).toHaveBeenCalledWith('Ship v2')
     await waitFor(() => { expect(screen.getByText('进行中的目标')).toBeTruthy() })
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '编辑目标' }))
   })
 
   it('Esc cancels the edit without calling onEdit', () => {
@@ -105,6 +106,7 @@ describe('GoalBar', () => {
     fireEvent.keyDown(screen.getByRole('textbox', { name: '目标内容' }), { key: 'Escape' })
     expect(actions.onEdit).not.toHaveBeenCalled()
     expect(screen.getByText('进行中的目标')).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '编辑目标' }))
   })
 
   it('the cancel button exits the form and drops the draft (re-edit starts from the objective)', () => {
@@ -115,6 +117,7 @@ describe('GoalBar', () => {
     fireEvent.click(screen.getByRole('button', { name: '取消编辑' }))
     expect(actions.onEdit).not.toHaveBeenCalled()
     expect(screen.getByText('进行中的目标')).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '编辑目标' }))
 
     fireEvent.click(screen.getByRole('button', { name: '编辑目标' }))
     expect(screen.getByRole('textbox', { name: '目标内容' })).toHaveProperty('value', 'Ship the redesign')
