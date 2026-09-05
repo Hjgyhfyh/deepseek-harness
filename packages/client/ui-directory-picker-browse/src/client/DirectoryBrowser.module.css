@@ -136,6 +136,13 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.crumb:focus-visible {
+  outline: none;
+  border-radius: 4px;
+  box-shadow: var(--dsw-shadow-focus-ring);
+  color: var(--dsw-alias-label-primary);
+}
+
 .crumbChevron {
   flex: none;
   color: var(--dsw-alias-label-tertiary);
@@ -254,6 +261,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.row:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 /* Selection: pill fill + the open-folder glyph in the info accent. */
 .rowSelected,
 .rowSelected:hover {
@@ -358,6 +370,12 @@
 
 .showHiddenToggle:hover {
   color: var(--dsw-alias-label-primary);
+}
+
+.showHiddenToggle:focus-visible {
+  outline: none;
+  border-radius: 4px;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .showHiddenToggle:disabled {

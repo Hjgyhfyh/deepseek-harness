@@ -38,12 +38,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
   Button, IconCheckOutline16, IconChevronRightOutline14, IconEditOutline16, IconFolderClose16, IconFolderOpen16,
-  IconPlusOutline16, Modal,
+  IconPlusOutline16, Modal, useOverlayEscape,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { DirectoryEntry, DirectoryListing } from '@deepseek-ai/dsh-client-runtime/client'
 import { DirectoryBrowseError } from '@deepseek-ai/dsh-client-runtime/client'
 import type { Translate } from '@deepseek-ai/dsh-client-locale/client'
 import css from './DirectoryBrowser.module.css'
+
+/** Path-edit sits above the browse Modal on the overlay Escape stack. */
+function PathEditOverlayEscape({ active, onCancel }: { active: boolean; onCancel: () => void }) {
+  useOverlayEscape(active, onCancel)
+  return null
+}
 
 /** Owner-supplied browser props: browse calls, pick semantics, and copy. */
 export interface DirectoryBrowserProps {
@@ -752,28 +758,19 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
   return (
     <Modal
       open={open}
-      // Overlay Escape is LIFO: the nested create is the top frame while open.
-      // Its own guard still keeps an in-flight creation from closing, and an
-      // in-flight adoption pins the flow — dismissing it would leave the
-      // owner's createWorkspace to land after an apparent cancel.
+      // Overlay Escape is LIFO: path-edit (child frame) then nested create
+      // sit above this browser. The outer gate still keeps an in-flight
+      // adoption from closing, and an in-flight creation pins the nested
+      // dialog — dismissing it would leave the owner's createWorkspace to
+      // land after an apparent cancel.
       onClose={() => { if (folderDraft === null && !busy) onClose() }}
       title={t('browser.title')}
       className={clsx(css.dialog)}
       headless
     >
-      {/* Path-edit cancellation is observed at the card scope, not the
-        * input: once Tab parks focus on a filtered row the input is off the
-        * event path, yet Escape must still collapse the editor (not the
-        * dialog) and a further focus move out of the card must still
-        * cancel. display:contents keeps header/content/footer as direct
-        * flex children of the Modal card. */}
-      <div
-        className={css.editorScope}
-        onKeyDown={(event) => {
-          if (event.key !== 'Escape' || pathDraft === null) return
-          // stopPropagation keeps the card-scope Escape from the Modal's
-          // document listener.
-          event.stopPropagation()
+      <PathEditOverlayEscape
+        active={pathDraft !== null}
+        onCancel={() => {
           // Escape while the input holds focus is about to unmount it; with
           // focus already parked on a row, that row survives the cancel and
           // keeps focus naturally. Assignment (not a conditional set) also
@@ -781,6 +778,15 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
           refocusEditZone.current = document.activeElement === pathInputRef.current
           cancelPathEdit()
         }}
+      />
+      {/* Path-edit cancellation is observed at the card scope for blur, not
+        * the input: once Tab parks focus on a filtered row the input is off
+        * the event path, yet a further focus move out of the card must still
+        * cancel. Escape uses the overlay stack (this frame sits above the
+        * browse Modal) so a later dialog still wins. display:contents keeps
+        * header/content/footer as direct flex children of the Modal card. */}
+      <div
+        className={css.editorScope}
         // Focus leaving THIS dialog card while editing cancels like Escape.
         // Guarded non-cancel paths: window/tab focus loss (document no
         // longer focused); a focus move that stays inside the card (Tab
@@ -1016,10 +1022,6 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
               if (event.key === 'Enter' && !composingRef.current) {
                 event.preventDefault()
                 confirmCreate()
-              }
-              if (event.key === 'Escape') {
-                event.stopPropagation()
-                if (!creatingFolder) setFolderDraft(null)
               }
             }}
           />

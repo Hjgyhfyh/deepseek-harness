@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { DirectoryListing } from '@deepseek-ai/dsh-client-runtime/client'
 import { DirectoryBrowseError } from '@deepseek-ai/dsh-client-runtime/client'
+import { subscribeOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 import { DirectoryBrowser } from '../src/client/DirectoryBrowser.tsx'
 
 afterEach(cleanup)
@@ -1047,6 +1048,26 @@ describe('DirectoryBrowser', () => {
     // With no draft left, Escape falls through to the Modal and closes.
     fireEvent.keyDown(row, { key: 'Escape' })
     expect(b.onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves path editing open when a later overlay owns Escape', async () => {
+    const b = mount()
+    await waitFor(() => { expect(screen.getByRole('listitem')).toBeTruthy() })
+    fireEvent.click(screen.getByRole('button', { name: 'browser.editPath' }))
+    expect(screen.getByLabelText('browser.editPath', { selector: 'input' })).toBeTruthy()
+    const upper = vi.fn()
+    const release = subscribeOverlayEscape(upper)
+    try {
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(upper).toHaveBeenCalledTimes(1)
+      expect(screen.getByLabelText('browser.editPath', { selector: 'input' })).toBeTruthy()
+      expect(b.onClose).not.toHaveBeenCalled()
+    } finally {
+      release()
+    }
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByLabelText('browser.editPath', { selector: 'input' })).toBeNull()
+    expect(b.onClose).not.toHaveBeenCalled()
   })
 
   it('a picked dot-revealed hidden row stays visible as the selection', async () => {
