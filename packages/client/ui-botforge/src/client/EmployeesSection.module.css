@@ -63,9 +63,9 @@
   resize: vertical;
 }
 
-.textarea:focus {
-  outline: 2px solid var(--dsw-alias-brand-primary);
-  outline-offset: 1px;
+.textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .toolbar {
@@ -108,8 +108,8 @@
 
 .rosterItem:focus-visible,
 .rosterActive:focus-visible {
-  outline: 2px solid var(--dsw-alias-brand-primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .editor,

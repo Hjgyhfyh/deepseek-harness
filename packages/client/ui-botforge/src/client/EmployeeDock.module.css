@@ -75,14 +75,20 @@
 }
 
 .chip:focus-visible {
-  outline: 2px solid var(--dsw-alias-brand-primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 /* Running employees get the brand tint edge and a soft live glow. */
 .chipLive {
   border-color: color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--dsw-alias-brand-primary) 22%, transparent) inset;
+}
+
+.chipLive:focus-visible {
+  box-shadow:
+    var(--dsw-shadow-focus-ring),
+    0 0 0 1px color-mix(in srgb, var(--dsw-alias-brand-primary) 22%, transparent) inset;
 }
 
 /* Ordinal index: gives the roster a deliberate, table-like rhythm. */

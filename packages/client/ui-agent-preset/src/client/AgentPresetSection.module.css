@@ -124,8 +124,8 @@
 }
 
 .cardMain:focus-visible {
-  outline: 2px solid var(--dsw-alias-brand-primary);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .cardHead {
@@ -222,8 +222,8 @@
 }
 
 .iconButton:focus-visible {
-  outline: 2px solid var(--dsw-alias-brand-primary);
-  outline-offset: -1px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .iconButton::after {
@@ -321,9 +321,10 @@
   color: var(--dsw-alias-label-primary);
 }
 
-.input:focus {
+.input:focus-visible {
   outline: none;
   border-color: var(--dsw-alias-brand-primary);
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .input::placeholder {

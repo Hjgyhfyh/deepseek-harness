@@ -71,6 +71,11 @@
   cursor: default;
 }
 
+.reset:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .input {
   height: 34px;
   padding: 0 12px;
@@ -86,6 +91,7 @@
 .input:focus-visible {
   outline: none;
   border-color: var(--dsw-alias-brand-primary);
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .input:disabled {

@@ -89,6 +89,11 @@
   outline: none;
 }
 
+.row:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .row:hover > .clickarea,
 .row:focus-visible > .clickarea {
   background: var(--dsw-alias-interactive-bg-hover);
