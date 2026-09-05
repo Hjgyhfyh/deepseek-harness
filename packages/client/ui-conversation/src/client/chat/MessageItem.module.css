@@ -58,7 +58,8 @@
   cursor: pointer;
 }
 
-.compactionButton:not(:disabled):hover {
+.compactionButton:not(:disabled):hover,
+.compactionButton:not(:disabled):focus-visible {
   background: var(--dsw-alias-interactive-bg-hover);
 }
 

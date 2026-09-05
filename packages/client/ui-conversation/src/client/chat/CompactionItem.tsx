@@ -6,7 +6,7 @@
 // cited `compaction/summary` event, and a window cut that left that event outside makes the row
 // non-expandable rather than empty.
 
-import { memo, useState } from 'react'
+import { memo, useRef, useState, type KeyboardEvent } from 'react'
 import type { CompactionSummaryNode } from '@deepseek-ai/dsh-client-runtime/client'
 import {
   IconApiOutline14,
@@ -39,6 +39,7 @@ export const CompactionItem = memo(function CompactionItem({
   t,
 }: CompactionItemProps) {
   const [expanded, setExpanded] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const expandable = node.summary !== null
   const open = expandable && expanded
   const summary = node.shadowedItemCount !== null && node.shadowedTokenCount !== null
@@ -48,9 +49,19 @@ export const CompactionItem = memo(function CompactionItem({
     })
     : fallbackSummary
       ?? (expandable ? t('message.compaction.expand') : t('message.compaction.unavailable'))
+  // In-flow disclosure, not an overlay: Escape only while the summary is
+  // showing, so a later dialog still wins the first key. Closed markers ignore
+  // it. A nested control that already handled the key keeps the summary open.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || !open) return
+    event.preventDefault()
+    setExpanded(false)
+    buttonRef.current?.focus()
+  }
   return (
-    <div className={css.compactionRow}>
+    <div className={css.compactionRow} onKeyDown={collapseFromEscape}>
       <button
+        ref={buttonRef}
         type="button"
         className={css.compactionButton}
         disabled={!expandable}

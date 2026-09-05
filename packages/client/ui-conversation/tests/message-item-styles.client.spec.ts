@@ -31,3 +31,17 @@ describe('turn Continue keyboard chrome', () => {
     )
   })
 })
+
+describe('compaction marker keyboard chrome', () => {
+  it('fills on keyboard focus matching hover, and uses the product ring', () => {
+    expect(declarationsFrom(css, '.compactionButton:not(:disabled):hover')?.get('background')).toBe(
+      'var(--dsw-alias-interactive-bg-hover)',
+    )
+    expect(declarationsFrom(css, '.compactionButton:not(:disabled):focus-visible')?.get('background')).toBe(
+      'var(--dsw-alias-interactive-bg-hover)',
+    )
+    expect(declarationsFrom(css, '.compactionButton:focus-visible')?.get('box-shadow')).toBe(
+      'var(--dsw-shadow-focus-ring)',
+    )
+  })
+})
