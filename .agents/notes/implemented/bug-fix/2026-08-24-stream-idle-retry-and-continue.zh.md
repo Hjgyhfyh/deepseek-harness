@@ -22,7 +22,7 @@ Status: implemented
 
 **让用户把 `"continue"` 当作普通用户气泡输入。** 否决：续跑文本是 Host 拥有的模型可见输入，必须以插件通知写入会话日志，不得呈现为人类气泡，也不得接受调用方可控的客户端内容。
 
-**把 max-tokens 输出拼回同一轮。** 否决：loop 已经关闭该轮。Continue 在保留的 transcript 上开启新的 follow-up 轮，这正是 max-tokens 提示已经描述的安全续跑。
+**把 max-tokens 输出拼回同一轮。** 否决：loop 已经提交该步的 `assistant/message`。同一轮续跑走 `agent/turn-stopping` 上的 `steer()`，见 [max-tokens 自动续跑](2026-08-25-max-tokens-auto-continue.md)。
 
 **在本仓库实现 Decepticon `DECEPTICON_AUTH_PRIORITY` 回退。** 否决：本仓库没有 Decepticon 树。Harness 恢复只覆盖可重试 code、Retry-After、凭据与配额分类。
 
@@ -36,4 +36,4 @@ Status: implemented
 
 ## Related
 
-[LLM 暂时性请求失败的有界恢复](../architecture/2026-06-21-bounded-llm-request-recovery.md) 拥有结构化失败事实与重试执行。[聊天流展示 max-tokens 结束的轮次](2026-08-12-max-tokens-turn-end-notice.md) 拥有 `turn-max-tokens` 行。
+[LLM 暂时性请求失败的有界恢复](../architecture/2026-06-21-bounded-llm-request-recovery.md) 拥有结构化失败事实与重试执行。[聊天流展示 max-tokens 结束的轮次](2026-08-12-max-tokens-turn-end-notice.md) 拥有 `turn-max-tokens` 行。[max-tokens 自动续跑](2026-08-25-max-tokens-auto-continue.md) 在被截断的实时轮次关闭前 steer 同一条通知。

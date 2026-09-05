@@ -17,6 +17,7 @@ import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
 import type { ApiProxy } from './api/index.ts'
 import { createApiProxy, DEFAULT_COLD_BLANK_PROBE_MAX_BYTES } from './api-proxy.ts'
+import { installMaxTokensAutoContinue } from './agent-continue.ts'
 import {
   DEFAULT_SESSION_LOG_COMPRESSION_LEVEL,
   type SessionLogCompressionLevel,
@@ -59,6 +60,12 @@ export interface Config {
    * @default 1024
    */
   coldBlankProbeMaxBytes?: number
+  /**
+   * When true, a `max-tokens` last step steers the Host continue notice before
+   * the turn closes, so a truncated reply continues in the same turn.
+   * @default true
+   */
+  autoContinueOnMaxTokens?: boolean
 }
 
 /**
@@ -77,6 +84,7 @@ export class ApiProxyService extends Service implements ApiProxy {
     sessionExportCompressionLevel: z.number().step(1).min(0).max(9)
       .default(DEFAULT_SESSION_LOG_COMPRESSION_LEVEL) as z<SessionLogCompressionLevel>,
     coldBlankProbeMaxBytes: z.natural().default(DEFAULT_COLD_BLANK_PROBE_MAX_BYTES),
+    autoContinueOnMaxTokens: z.boolean().default(true),
   })
 
   readonly sessions: ApiProxy['sessions']
@@ -122,6 +130,7 @@ export class ApiProxyService extends Service implements ApiProxy {
     // createApiProxy returns closures (no `this` capture), so the bind is
     // behavior-neutral.
     this.respond = api.respond.bind(api)
+    if (config.autoContinueOnMaxTokens) installMaxTokensAutoContinue(ctx)
   }
 }
 

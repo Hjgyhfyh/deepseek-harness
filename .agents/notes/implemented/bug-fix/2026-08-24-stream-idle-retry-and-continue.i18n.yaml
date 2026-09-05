@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-08-24-stream-idle-retry-and-continue.md
-2026-08-24-stream-idle-retry-and-continue.md: dbbd61eeae1c6dd62b7c80bd4e78e73d68bb8d88
-2026-08-24-stream-idle-retry-and-continue.zh.md: 4c37fad0b5749a7b22f6bd2ad7d7f17bd0a6dbda
+2026-08-24-stream-idle-retry-and-continue.md: 4bd42649e1037feda89c35bcae1a00da6355c57e
+2026-08-24-stream-idle-retry-and-continue.zh.md: 22a5fa9bc00c68354d69f6f75ad8112732d65f1b

@@ -35,12 +35,12 @@ mail 能力 seam（`ctx.mail`）的 IMAP **Service Provider**：由一个 IMAP �
 
 ## 启用部署邮箱
 
-本仓库的 base bundle 已对 `mail.telepasta.ru` / `catchall@telepasta.ru` 启用 `mail-imap`。密码仍从 `passwordEnv`（`MAIL_IMAP_PASSWORD`）解析，不进入 YAML。其他部署重写 `host`、`user` 与 `passwordEnv`。
+本仓库的 base bundle 已对 `telepasta.ru` / `catchall@telepasta.ru` 启用 `mail-imap`。密码仍从 `passwordEnv`（`MAIL_IMAP_PASSWORD`）解析，不进入 YAML。其他部署重写 `host`、`user` 与 `passwordEnv`。
 
 ```yaml
 - id: mail-imap
   config:
-    host: mail.telepasta.ru
+    host: telepasta.ru
     user: catchall@telepasta.ru
     passwordEnv: MAIL_IMAP_PASSWORD
     sinceHours: 48

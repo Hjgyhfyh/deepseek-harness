@@ -426,17 +426,16 @@
     - id: mail-imap
       name: '@deepseek-ai/dsh-mail-imap'
       config:
-        host: mail.telepasta.ru
+        host: telepasta.ru
         user: catchall@telepasta.ru
         passwordEnv: MAIL_IMAP_PASSWORD
-        sinceHours: 48
 
     - id: tool-mail
       name: '@deepseek-ai/dsh-tool-mail'
       config:
         mailboxHint: >-
           This process reads Telepasta mail (catchall@telepasta.ru on
-          mail.telepasta.ru) through those tools.
+          telepasta.ru) through those tools.
 
     # ── rows every mode mounts, whose values each overlay may state ──────────────
 

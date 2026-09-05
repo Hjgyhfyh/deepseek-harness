@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-The API gateway shared by every client consists of the TypeScript API contract (`src/api/`, zero Node dependencies, importable from the browser), the fetch carrier pair (`src/fetch/`: `toFetchHandler` on the host side, `AbstractApiClient` plus platform subclasses on the client side), and the host-side implementation (`src/api-proxy.ts`: `createApiProxy` plus the default-exported `ApiProxyService` gateway plugin — config `{nativeOpen?, sessionExportCompressionLevel?, coldBlankProbeMaxBytes?}`, provides `ctx.apiProxy`). This package registers no routes; carriers such as HTTP wrap `ctx.apiProxy` themselves. The shipped Web composition lives in [`packages/bundle/web-app/cordis.patch.yml`](../../bundle/web-app/cordis.patch.yml), while its default Agent model selection belongs to [`@deepseek-ai/dsh-agent-default-model`](../../core/agent-default-model/README.md) in the base bundle.
+The API gateway shared by every client consists of the TypeScript API contract (`src/api/`, zero Node dependencies, importable from the browser), the fetch carrier pair (`src/fetch/`: `toFetchHandler` on the host side, `AbstractApiClient` plus platform subclasses on the client side), and the host-side implementation (`src/api-proxy.ts`: `createApiProxy` plus the default-exported `ApiProxyService` gateway plugin — config `{nativeOpen?, sessionExportCompressionLevel?, coldBlankProbeMaxBytes?, autoContinueOnMaxTokens?}`, provides `ctx.apiProxy`). This package registers no routes; carriers such as HTTP wrap `ctx.apiProxy` themselves. The shipped Web composition lives in [`packages/bundle/web-app/cordis.patch.yml`](../../bundle/web-app/cordis.patch.yml), while its default Agent model selection belongs to [`@deepseek-ai/dsh-agent-default-model`](../../core/agent-default-model/README.md) in the base bundle.
 
 ## The shared Agent default (`agent-default-model` Settings section)
 
@@ -70,7 +70,7 @@ The `settings.*`, `credentials.*`, and `llm.*` domains are the configuration-pag
 
 #### What the model sees
 
-When `session.prompt` or `subagent.prompt` carries `continuation: true`, the Host admits a plugin-sourced user-role notice. Client `content` is ignored. The collapsed-row summary is `Continue`.
+When `session.prompt` or `subagent.prompt` carries `continuation: true`, the Host admits a plugin-sourced user-role notice. Client `content` is ignored. The collapsed-row summary is `Continue`. While `autoContinueOnMaxTokens` is true (the default), a live last step that finishes `max-tokens` steers that same notice into the current turn's next step before the turn closes.
 
 ##### Continuation prompt
 
@@ -80,7 +80,7 @@ Continue from where the previous reply stopped. Resume unfinished work; do not r
 
 #### Token effect
 
-The notice is one additional user message on the next request.
+The notice is one additional user message on the next request. Each auto-continued truncated step adds the same notice in the same turn.
 
 #### KV Cache effect
 
@@ -88,6 +88,7 @@ The prefix through the prior transcript is unchanged; the notice is a new suffix
 
 ## Known Limitations and Deferred Work
 
+- **Auto-continue requires this gateway** — `dsh --profile headless` does not mount this package, so a `max-tokens` last step still closes the turn there. Provider quota and user Stop remain the bounds on a long auto-continued Web run.
 - **Forwarded Remote events are parasitic on this legacy frame union** — `host/remote-event` lives in `HostFrame` so the delivery path could reuse the existing host stream instead of opening a third downlink, which makes it read as if this package owned the Remote event contract. It does not: the allowlist is `dsh-api-remotes`' and the consumer verb is `ctx.remote.$on`. When the host stream moves off this package, the frame moves with it and the consumer contract is unaffected ([rationale](../../../.agents/notes/implemented/architecture/2026-08-10-remote-event-delivery.md)).
 - **Pending-interaction state is host-side** — the wire uses POST `/api/respond` plus `RpcReceipt`; the table in `src/api-proxy.ts` handles questions only and has no approval entries.
 - **Reserved seams stay out of `RpcMethodMap`** — `prompt.mode: 'inject'`, `job.list`, and a describe `hostInstanceId` are documented reservations; model discovery uses `llm.models`. An unknown method fails loud at envelope parse rather than getting a not-implemented code.

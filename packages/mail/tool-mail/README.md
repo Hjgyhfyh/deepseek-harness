@@ -151,7 +151,7 @@ Append-only; newly visible content follows the reusable request prefix and does 
 
 #### What the model sees
 
-A non-empty listing is `Recent messages:` followed by lines shaped `- <from> [id: <uid>]`, optionally suffixed ` — <subject> — <date>`, then `Use mail_read with one of the ids above to see its full text.` An empty mailbox says `No messages found.` A truncated listing adds `(More messages exist beyond the <N> shown.)`.
+A non-empty listing is `Recent messages:` followed by lines shaped `- <from> [id: <uid>]`, optionally suffixed ` — <subject> — <date>`, then `Use mail_read with one of the ids above to see its full text.` An empty mailbox says `No messages found.` A truncated non-empty listing adds `(More messages exist beyond the <N> shown.)`; an empty truncated listing adds `(The mailbox has messages outside this listing window.)`.
 
 #### Token effect
 

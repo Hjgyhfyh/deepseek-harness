@@ -20,7 +20,7 @@ agent loop 已把 `max-tokens` 记录为独立的 `turn/end` 原因，但没有�
 
 **用 turn-tail 标记代替独立聊天行** — 否决：turn-tail 渲染的是完成轮次的收尾信息，其操作会在后续轮次折叠，而截断提示必须停留在被截断的那一轮，并且在历史中无需交互即可看到。
 
-**在提示上放继续或重试按钮** — Continue 现已作为 Host 拥有的续跑通知交付；本说明仍然只拥有 `turn-max-tokens` 行。同轮拼接仍然否决：loop 已经关闭被截断的那一轮。
+**在提示上放继续或重试按钮** — Continue 现已作为 Host 拥有的续跑通知交付；本说明仍然只拥有 `turn-max-tokens` 行。同轮拼接仍然否决：loop 已经提交该步的 `assistant/message`。同轮续跑是 `agent/turn-stopping` 上的 `steer()`，见 [max-tokens 自动续跑](2026-08-25-max-tokens-auto-continue.md)。
 
 ## Consequences
 

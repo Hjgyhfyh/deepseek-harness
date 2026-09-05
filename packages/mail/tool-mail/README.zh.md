@@ -151,7 +151,7 @@ Use mail_read to fetch one mailbox message in full by the id mail_list_recent re
 
 #### 模型看到的内容
 
-非空列表是 `Recent messages:`，随后是形状为 `- <from> [id: <uid>]` 的行，并可添加后缀 ` — <subject> — <date>`，再跟随 `Use mail_read with one of the ids above to see its full text.`。空邮箱写 `No messages found.`。列表被截断时添加 `(More messages exist beyond the <N> shown.)`。
+非空列表是 `Recent messages:`，随后是形状为 `- <from> [id: <uid>]` 的行，并可添加后缀 ` — <subject> — <date>`，再跟随 `Use mail_read with one of the ids above to see its full text.`。空邮箱写 `No messages found.`。非空且截断时添加 `(More messages exist beyond the <N> shown.)`；空且截断时添加 `(The mailbox has messages outside this listing window.)`。
 
 #### Token 影响
 

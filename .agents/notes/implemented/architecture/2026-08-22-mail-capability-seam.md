@@ -24,7 +24,7 @@ The two-step flow is deliberate. `mail_list_recent` fetches headers only and ret
 
 `mail_codes` is a consumer projection over that same list+read path: it opens the newest messages, extracts likely verification codes, and returns compact rows. A miss is a successful empty result that tells the model to use `mail_list_recent` and `mail_read` — the extractor is not a second mailbox and must not hide recovery. The external Telegram-bot parser stays useful as a push channel.
 
-The base bundle in this tree enables `mail-imap` against `mail.telepasta.ru` / `catchall@telepasta.ru` and sets `tool-mail.mailboxHint`. The password still resolves from `passwordEnv` (`MAIL_IMAP_PASSWORD`) and never enters YAML. `mail_codes`, `mail_list_recent`, and `mail_read` stay registered on the parent and on every in-process child (BotForge employees inherit them; the deny list is only delegation tools). A standing prompt tells the model to call those tools and not to grep the workspace or spawn Telegram to read mail.
+The base bundle in this tree enables `mail-imap` against `telepasta.ru` / `catchall@telepasta.ru` and sets `tool-mail.mailboxHint`. The password still resolves from `passwordEnv` (`MAIL_IMAP_PASSWORD`) and never enters YAML. `mail_codes`, `mail_list_recent`, and `mail_read` stay registered on the parent and on every in-process child (BotForge employees inherit them; the deny list is only delegation tools). A standing prompt tells the model to call those tools and not to grep the workspace or spawn Telegram to read mail.
 
 ```text
 @deepseek-ai/dsh-tool-mail  --depends on-->  @deepseek-ai/dsh-mail  <--depends on--  @deepseek-ai/dsh-mail-imap

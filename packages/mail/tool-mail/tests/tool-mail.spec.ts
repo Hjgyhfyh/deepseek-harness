@@ -137,6 +137,14 @@ describe('list formatting', () => {
     expect(out).toContain('No messages found.')
     expect(out).not.toContain('mail_read')
     expect(out).not.toContain('More messages')
+    expect(out).not.toContain('listing window')
+  })
+
+  it('notes that an empty truncated listing still has mail outside the window', () => {
+    const out = formatListOutput({ messages: [], truncated: true })
+    expect(out).toContain('No messages found.')
+    expect(out).toContain('(The mailbox has messages outside this listing window.)')
+    expect(out).not.toContain('beyond the 0 shown')
   })
 
   it('omits the more-messages note when nothing was left behind', () => {
@@ -228,7 +236,7 @@ describe('presentation', () => {
       title: 'Recent mail',
       sources: [
         { url: 'mail:31', title: 's', snippet: '2026-08-22T10:00:00.000Z' },
-        { url: 'mail:9', title: 'f@x', snippet: undefined },
+        { url: 'mail:9', title: 'f@x' },
       ],
       truncated: false,
     })

@@ -35,12 +35,12 @@ The IMAP **Service Provider** for the mail capability seam (`ctx.mail`): a `Mail
 
 ## Enabling a deployment mailbox
 
-This tree's base bundle enables `mail-imap` against `mail.telepasta.ru` / `catchall@telepasta.ru`. The password still resolves from `passwordEnv` (`MAIL_IMAP_PASSWORD`); it never enters YAML. Other deployments restate `host`, `user`, and `passwordEnv`.
+This tree's base bundle enables `mail-imap` against `telepasta.ru` / `catchall@telepasta.ru`. The password still resolves from `passwordEnv` (`MAIL_IMAP_PASSWORD`); it never enters YAML. Other deployments restate `host`, `user`, and `passwordEnv`.
 
 ```yaml
 - id: mail-imap
   config:
-    host: mail.telepasta.ru
+    host: telepasta.ru
     user: catchall@telepasta.ru
     passwordEnv: MAIL_IMAP_PASSWORD
     sinceHours: 48

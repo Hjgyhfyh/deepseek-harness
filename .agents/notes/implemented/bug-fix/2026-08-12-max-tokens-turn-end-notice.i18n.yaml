@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-08-12-max-tokens-turn-end-notice.md
-2026-08-12-max-tokens-turn-end-notice.md: 03e5326d1d7b8e00118bf043f9f11bae953d25ff
-2026-08-12-max-tokens-turn-end-notice.zh.md: c6d4a890f506eb3a3002d3ca543fffc5c4113de4
+2026-08-12-max-tokens-turn-end-notice.md: 50c76e5209b45cb01292973376a9533ba5242811
+2026-08-12-max-tokens-turn-end-notice.zh.md: 45468a64afe64fedd755ef3f76b886de7f52ad84

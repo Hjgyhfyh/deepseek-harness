@@ -1,6 +1,6 @@
 # Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
-#   #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-22-mail-capability-seam.md
-2026-08-22-mail-capability-seam.md: 37e42a423131c7a4558f91f9e6769550864cec4f
-2026-08-22-mail-capability-seam.zh.md: 068cd1d353cdcef7133051c6d85f14910a35f42e
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-22-mail-capability-seam.md
+2026-08-22-mail-capability-seam.md: 2792c2839cf84c67d819876845c795623a0962bd
+2026-08-22-mail-capability-seam.zh.md: c19d11743624b03569837ec5a33e77824ed814a2

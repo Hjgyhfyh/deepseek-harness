@@ -71,10 +71,14 @@ export async function startFakeImapServer(script: ScriptedCommand[]): Promise<Fa
   }
 }
 
-/** Frame `bytes` as one IMAP literal, as `* … {n}` FETCH responses embed it. */
+/**
+ * Frame `bytes` as one IMAP nstring literal after a `BODY[…]` section.
+ * RFC 3501 `msg-att-static` is `BODY SP "[" section "]" SP nstring`; Dovecot
+ * emits the SP before `{n}`, so fixtures keep that space.
+ */
 export function literal(bytes: string | Buffer): string {
   const payload = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes, 'utf8')
-  return `{${payload.length}}\r\n${payload.toString('latin1')}`
+  return ` {${payload.length}}\r\n${payload.toString('latin1')}`
 }
 
 /** Build one FETCH response line pair for a message with the given sections. */

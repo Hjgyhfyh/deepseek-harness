@@ -24,7 +24,7 @@ agent 运营的账号通过发送到 VPS 私有域名邮箱（此处为 `@telepa
 
 `mail_codes` 是同一条 list+read 路径上的消费方投影：打开最新邮件、提取可能的验证码、返回紧凑行。未找到码是成功的空结果，并告诉模型使用 `mail_list_recent` 和 `mail_read` —— 提取器不是第二套邮箱，不得把恢复路径藏起来。外部 Telegram bot 解析器作为推送通道仍然有用。
 
-本仓库的 base bundle 对 `mail.telepasta.ru` / `catchall@telepasta.ru` 启用 `mail-imap`，并设置 `tool-mail.mailboxHint`。密码仍从 `passwordEnv`（`MAIL_IMAP_PASSWORD`）解析，绝不进入 YAML。`mail_codes`、`mail_list_recent` 和 `mail_read` 在父 agent 与每个进程内子 agent 上保持注册（BotForge 雇员继承它们；拒绝列表只有委派工具）。常驻提示词要求模型直接调用这些工具，而不是 grep 工作区或再拉起 Telegram 去读信。
+本仓库的 base bundle 对 `telepasta.ru` / `catchall@telepasta.ru` 启用 `mail-imap`，并设置 `tool-mail.mailboxHint`。密码仍从 `passwordEnv`（`MAIL_IMAP_PASSWORD`）解析，绝不进入 YAML。`mail_codes`、`mail_list_recent` 和 `mail_read` 在父 agent 与每个进程内子 agent 上保持注册（BotForge 雇员继承它们；拒绝列表只有委派工具）。常驻提示词要求模型直接调用这些工具，而不是 grep 工作区或再拉起 Telegram 去读信。
 
 ```text
 @deepseek-ai/dsh-tool-mail  --depends on-->  @deepseek-ai/dsh-mail  <--depends on--  @deepseek-ai/dsh-mail-imap

@@ -20,7 +20,7 @@ The renderer registers under the keyed `conversation.chat.node` seat like every 
 
 **A turn-tail marker instead of a flow row** — rejected: the tail renders closing chrome for a finished turn and its actions collapse on later turns, while the truncation notice must stay at the turn that was cut and remain visible in history without interaction.
 
-**A continue or retry action button on the notice** — Continue now ships as the Host-owned continuation notice; this note still owns only the `turn-max-tokens` row. Same-turn splice remains rejected: the loop has already closed the truncated turn.
+**A continue or retry action button on the notice** — Continue now ships as the Host-owned continuation notice; this note still owns only the `turn-max-tokens` row. Same-turn splice remains rejected: the loop has already committed that step's `assistant/message`. Same-turn resume is `steer()` on `agent/turn-stopping`, documented in [max-tokens auto-continue](2026-08-25-max-tokens-auto-continue.md).
 
 ## Consequences
 

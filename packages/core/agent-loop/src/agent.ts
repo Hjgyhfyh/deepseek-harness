@@ -282,12 +282,9 @@ export class ReactLoopAgent implements Agent {
           for (const message of decision.messages) {
             this.session.append('user/message', message, { surfaceOp: 'append' })
           }
-          // max-tokens is sticky: once any step hits the ceiling, later steps
-          // that complete normally must not downgrade the turn outcome.
           const stepEnd = await this.step(decision.assembly)
-          // max-tokens stays sticky: a later completed step must not
-          // downgrade the turn outcome.
-          if (turnEnds === null || turnEnds.kind !== 'max-tokens') turnEnds = stepEnd
+          // A later completed step replaces an earlier max-tokens outcome.
+          if (stepEnd !== null) turnEnds = stepEnd
         } finally {
           this.session.append('step/end', { turn, step })
         }

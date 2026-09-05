@@ -313,8 +313,10 @@ function createLineReader(socket: Socket | TLSSocket): LineReader {
 /**
  * Parse one `* <n> FETCH …` line into a {@link FetchedMessage}, consuming the
  * message's section literals through the reader. Returns undefined for
- * non-FETCH untagged lines. Exactly `sections` trailing `BODY[…]…{n}` markers
- * are consumed; a server sending fewer leaves the message short instead of
+ * non-FETCH untagged lines. Exactly `sections` trailing `BODY[…]` nstring
+ * literals are consumed. RFC 3501 `msg-att-static` puts SP between `]` and
+ * the nstring (`BODY[…] {n}`), which Dovecot emits; a glued `]{n}` form is
+ * also accepted. A server sending fewer literals fails the message instead of
  * desynchronizing the stream.
  */
 async function readFetchedMessage(
@@ -332,7 +334,7 @@ async function readFetchedMessage(
   let bodyBytes = Buffer.alloc(0)
   let piece = first
   for (let captured = 0; captured < sections; captured++) {
-    const marker = /(?:^|\s)(BODY\[[^\]]*\])\{\d+\}$/.exec(piece.line)
+    const marker = /(?:^|\s)(BODY\[[^\]]*\])\s*\{\d+\}$/.exec(piece.line)
     if (marker === null || piece.literal === undefined) {
       throw new MailError(`IMAP FETCH response carried ${captured} of ${sections} expected section literals`, 'MAIL_PROVIDER_ERROR')
     }

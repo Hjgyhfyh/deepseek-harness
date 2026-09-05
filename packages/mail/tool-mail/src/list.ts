@@ -61,7 +61,11 @@ export function formatListOutput(result: MailListResult): string {
     parts.push('No messages found.')
   }
   if (result.truncated) {
-    parts.push(`(More messages exist beyond the ${result.messages.length} shown.)`)
+    if (result.messages.length === 0) {
+      parts.push('(The mailbox has messages outside this listing window.)')
+    } else {
+      parts.push(`(More messages exist beyond the ${result.messages.length} shown.)`)
+    }
   }
   return parts.join('\n\n')
 }
@@ -150,7 +154,7 @@ export function presentListResult(_args: { limit?: number }, result: ToolResult)
     sources: meta.messages.map(message => ({
       url: `mail:${message.uid}`,
       title: message.subject.length > 0 ? message.subject : message.from,
-      snippet: message.date,
+      ...message.date !== undefined && message.date.length > 0 ? { snippet: message.date } : {},
     })),
     truncated: false,
   }

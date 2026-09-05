@@ -1,9 +1,12 @@
 /**
  * Host-owned continuation prompt admitted when a client asks to resume an
- * idle agent without typing a new user bubble.
+ * idle agent without typing a new user bubble, and the same notice the
+ * gateway steers when a live step ends `max-tokens`.
  * @module dsh-host-apiproxy/agent-continue
  */
 
+import type { Context } from '@deepseek-ai/cordis'
+import type { Agent } from '@deepseek-ai/dsh-agent'
 import { boundContextSummary, createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
 
@@ -36,5 +39,36 @@ export function createAgentContinueMessage(): UserMessage {
       form: 'notice',
       summary: boundContextSummary(AGENT_CONTINUE_SUMMARY),
     },
+  })
+}
+
+/**
+ * Whether the open turn's latest model finish is `max-tokens`.
+ * @param agent - the agent whose open-turn log is inspected.
+ * @returns true only when that latest finish is `max-tokens`.
+ */
+export function openTurnLastFinishIsMaxTokens(agent: Agent): boolean {
+  const { events } = agent.session
+  const turnStart = events.findLastIndex(event => event.type === 'turn/start')
+  const openTurn = turnStart < 0 ? events : events.slice(turnStart)
+  const finish = openTurn.findLast(event =>
+    event.type === 'assistant/chunk' && event.data.chunk.type === 'finish')
+  return finish?.type === 'assistant/chunk'
+    && finish.data.chunk.type === 'finish'
+    && finish.data.chunk.reason.kind === 'max-tokens'
+}
+
+/**
+ * Steer {@link createAgentContinueMessage} at `agent/turn-stopping` when the
+ * latest finish is `max-tokens` and nothing else already queued the next step.
+ * Cooperates with `signal`; does not continue abort, error, or a completed last step.
+ * @param ctx - the host context that receives every agent's turn-stopping serial.
+ */
+export function installMaxTokensAutoContinue(ctx: Context): void {
+  ctx.on('agent/turn-stopping', ({ agent, signal }) => {
+    if (signal.aborted) return
+    if (agent.inbox.nextStep.length > 0) return
+    if (!openTurnLastFinishIsMaxTokens(agent)) return
+    agent.steer(createAgentContinueMessage())
   })
 }

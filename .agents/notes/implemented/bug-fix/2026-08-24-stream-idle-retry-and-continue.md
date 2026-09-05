@@ -22,7 +22,7 @@ Both remote adapters default `streamIdleTimeoutMs` to 15 minutes (`900000`). pi-
 
 **Let the user type `"continue"` as an ordinary user bubble.** Rejected: the resume text is Host-owned model-visible input, must be reconstructable from the session log as a plugin notice, and must not appear as a human bubble or accept attacker-controlled client content.
 
-**Splice max-tokens output into the same turn.** Rejected: the loop already closed that turn. Continue opens a new follow-up turn over preserved transcript, which is the safe resume the max-tokens notice already described.
+**Splice max-tokens output into the same turn.** Rejected: the loop has already committed that step's `assistant/message`. Same-turn resume is `steer()` on `agent/turn-stopping`, documented in [max-tokens auto-continue](2026-08-25-max-tokens-auto-continue.md).
 
 **Implement Decepticon `DECEPTICON_AUTH_PRIORITY` fallback here.** Rejected: this repository has no Decepticon tree. Harness recovery covers retryable codes, Retry-After, credentials, and quota classification only.
 
@@ -36,4 +36,4 @@ A long think that only emits SSE pings no longer fails at 95 seconds or five min
 
 ## Related
 
-[Bounded LLM request recovery](../architecture/2026-06-21-bounded-llm-request-recovery.md) owns structured failure facts and retry execution. [The chat flow surfaces a max-tokens turn end](2026-08-12-max-tokens-turn-end-notice.md) owns the `turn-max-tokens` row.
+[Bounded LLM request recovery](../architecture/2026-06-21-bounded-llm-request-recovery.md) owns structured failure facts and retry execution. [The chat flow surfaces a max-tokens turn end](2026-08-12-max-tokens-turn-end-notice.md) owns the `turn-max-tokens` row. [Max-tokens auto-continue](2026-08-25-max-tokens-auto-continue.md) steers the same notice before a truncated live turn closes.

@@ -55,7 +55,7 @@ const DEFAULT_TIMEOUT_MS = 30_000
  * deployment must state (misconfiguration fails loud at load).
  */
 export interface Config {
-  /** IMAP server hostname (e.g. `mail.telepasta.ru`). */
+  /** IMAP server hostname (e.g. `telepasta.ru`). */
   host: string
   /** IMAP server port; defaults to 993 when `secure`, else 143. */
   port?: number

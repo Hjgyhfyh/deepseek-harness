@@ -752,10 +752,16 @@ export interface Config {
    * @default 1024
    */
   coldBlankProbeMaxBytes?: number
+  /**
+   * When true, a `max-tokens` last step steers the Host continue notice before
+   * the turn closes, so a truncated reply continues in the same turn.
+   * @default true
+   */
+  autoContinueOnMaxTokens?: boolean
 }
 ```
 
-来源：[`packages/host/apiproxy/src/index.ts:41`](../packages/host/apiproxy/src/index.ts)
+来源：[`packages/host/apiproxy/src/index.ts:42`](../packages/host/apiproxy/src/index.ts)
 
 <a id="deepseek-aidsh-host-directory-picker-browse"></a>
 

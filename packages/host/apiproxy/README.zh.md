@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-所有客户端共用的 API 网关由三部分组成：TypeScript API 约定（`src/api/`，不依赖 Node，可从浏览器导入）、fetch 载体对（`src/fetch/`：宿主侧的 `toFetchHandler`，以及客户端侧的 `AbstractApiClient` 与平台子类）和宿主侧实现（`src/api-proxy.ts`：`createApiProxy` 加上默认导出的 `ApiProxyService` 网关插件，其配置为 `{nativeOpen?, sessionExportCompressionLevel?, coldBlankProbeMaxBytes?}`，提供 `ctx.apiProxy`）。该包不注册任何路由；HTTP 等载体自行包装 `ctx.apiProxy`。随发行版交付的 Web 组合位于 [`packages/bundle/web-app/cordis.patch.yml`](../../bundle/web-app/cordis.patch.yml)，其默认 Agent（智能体）模型选择属于 base 组合包中的 [`@deepseek-ai/dsh-agent-default-model`](../../core/agent-default-model/README.md)。
+所有客户端共用的 API 网关由三部分组成：TypeScript API 约定（`src/api/`，不依赖 Node，可从浏览器导入）、fetch 载体对（`src/fetch/`：宿主侧的 `toFetchHandler`，以及客户端侧的 `AbstractApiClient` 与平台子类）和宿主侧实现（`src/api-proxy.ts`：`createApiProxy` 加上默认导出的 `ApiProxyService` 网关插件，其配置为 `{nativeOpen?, sessionExportCompressionLevel?, coldBlankProbeMaxBytes?, autoContinueOnMaxTokens?}`，提供 `ctx.apiProxy`）。该包不注册任何路由；HTTP 等载体自行包装 `ctx.apiProxy`。随发行版交付的 Web 组合位于 [`packages/bundle/web-app/cordis.patch.yml`](../../bundle/web-app/cordis.patch.yml)，其默认 Agent（智能体）模型选择属于 base 组合包中的 [`@deepseek-ai/dsh-agent-default-model`](../../core/agent-default-model/README.md)。
 
 ## 共享 Agent 默认值（`agent-default-model` Settings 分节）
 
@@ -70,7 +70,7 @@ Workspace 列表与 Session 列表是相互独立的重连基线。`workspace.cr
 
 #### 模型看到的内容
 
-当 `session.prompt` 或 `subagent.prompt` 携带 `continuation: true` 时，Host 会准入一条插件来源的 user-role 通知。客户端 `content` 会被忽略。折叠行摘要为 `Continue`。
+当 `session.prompt` 或 `subagent.prompt` 携带 `continuation: true` 时，Host 会准入一条插件来源的 user-role 通知。客户端 `content` 会被忽略。折叠行摘要为 `Continue`。在 `autoContinueOnMaxTokens` 为 true（默认）时，实时轮次的最后一步若以 `max-tokens` 结束，会在轮次关闭前把同一条通知 steer 进当前轮次的下一步。
 
 ##### 续跑提示
 
@@ -80,7 +80,7 @@ Continue from where the previous reply stopped. Resume unfinished work; do not r
 
 #### Token 影响
 
-该通知是下一次请求中多出的一条用户消息。
+该通知是下一次请求中多出的一条用户消息。每个被自动续跑的截断步骤会在同一轮次中加入同一条通知。
 
 #### KV Cache 影响
 
@@ -88,6 +88,7 @@ Continue from where the previous reply stopped. Resume unfinished work; do not r
 
 ## 已知限制与暂缓事项
 
+- **自动续跑依赖本网关**：`dsh --profile headless` 不挂载本包，因此那里的 `max-tokens` 最后一步仍会关闭轮次。提供方配额和用户 Stop 仍是长时间自动续跑 Web 运行的边界。
 - **转发的 Remote 事件寄居在这套 legacy 帧联合里**：`host/remote-event` 住在 `HostFrame` 中，是为了让投递路径复用现有宿主流、不必新开第三条下行通道，因此读起来像是本包拥有 Remote 事件契约。并非如此：名单归 `dsh-api-remotes`，消费端动词是 `ctx.remote.$on`。将来宿主流整体搬离本包时，该帧随之搬走，消费端契约不受影响（[原委](../../../.agents/notes/implemented/architecture/2026-08-10-remote-event-delivery.md)）。
 - **待处理交互状态位于宿主侧**：wire 使用 POST `/api/respond` 加 `RpcReceipt`；`src/api-proxy.ts` 中的表只处理问题，不包含审批条目。
 - **预留 seam 不进入 `RpcMethodMap`**：`prompt.mode: 'inject'`、`job.list` 和描述字段 `hostInstanceId` 都是已记录的预留项；模型发现使用 `llm.models`。未知方法会在信封解析时直接失败，而不会返回「尚未实现」错误码。

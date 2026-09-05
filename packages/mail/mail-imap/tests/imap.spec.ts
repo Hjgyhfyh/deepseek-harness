@@ -175,6 +175,20 @@ describe('ImapMailProvider.read', () => {
     expect(server.received().filter(command => command.startsWith('UID FETCH'))).toHaveLength(1)
   })
 
+  it('lists when Dovecot puts SP between BODY[] and the header literal', async () => {
+    const server = await track(await startFakeImapServer([
+      { match: 'SELECT', respond: ['* 1 EXISTS\r\n'] },
+      { match: 'FETCH', respond: [
+        headerFetch(1, '1', 'From: codes@svc.example\r\nSubject: otp\r\nDate: Thu, 1 Jan 2026 10:00:00 +0000', ' INTERNALDATE "02-Aug-2026 00:58:28 +0000"'),
+      ] },
+    ]))
+    const provider = new ImapMailProvider(() => providerOptions(server.port))
+    const result = await provider.list({ limit: 10 })
+    expect(result.messages).toEqual([
+      expect.objectContaining({ uid: '1', from: 'codes@svc.example', subject: 'otp' }),
+    ])
+  })
+
   it('throws MAIL_CREDENTIAL_MISSING when the password does not resolve', async () => {
     const server = await track(await startFakeImapServer([]))
     const provider = new ImapMailProvider(() => providerOptions(server.port, { resolvePassword: () => Promise.resolve(undefined) }))
@@ -253,6 +267,20 @@ describe('ImapClient framing', () => {
     })
     cleanup.push(async () => client.close())
     await expect(client.command('STATUS INBOX (MESSAGES)')).rejects.toThrow(expect.objectContaining({ code: 'MAIL_PROVIDER_ERROR' }))
+  })
+
+  it('throws MAIL_PROVIDER_ERROR when a FETCH omits the expected BODY literal', async () => {
+    const server = await track(await startFakeImapServer([
+      { match: 'FETCH', respond: ['* 1 FETCH (UID 9 FLAGS (\\Seen))\r\n'] },
+    ]))
+    const client = new ImapClient({
+      host: '127.0.0.1', port: server.port, secure: false,
+      user: 'u', password: 'p',
+    })
+    cleanup.push(async () => client.close())
+    await expect(client.command('FETCH 1 (UID)', { fetchSections: 1 })).rejects.toThrow(
+      /IMAP FETCH response carried 0 of 1 expected section literals/,
+    )
   })
 
   it('reports connection refused as MAIL_PROVIDER_ERROR', async () => {

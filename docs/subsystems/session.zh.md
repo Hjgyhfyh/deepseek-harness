@@ -564,7 +564,7 @@ interface TurnEndReasonMap {
    * flattened from any other error.
    */
   error: { kind: 'error'; error: LlmFailure }
-  /** At least one step reached its output-token ceiling, even if a plugin continued the turn. */
+  /** The last step reached its output-token ceiling. */
   'max-tokens': { kind: 'max-tokens' }
   /**
    * A persistence backend closed a crash-orphaned turn on reload. The loop never
@@ -574,7 +574,7 @@ interface TurnEndReasonMap {
 }
 ```
 
-`max-tokens` 与模型调用中同名的 `FinishReason` 对应：只要轮次内有任何步骤以 `max-tokens` 结束，整个轮次就以 `max-tokens` 而不是 `completed` 结束（即使之后继续执行，截断事实仍优先），让消费方能够区分正常停止和截断停止。取消和错误仍是不同的结果。`interrupted` 是唯一不会由任何 loop 发出的原因：它由崩溃恢复合成（见 [persistence.md](persistence.md)）。该 map 可通过合并扩展。
+`max-tokens` 与模型调用中同名的 `FinishReason` 对应：最后一步被截断时，轮次以 `max-tokens` 结束。之后若有一步正常完成，则记录 `completed`。取消和错误仍是不同的结果。`interrupted` 是唯一不会由任何 loop 发出的原因：它由崩溃恢复合成（见 [persistence.md](persistence.md)）。该 map 可通过合并扩展。
 
 ## 执行封闭与独立事件
 
