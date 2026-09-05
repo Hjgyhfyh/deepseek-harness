@@ -499,7 +499,8 @@
   cursor: pointer;
 }
 
-.iconButton:hover:not(:disabled) {
+.iconButton:hover:not(:disabled),
+.iconButton:focus-visible:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);
 }
@@ -510,7 +511,8 @@
 }
 
 /* The delete glyph keeps the danger tint the rest of the section uses. */
-.iconButtonDanger:hover:not(:disabled) {
+.iconButtonDanger:hover:not(:disabled),
+.iconButtonDanger:focus-visible:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover-danger);
   color: var(--dsw-alias-state-error-primary);
 }

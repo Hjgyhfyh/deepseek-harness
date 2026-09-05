@@ -5,8 +5,7 @@
  * override; reset removes that override instead of copying defaults into it.
  */
 
-import { useState } from 'react'
-import type { ReactNode } from 'react'
+import { useState, type KeyboardEvent, type ReactNode } from 'react'
 import {
   IconChevronDownOutline14, IconChevronRightOutline14, IconPlusOutline16, IconTrashOutline16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -210,6 +209,23 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
     })
   }
 
+  // In-flow disclosure inside 自定义设置: Escape only while this row's
+  // capacities are open, so the parent details and Settings still win when
+  // the fold is closed. stopPropagation keeps one key from collapsing both.
+  const collapseAdvancedFromEscape = (index: number) =>
+    (event: KeyboardEvent<HTMLDivElement>): void => {
+      if (event.key !== 'Escape' || event.defaultPrevented || !expanded.has(index)) return
+      event.preventDefault()
+      event.stopPropagation()
+      setExpanded((current) => {
+        if (!current.has(index)) return current
+        const next = new Set(current)
+        next.delete(index)
+        return next
+      })
+      event.currentTarget.querySelector<HTMLButtonElement>('[aria-expanded="true"]')?.focus()
+    }
+
   /** The field's text: its live keystrokes, else the stored count spelled short. */
   const capacityText = (model: DeepSeekModelDraft, index: number, field: CapacityField): string => {
     const typed = editing.get(`${String(index)}:${field}`)
@@ -289,7 +305,7 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
         : (
           <div className={styles['modelList']}>
             {props.models.map((model, index) => (
-              <div className={styles['modelEntry']} key={index}>
+              <div className={styles['modelEntry']} key={index} onKeyDown={collapseAdvancedFromEscape(index)}>
                 <div className={styles['modelRow']}>
                   <input
                     className={styles['input']}

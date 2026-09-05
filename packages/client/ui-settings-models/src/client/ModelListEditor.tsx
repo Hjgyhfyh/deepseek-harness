@@ -14,8 +14,7 @@
  * rows the user can still fill in by hand.
  */
 
-import { useState } from 'react'
-import type { ReactNode } from 'react'
+import { useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { DiscoveredModelView, IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
 import { Button, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import { formatCapacity, parseCapacity } from './DeepSeekModelsEditor.tsx'
@@ -210,6 +209,23 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     })
   }
 
+  // In-flow disclosure inside 自定义设置: Escape only while this row's
+  // capacities are open, so the parent details and Settings still win when
+  // the fold is closed. stopPropagation keeps one key from collapsing both.
+  const collapseAdvancedFromEscape = (index: number) =>
+    (event: KeyboardEvent<HTMLDivElement>): void => {
+      if (event.key !== 'Escape' || event.defaultPrevented || !expanded.has(index)) return
+      event.preventDefault()
+      event.stopPropagation()
+      setExpanded((current) => {
+        if (!current.has(index)) return current
+        const next = new Set(current)
+        next.delete(index)
+        return next
+      })
+      event.currentTarget.querySelector<HTMLButtonElement>('[aria-expanded="true"]')?.focus()
+    }
+
   const patch = (index: number, next: Record<string, string | number | undefined>): void => {
     onChange(models.map((model, at) => {
       if (at !== index) return model
@@ -332,7 +348,7 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
       </div>
       {models.length === 0 ? <p className={styles['modelEmpty']}>{t('modelsEmpty')}</p> : null}
       {models.map((model, index) => (
-        <div key={index} className={styles['modelEntry']}>
+        <div key={index} className={styles['modelEntry']} onKeyDown={collapseAdvancedFromEscape(index)}>
           <div className={styles['modelRow']}>
             <input
               className={styles['input']}

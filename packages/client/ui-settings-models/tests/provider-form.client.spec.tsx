@@ -571,6 +571,31 @@ describe('endpoint interrogation', () => {
     expect(screen.queryByLabelText(`${en.modelMaxTokens} 1`)).toBeNull()
   })
 
+  it('Escape collapses an open capacities fold without closing 自定义设置', async () => {
+    await mountSection({
+      providers: { openai: { baseURL: 'https://proxy.example/v1', models: [{ id: 'only' }] } },
+    })
+    openEditor('openai')
+    const summary = document.querySelector('summary')
+    if (summary === null) throw new Error('no customized fold')
+    const details = summary.closest('details')
+    if (details === null) throw new Error('no customized details')
+    expect(details.open).toBe(true)
+
+    const chevron = screen.getByLabelText(`${en.modelAdvanced} 1`)
+    expandModel(1)
+    const cap = screen.getByLabelText(`${en.modelMaxTokens} 1`)
+    cap.focus()
+    fireEvent.keyDown(cap, { key: 'Escape' })
+    expect(screen.queryByLabelText(`${en.modelMaxTokens} 1`)).toBeNull()
+    expect(details.open).toBe(true)
+    expect(document.activeElement).toBe(chevron)
+
+    fireEvent.keyDown(chevron, { key: 'Escape' })
+    expect(details.open).toBe(false)
+    expect(document.activeElement).toBe(summary)
+  })
+
   it('closes the picker without adopting anything on cancel', async () => {
     const discover = vi.fn(() => Promise.resolve(ok({ models: [{ id: 'fresh' }] })))
     const { mutate } = await mountSection({ discover })

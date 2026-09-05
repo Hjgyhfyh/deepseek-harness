@@ -784,6 +784,29 @@ describe('ModelsSection', () => {
       .toBe(en.maxTokensPlaceholder)
   })
 
+  it('Escape collapses an open capacities fold and restores chevron focus', () => {
+    render(<DeepSeekModelsEditor
+      models={[{ id: 'flash' }]}
+      overridden={false}
+      defaultContextWindow={undefined}
+      defaultMaxTokens={undefined}
+      t={t}
+      disabled={false}
+      onChange={vi.fn()}
+      onReset={vi.fn()}
+    />)
+    const chevron = screen.getByLabelText(`${en.modelAdvanced} 1`)
+    fireEvent.keyDown(chevron, { key: 'Escape' })
+    expect(screen.queryByLabelText(`${en.maxTokens} 1`)).toBeNull()
+
+    expandRow(1)
+    const cap = screen.getByLabelText(`${en.maxTokens} 1`)
+    cap.focus()
+    fireEvent.keyDown(cap, { key: 'Escape' })
+    expect(screen.queryByLabelText(`${en.maxTokens} 1`)).toBeNull()
+    expect(document.activeElement).toBe(chevron)
+  })
+
   it('can empty and reset the model override, then clear optional fields without dropping hidden data', async () => {
     const { mutate } = await mountDeepSeekCard({
       mutate: vi.fn(() => Promise.resolve(ok(wireNamespaces()[0]))),

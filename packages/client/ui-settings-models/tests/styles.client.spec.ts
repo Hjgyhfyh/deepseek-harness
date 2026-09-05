@@ -95,4 +95,10 @@ describe('ModelsSection theme styles', () => {
       /\.customizedSummary:hover,\s*\.customizedSummary:focus-visible\s*\{[^}]*color: var\(--dsw-alias-label-primary\)/,
     )
   })
+
+  it('paints catalog icon buttons primary on keyboard focus, matching hover', () => {
+    expect(css).toMatch(
+      /\.iconButton:hover:not\(:disabled\),\s*\.iconButton:focus-visible:not\(:disabled\)\s*\{[^}]*color: var\(--dsw-alias-label-primary\)/,
+    )
+  })
 })
