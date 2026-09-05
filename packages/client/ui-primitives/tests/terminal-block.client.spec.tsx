@@ -309,6 +309,37 @@ describe('TerminalBlock height cap', () => {
     expect(outputLines(view.container)).toEqual(['line 1', 'line 2', 'line 9', 'line 10'])
   })
 
+  it('Escape collapses an expanded cap and ignores a collapsed one', () => {
+    const view = render(<TerminalBlock command="ls" output={body(10)} maxLines={4} />)
+    const toggle = view.getByRole('button', { name: '展开其余 6 行输出' })
+    toggle.focus()
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.keyDown(toggle, { key: 'a' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(toggle)
+    const collapse = view.getByRole('button', { name: '收起输出' })
+    collapse.focus()
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    const collapsed = view.getByRole('button', { name: '展开其余 6 行输出' })
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(collapsed)
+    expect(outputLines(view.container)).toEqual(['line 1', 'line 2', 'line 9', 'line 10'])
+  })
+
+  it('Escape that already had default prevented leaves the cap expanded', () => {
+    const view = render(<TerminalBlock command="ls" output={body(10)} maxLines={4} />)
+    fireEvent.click(view.getByRole('button', { name: '展开其余 6 行输出' }))
+    const collapse = view.getByRole('button', { name: '收起输出' })
+    collapse.focus()
+    collapse.addEventListener('keydown', (event) => { event.preventDefault() }, true)
+    fireEvent.keyDown(collapse, { key: 'Escape' })
+    expect(collapse.getAttribute('aria-expanded')).toBe('true')
+    expect(outputLines(view.container)).toHaveLength(10)
+    expect(document.activeElement).toBe(collapse)
+  })
+
   it('renders the head slice alone when the cap leaves no tail', () => {
     const view = render(<TerminalBlock command="ls" output={body(5)} maxLines={1} />)
     expect(outputLines(view.container)).toEqual(['line 1'])

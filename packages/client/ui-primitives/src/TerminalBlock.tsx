@@ -5,7 +5,7 @@
 // scrolls horizontally instead of folding. Colors resolve through --dsw-*
 // tokens; ANSI parsing lives in ansi.ts.
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import { parseAnsiLines, type AnsiLine } from './ansi.ts'
 import { headTailCap } from './head-tail-cap.ts'
@@ -208,6 +208,13 @@ export function TerminalBlock({
   const { copied, onCopy } = useCopyFeedback(text)
 
   const onToggle = useCallback(() => { setExpanded(value => !value) }, [])
+  // In-flow cap disclosure: Escape only while the middle is showing, so a
+  // later dialog still wins the first key. The collapsed control ignores it.
+  const collapseFromEscape = useCallback((event: KeyboardEvent<HTMLButtonElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || !expanded) return
+    event.preventDefault()
+    setExpanded(false)
+  }, [expanded])
 
   const status = statusText(exitCode, signal, copy)
   const state = runState(running, exitCode, signal, copy)
@@ -272,6 +279,7 @@ export function TerminalBlock({
                 aria-expanded={expanded}
                 aria-label={expanded ? copy.collapseAria : copy.expandAria(hidden)}
                 onClick={onToggle}
+                onKeyDown={collapseFromEscape}
               >
                 {expanded ? copy.collapse : copy.expand(hidden)}
               </button>

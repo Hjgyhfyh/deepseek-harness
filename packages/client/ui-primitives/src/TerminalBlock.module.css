@@ -205,7 +205,8 @@
   text-align: left;
 }
 
-.expand:hover {
+.expand:hover,
+.expand:focus-visible {
   color: var(--dsw-alias-label-secondary);
 }
 
