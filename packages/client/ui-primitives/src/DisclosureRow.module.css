@@ -63,11 +63,15 @@ button.leading:focus-visible {
   transition: opacity 100ms ease;
 }
 
-.row:hover .iconIdle {
+.row:hover .iconIdle,
+.row:focus-visible .iconIdle,
+button.leading:focus-visible .iconIdle {
   opacity: 0;
 }
 
-.row:hover .chevronHover {
+.row:hover .chevronHover,
+.row:focus-visible .chevronHover,
+button.leading:focus-visible .chevronHover {
   opacity: 1;
 }
 

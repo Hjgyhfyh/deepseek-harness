@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+import { useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { IconChevronDownOutline14 } from './icons/index.tsx'
 import css from './DisclosureRow.module.css'
@@ -12,7 +12,7 @@ export interface DisclosureRowProps {
   onToggle: () => void
   /** Makes the complete title row the disclosure target. */
   expandOnRowClick?: boolean | undefined
-  /** Replaces the collapsed icon with a chevron while the row is hovered. */
+  /** Replaces the collapsed icon with a chevron while the row is hovered or keyboard-focused. */
   previewChevron?: boolean | undefined
   /** Keeps `collapsedContent` inline while open. */
   keepContentWhenOpen?: boolean | undefined
@@ -48,6 +48,8 @@ export function DisclosureRow({
   titleClassName,
 }: DisclosureRowProps) {
   const rowExpands = expandable && expandOnRowClick
+  const rowRef = useRef<HTMLDivElement>(null)
+  const leadingRef = useRef<HTMLButtonElement>(null)
   const toggleFromLeading = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
     onToggle()
@@ -56,6 +58,16 @@ export function DisclosureRow({
     if (!rowExpands || (event.key !== 'Enter' && event.key !== ' ')) return
     event.preventDefault()
     onToggle()
+  }
+  // In-flow disclosure, not an overlay: Escape only while this row holds
+  // focus (header, leading control, or a nested control), so a later dialog
+  // still wins the first key. Forced-open non-expandable rows ignore it.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Escape' || !open || !expandable) return
+    event.preventDefault()
+    onToggle()
+    if (rowExpands) rowRef.current?.focus()
+    else leadingRef.current?.focus()
   }
   const collapsedLeading = previewChevron
     ? (
@@ -70,8 +82,9 @@ export function DisclosureRow({
     : collapsedLeading
 
   return (
-    <div className={clsx(css.root, className)} data-open={open || undefined}>
+    <div className={clsx(css.root, className)} data-open={open || undefined} onKeyDown={collapseFromEscape}>
       <div
+        ref={rowRef}
         className={clsx(css.row, rowClassName)}
         data-disclosure-row
         data-expandable={rowExpands || undefined}
@@ -83,6 +96,7 @@ export function DisclosureRow({
       >
         {expandable && !rowExpands ? (
           <button
+            ref={leadingRef}
             type="button"
             className={clsx(css.leading, leadingClassName)}
             aria-expanded={open}
