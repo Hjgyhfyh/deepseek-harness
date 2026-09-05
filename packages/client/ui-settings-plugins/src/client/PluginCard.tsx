@@ -55,7 +55,7 @@ export function PluginCard(props: PluginCardProps) {
   // focus (header or a nested field), so the settings overlay still wins
   // when the card is closed. Staged edits outlive collapsing.
   const collapseFromEscape = (event: KeyboardEvent<HTMLLIElement>): void => {
-    if (event.key !== 'Escape' || !open) return
+    if (event.key !== 'Escape' || event.defaultPrevented || !open) return
     event.preventDefault()
     setOpen(false)
     headerRef.current?.focus()

@@ -42,6 +42,7 @@
   outline: none;
 }
 
+.header:hover .chevron,
 .header:focus-visible .chevron {
   color: var(--dsw-alias-label-secondary);
 }
@@ -141,7 +142,8 @@
   color: var(--dsw-alias-label-secondary);
 }
 
-.discard:hover:not(:disabled) {
+.discard:hover:not(:disabled),
+.discard:focus-visible:not(:disabled) {
   color: var(--dsw-alias-label-primary);
   border-color: var(--dsw-alias-label-dimmed);
 }

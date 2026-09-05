@@ -28,5 +28,17 @@ describe('plugin configuration card keyboard chrome', () => {
     expect(declarationsFrom(css, '.header:focus-visible .chevron')?.get('color')).toBe(
       'var(--dsw-alias-label-secondary)',
     )
+    expect(declarationsFrom(css, '.header:hover .chevron')?.get('color')).toBe(
+      'var(--dsw-alias-label-secondary)',
+    )
+  })
+
+  it('paints Discard primary on keyboard focus, matching hover', () => {
+    expect(declarationsFrom(css, '.discard:hover:not(:disabled)')?.get('color')).toBe(
+      'var(--dsw-alias-label-primary)',
+    )
+    expect(declarationsFrom(css, '.discard:focus-visible:not(:disabled)')?.get('color')).toBe(
+      'var(--dsw-alias-label-primary)',
+    )
   })
 })

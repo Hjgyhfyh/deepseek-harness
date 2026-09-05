@@ -320,6 +320,19 @@ describe('BashCard', () => {
     expect(document.activeElement).toBe(header)
     expect(screen.queryByLabelText(en.bashTimeoutMs)).toBeNull()
   })
+
+  it('Escape that a nested field already handled leaves the card open', () => {
+    renderBash()
+    const header = screen.getByRole('button', { name: `${en.expand}: ${en.bashTitle}` })
+    fireEvent.click(header)
+    const timeout = screen.getByLabelText(en.bashTimeoutMs)
+    timeout.focus()
+    timeout.addEventListener('keydown', (event) => { event.preventDefault() }, true)
+    fireEvent.keyDown(timeout, { key: 'Escape' })
+    expect(header.getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByLabelText(en.bashTimeoutMs)).toBeTruthy()
+    expect(document.activeElement).toBe(timeout)
+  })
 })
 
 describe('AgentLoopCard', () => {
