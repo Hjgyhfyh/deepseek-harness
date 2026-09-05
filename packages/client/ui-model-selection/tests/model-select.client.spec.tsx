@@ -182,3 +182,45 @@ describe('ModelSelect reasoning effort', () => {
     expect(load).not.toHaveBeenCalled()
   })
 })
+
+describe('ModelSelect keyboard', () => {
+  it('opening focuses the first row; ArrowDown from the trigger does not skip it', () => {
+    render(<ModelSelect
+      locked={false}
+      available
+      directory={createSnapshotStore(state())}
+      load={vi.fn()}
+      select={vi.fn().mockResolvedValue(true)}
+      t={t}
+    />)
+    const trigger = screen.getByRole('button', { name: /选择模型|当前/ })
+    fireEvent.click(trigger)
+    const modelRow = screen.getByRole('menuitem', { name: /模型/ })
+    const effortRow = screen.getByRole('menuitem', { name: /推理等级/ })
+    expect(document.activeElement).toBe(modelRow)
+    trigger.focus()
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(modelRow)
+    fireEvent.keyDown(modelRow, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(effortRow)
+    fireEvent.keyDown(effortRow, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(modelRow)
+    trigger.focus()
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(effortRow)
+  })
+
+  it('drilling into the model pane focuses the current radio', () => {
+    render(<ModelSelect
+      locked={false}
+      available
+      directory={createSnapshotStore(state())}
+      load={vi.fn()}
+      select={vi.fn().mockResolvedValue(true)}
+      t={t}
+    />)
+    fireEvent.click(screen.getByRole('button', { name: /选择模型|当前/ }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /模型/ }))
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: 'DeepSeek-V4-Flash' }))
+  })
+})

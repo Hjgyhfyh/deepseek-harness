@@ -128,6 +128,11 @@
   cursor: pointer;
 }
 
+.retry:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .groups {
   min-height: 0;
   overflow-y: auto;
@@ -240,6 +245,11 @@
 
 .cell:hover {
   background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.cell:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .cellLabel {

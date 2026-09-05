@@ -138,13 +138,27 @@ export function ModelSelect(
     if (restoreFocus) queueMicrotask(() => { triggerRef.current?.focus() })
   }
 
+  const enabledItems = (): HTMLButtonElement[] =>
+    itemRefs.current.filter((item): item is HTMLButtonElement => item !== null && !item.disabled)
+
   const moveFocus = (offset: number): void => {
-    const items = itemRefs.current.filter(item => item !== null)
+    const items = enabledItems()
     if (items.length === 0) return
     const active = items.findIndex(item => item === document.activeElement)
-    const next = (Math.max(active, 0) + offset + items.length) % items.length
+    const next = active === -1
+      ? (offset > 0 ? 0 : items.length - 1)
+      : (active + offset + items.length) % items.length
     items[next]?.focus()
   }
+
+  // Opening (or drilling a pane) moves focus into the list so ArrowDown from
+  // a mouse-opened menu does not skip the first row.
+  useEffect(() => {
+    if (!open) return
+    const items = enabledItems()
+    const preferred = items.find(item => item.getAttribute('aria-checked') === 'true')
+    ;(preferred ?? items[0])?.focus()
+  }, [open, pane, state.status, choices.length, effortChoices.length])
 
   const onRootKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Escape' && open) {
