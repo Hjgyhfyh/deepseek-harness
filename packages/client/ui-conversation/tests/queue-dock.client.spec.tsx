@@ -293,6 +293,50 @@ describe('QueueDock', () => {
     expect(document.activeElement).toBe(getByLabelText('编辑排队消息'))
   })
 
+  it('Escape from save or cancel exits the editor without collapsing a multi-row list', () => {
+    const snap = snapshotWith([row('i-1', 'one'), row('i-2', 'two')])
+    const source = liveSession(snap)
+    const updateQueue = vi.fn(() => Promise.resolve())
+    const view = render(<QueueDock {...kitFor(snap, { updateQueue })} useSession={source.useSession} />)
+    fireEvent.click(view.getByRole('button', { name: '2 条排队消息' }))
+    fireEvent.click(view.getAllByLabelText('编辑排队消息')[0]!)
+
+    const save = view.getByLabelText('保存排队消息')
+    save.focus()
+    fireEvent.keyDown(save, { key: 'Escape' })
+    expect(view.getByText('one')).toBeTruthy()
+    expect(view.getByText('two')).toBeTruthy()
+    expect(view.queryByRole('textbox')).toBeNull()
+    expect(updateQueue).not.toHaveBeenCalled()
+    expect(view.getByRole('button', { name: '2 条排队消息' }).getAttribute('aria-expanded')).toBe('true')
+    expect(document.activeElement).toBe(view.getAllByLabelText('编辑排队消息')[0])
+
+    fireEvent.click(view.getAllByLabelText('编辑排队消息')[0]!)
+    const cancel = view.getByLabelText('取消编辑')
+    cancel.focus()
+    fireEvent.keyDown(cancel, { key: 'Escape' })
+    expect(view.getByText('one')).toBeTruthy()
+    expect(updateQueue).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(view.getAllByLabelText('编辑排队消息')[0])
+  })
+
+  it('Escape from save on a single-row queue cancels without mutating', () => {
+    const snap = snapshotWith([row('i-edit', 'before')])
+    const source = liveSession(snap)
+    const updateQueue = vi.fn(() => Promise.resolve())
+    const { getByLabelText, getByText, queryByRole } = render(
+      <QueueDock {...kitFor(snap, { updateQueue })} useSession={source.useSession} />,
+    )
+    fireEvent.click(getByLabelText('编辑排队消息'))
+    const save = getByLabelText('保存排队消息')
+    save.focus()
+    fireEvent.keyDown(save, { key: 'Escape' })
+    expect(getByText('before')).toBeTruthy()
+    expect(queryByRole('textbox')).toBeNull()
+    expect(updateQueue).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(getByLabelText('编辑排队消息'))
+  })
+
   it('keeps editing during IME composition and disables a blank save', () => {
     const snap = snapshotWith([row('i-edit', 'before')])
     const source = liveSession(snap)

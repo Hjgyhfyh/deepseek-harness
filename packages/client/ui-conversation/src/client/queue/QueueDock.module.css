@@ -183,8 +183,10 @@
   cursor: pointer;
 }
 
-.action:hover:not(:disabled) {
+.action:hover:not(:disabled),
+.action:focus-visible:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
 }
 
 .action:focus-visible {

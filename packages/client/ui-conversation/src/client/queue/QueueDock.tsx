@@ -54,12 +54,23 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
   const expanded = !collapsed || interactionActive
   const listVisible = queue.length === 1 || expanded
 
+  const cancelEdit = (itemId: QueueItemId): void => {
+    restoreEditId.current = itemId
+    setEditing(null)
+  }
+
   // In-flow disclosure above the composer: Escape only while the multi-row
-  // list is open and idle, so an overlay still wins when it is closed, and
-  // an editor's own Escape (already preventDefault) still only cancels.
+  // list is open and idle, so an overlay still wins when it is closed.
+  // Save/cancel have no field handler, so the dock cancels the draft there;
+  // the editor's own Escape already preventDefaults and stays edit-only.
   const collapseFromEscape = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key !== 'Escape' || event.defaultPrevented) return
-    if (queue.length <= 1 || collapsed || interactionActive) return
+    if (editing !== null) {
+      event.preventDefault()
+      cancelEdit(editing.id)
+      return
+    }
+    if (queue.length <= 1 || collapsed || busy !== null) return
     event.preventDefault()
     setCollapsed(true)
     headerRef.current?.focus()
@@ -130,8 +141,7 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
                     onKeyDown={(event) => {
                       if (event.key === 'Escape') {
                         event.preventDefault()
-                        restoreEditId.current = row.id
-                        setEditing(null)
+                        cancelEdit(row.id)
                         return
                       }
                       if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
@@ -163,10 +173,7 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
                           className={css.action}
                           aria-label={t('queue.cancelEdit')}
                           disabled={busy !== null}
-                          onClick={() => {
-                            restoreEditId.current = row.id
-                            setEditing(null)
-                          }}
+                          onClick={() => { cancelEdit(row.id) }}
                         >
                           <IconCloseOutline16 size={14} />
                         </button>

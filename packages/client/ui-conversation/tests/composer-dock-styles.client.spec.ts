@@ -20,4 +20,13 @@ describe('composer dock chevron keyboard chrome', () => {
       /\.header:hover:not\(:disabled\) \.chevron,\s*\.header:focus-visible:not\(:disabled\) \.chevron\s*\{[^}]*color: var\(--dsw-alias-label-primary\)/,
     )
   })
+
+  it('paints queue row actions secondary on keyboard focus, matching hover', () => {
+    expect(queue).toMatch(
+      /\.action:hover:not\(:disabled\),\s*\.action:focus-visible:not\(:disabled\)\s*\{[^}]*background: var\(--dsw-alias-interactive-bg-hover\)/,
+    )
+    expect(queue).toMatch(
+      /\.action:hover:not\(:disabled\),\s*\.action:focus-visible:not\(:disabled\)\s*\{[^}]*color: var\(--dsw-alias-label-secondary\)/,
+    )
+  })
 })
