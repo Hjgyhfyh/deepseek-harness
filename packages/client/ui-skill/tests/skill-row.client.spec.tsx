@@ -83,6 +83,25 @@ describe('SkillRow', () => {
     expect(row.getAttribute('aria-expanded')).toBe('false')
   })
 
+  it('Escape collapses an open row and restores focus from Inspect', () => {
+    const view = render(<SkillRow {...props(settled(), vi.fn())} />)
+    const row = screen.getByRole('button', { name: 'Skilldsh-manage-issues' })
+    fireEvent.keyDown(row, { key: 'Enter' })
+    expect(row.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.keyDown(row, { key: 'Escape' })
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(row)
+
+    fireEvent.keyDown(row, { key: 'Enter' })
+    const inspect = screen.getByRole('button', { name: 'Inspect' })
+    inspect.focus()
+    expect(document.activeElement).toBe(inspect)
+    fireEvent.keyDown(inspect, { key: 'Escape' })
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(row)
+    expect(view.queryByRole('button', { name: 'Inspect' })).toBeNull()
+  })
+
   it('keeps a running call compact and announces its state', () => {
     const view = render(<SkillRow {...props(running())} />)
     const row = view.container.querySelector('[data-tool="skill"] > div')!

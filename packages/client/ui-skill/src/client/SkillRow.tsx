@@ -2,7 +2,7 @@
 // The compact accent row keeps loaded instructions scannable in the transcript;
 // the exact durable tool output remains available in a bounded disclosure card.
 
-import { useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import {
   IconChevronDownOutline14, IconInspectOutline12, IconSkillOutline16, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -117,6 +117,7 @@ function stateStatus(state: SkillRowState, t: SkillRowProps['t']): string | null
 export function SkillRow({ block, inspect, t }: SkillRowProps) {
   const model = skillRowModel(block)
   const [expanded, setExpanded] = useState(false)
+  const rowRef = useRef<HTMLDivElement>(null)
   const expandable = model.output !== null
   const open = expanded && expandable
   const status = stateStatus(model.state, t)
@@ -129,6 +130,14 @@ export function SkillRow({ block, inspect, t }: SkillRowProps) {
     event.preventDefault()
     toggleExpand()
   }
+  // In-flow disclosure, not an overlay: Escape only while this card holds
+  // focus (header or Inspect), so a later dialog still wins the first key.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Escape' || !open) return
+    event.preventDefault()
+    setExpanded(false)
+    rowRef.current?.focus()
+  }
   const disclosureProps = expandable ? {
     role: 'button' as const,
     tabIndex: 0,
@@ -138,8 +147,9 @@ export function SkillRow({ block, inspect, t }: SkillRowProps) {
   } : {}
   const leading = disclosureLeading(model.state, open, expandable)
   return (
-    <div className={css.card} data-tool="skill" data-state={model.state}>
+    <div className={css.card} data-tool="skill" data-state={model.state} onKeyDown={collapseFromEscape}>
       <div
+        ref={rowRef}
         className={css.row}
         data-expandable={expandable || undefined}
         {...disclosureProps}
