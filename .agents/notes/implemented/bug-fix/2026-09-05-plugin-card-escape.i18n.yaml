@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-plugin-card-escape.md
+2026-09-05-plugin-card-escape.md: c8b7a37d5f08aa3acb061a519fbd86153e1f86e8
+2026-09-05-plugin-card-escape.zh.md: 3cd6ed92e814b03127a96e3912cba91322765da2

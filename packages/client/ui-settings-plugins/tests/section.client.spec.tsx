@@ -304,6 +304,22 @@ describe('BashCard', () => {
 
     expect(screen.queryByLabelText(en.bashTimeoutMs)).toBeNull()
   })
+
+  it('Escape collapses an open card and restores header focus from a nested field', () => {
+    renderBash()
+    const header = screen.getByRole('button', { name: `${en.expand}: ${en.bashTitle}` })
+    fireEvent.keyDown(header, { key: 'Escape' })
+    expect(header.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(header)
+    expect(screen.getByRole('button', { name: `${en.collapse}: ${en.bashTitle}` }).getAttribute('aria-expanded')).toBe('true')
+    const timeout = screen.getByLabelText(en.bashTimeoutMs)
+    timeout.focus()
+    fireEvent.keyDown(timeout, { key: 'Escape' })
+    expect(header.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(header)
+    expect(screen.queryByLabelText(en.bashTimeoutMs)).toBeNull()
+  })
 })
 
 describe('AgentLoopCard', () => {

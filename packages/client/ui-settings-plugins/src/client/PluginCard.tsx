@@ -14,7 +14,7 @@
  * disabled card the user cannot act on.
  */
 
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { CardShell } from './card-form.ts'
@@ -46,13 +46,24 @@ export interface PluginCardProps {
  */
 export function PluginCard(props: PluginCardProps) {
   const [open, setOpen] = useState(false)
+  const headerRef = useRef<HTMLButtonElement>(null)
   const { state } = props
   if (!state.available) return null
   const title = props.t(props.titleKey)
   const blocked = !state.dirty || state.invalid || state.saving
+  // In-flow disclosure inside Settings: Escape only while this card holds
+  // focus (header or a nested field), so the settings overlay still wins
+  // when the card is closed. Staged edits outlive collapsing.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLLIElement>): void => {
+    if (event.key !== 'Escape' || !open) return
+    event.preventDefault()
+    setOpen(false)
+    headerRef.current?.focus()
+  }
   return (
-    <li className={clsx(css.card, open && css.cardOpen)}>
+    <li className={clsx(css.card, open && css.cardOpen)} onKeyDown={collapseFromEscape}>
       <button
+        ref={headerRef}
         type="button"
         className={css.header}
         aria-expanded={open}

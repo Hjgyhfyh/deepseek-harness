@@ -12,6 +12,10 @@
   border-color: var(--dsw-alias-label-dimmed);
 }
 
+.card:focus-within {
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 /* An open card reads as the one being worked on, not merely taller. */
 .cardOpen {
   background: var(--dsw-alias-bg-layer-2);
@@ -36,7 +40,10 @@
 
 .header:focus-visible {
   outline: none;
-  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
+.header:focus-visible .chevron {
+  color: var(--dsw-alias-label-secondary);
 }
 
 /* Name over description: the description is what tells two plugins apart, so
