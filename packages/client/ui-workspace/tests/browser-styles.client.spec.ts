@@ -113,4 +113,17 @@ describe('WorkspaceBrowser.module.css list', () => {
     expect(declarations('.rail .iconButton')?.get('width')).toBe('36px')
     expect(declarations('.rail .search')?.get('width')).toBe('36px')
   })
+
+  it('uses the product focus ring on keyboard chrome', () => {
+    const ring = 'var(--dsw-shadow-focus-ring)'
+    expect(declarations('.iconButton:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(declarations('.searchButton:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(declarations('.searchExpanded:focus-within')?.get('box-shadow')).toBe(ring)
+    expect(declarations('.clearButton:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(declarations('.sessionOverflowButton:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(declarations('.renameInput:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(rowDeclarations('.projectRow:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(rowDeclarations('.renameInput:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(rowDeclarations('.iconButton:focus-visible')?.get('box-shadow')).toBe(ring)
+  })
 })

@@ -20,6 +20,13 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.projectRow:focus-visible,
+.sessionRow:focus-visible,
+.searchResultRow:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .sessionRow.selected {
   background: var(--dsw-alias-interactive-bg-hover);
 }
@@ -219,6 +226,11 @@
   outline: none;
 }
 
+.renameInput:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .sessionRow .title {
   flex: 1;
 }
@@ -366,6 +378,11 @@
 
 .iconButton:hover {
   color: var(--dsw-alias-label-primary);
+}
+
+.iconButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 /* Chevrons ride the caption grey (#ADB2B8); the folder glyph stays one step
