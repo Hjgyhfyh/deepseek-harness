@@ -81,7 +81,13 @@ export function EmployeesSection(props: EmployeesSectionProps): React.ReactNode 
   const { t, useWorkers, useOrch, setWorkers, setOrch } = props
   const workersSnap = useWorkers((snapshot) => snapshot)
   const orchSnap = useOrch((snapshot) => snapshot)
-  const workers = workersSnap.value?.workers ?? []
+  const storedWorkers = workersSnap.value?.workers
+  const workers = useMemo(
+    () => (storedWorkers !== undefined && storedWorkers.length > 0
+      ? storedWorkers
+      : defaultEmployees()),
+    [storedWorkers],
+  )
   const orch = orchSnap.value ?? defaultOrchestrator()
   const writable = workersSnap.writable && orchSnap.writable
   const [selectedId, setSelectedId] = useState<string | undefined>(workers[0]?.id)
@@ -241,7 +247,8 @@ export function EmployeesSection(props: EmployeesSectionProps): React.ReactNode 
               setSelectedId(draft.id)
             }}
             onDelete={() => {
-              const next = workers.filter((row) => row.id !== draft.id)
+              const remaining = workers.filter((row) => row.id !== draft.id)
+              const next = remaining.length > 0 ? remaining : defaultEmployees()
               void setWorkers(next)
               setSelectedId(next[0]?.id)
             }}

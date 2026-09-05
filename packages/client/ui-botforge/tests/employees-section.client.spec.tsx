@@ -79,7 +79,7 @@ describe('EmployeesSection', () => {
 
   it('adds, edits, saves, and deletes an employee, including MCP rows', () => {
     const { setWorkers } = renderSection({ value: { workers: [] } })
-    expect(screen.getByText('还没有员工。添加一位，或恢复默认名册。')).toBeTruthy()
+    expect(screen.getByText('Roblox Scripter')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: '添加员工' }))
     expect(setWorkers).toHaveBeenCalled()
     cleanup()
@@ -112,7 +112,7 @@ describe('EmployeesSection', () => {
     const one = defaultEmployees()[0]!
     const { setWorkers } = renderSection({ value: { workers: [one] } })
     fireEvent.click(screen.getByRole('button', { name: '删除员工' }))
-    expect(setWorkers).toHaveBeenCalledWith([])
+    expect(setWorkers).toHaveBeenCalledWith(defaultEmployees())
     cleanup()
     renderSection({ writable: false }, { writable: false })
     expect(screen.getByText('此部署以只读方式存储设置。')).toBeTruthy()
