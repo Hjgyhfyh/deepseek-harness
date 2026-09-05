@@ -65,6 +65,21 @@ describe('botforge config', () => {
     expect(sparse.skills).toEqual([])
     expect(sparse.triggers).toEqual([])
     expect(sparse.mcp).toEqual([])
+    const idOnly = normalizeWorker({ id: 'x' })
+    expect(idOnly).toEqual({
+      id: 'x',
+      enabled: true,
+      name: '',
+      role: '',
+      roleDescription: '',
+      skills: [],
+      hint: '',
+      triggers: [],
+      systemPrompt: '',
+      avatar: '',
+      avatarSeed: 'x',
+      mcp: [],
+    })
   })
 
   it('rejects a missing workers array, empty ids, and duplicates', () => {

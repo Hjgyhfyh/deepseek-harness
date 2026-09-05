@@ -38,7 +38,6 @@ describe('buildOrchestratorSection', () => {
       delegationDepth: 1,
     })).toBe('')
     expect(buildOrchestratorSection(true, defaultOrchestrator(), defaultWorkers(), {
-      origin: undefined,
       delegationDepth: 0,
     })).toContain(EMPLOYEE_TOOL_NAME)
   })

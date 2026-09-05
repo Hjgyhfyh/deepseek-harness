@@ -190,12 +190,18 @@ export function normalizeWorker(
   raw: Partial<Omit<BotForgeWorkerConfig, 'id'>> & Pick<BotForgeWorkerConfig, 'id'>,
 ): BotForgeWorkerConfig {
   return {
-    ...raw,
+    id: raw.id,
     enabled: raw.enabled !== false,
+    name: raw.name ?? '',
+    role: raw.role ?? '',
+    roleDescription: raw.roleDescription ?? '',
     skills: [...(raw.skills ?? [])],
+    hint: raw.hint ?? '',
     triggers: [...(raw.triggers ?? [])],
-    mcp: (raw.mcp ?? []).map(normalizeMcp),
+    systemPrompt: raw.systemPrompt ?? '',
+    avatar: raw.avatar ?? '',
     avatarSeed: raw.avatarSeed || raw.id,
+    mcp: (raw.mcp ?? []).map(normalizeMcp),
   }
 }
 
