@@ -131,6 +131,15 @@
   box-shadow: var(--dsw-shadow-lv1);
 }
 
+.card:has(.cardContent:focus-visible),
+.card[data-open='true']:has(.cardContent:focus-visible) {
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
+.card:has(.cardContent:focus-visible) .chevron {
+  color: var(--dsw-alias-label-secondary);
+}
+
 .cardContent {
   box-sizing: border-box;
   display: flex;
@@ -155,7 +164,6 @@
 
 .cardContent:focus-visible {
   outline: none;
-  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .cardTitle {

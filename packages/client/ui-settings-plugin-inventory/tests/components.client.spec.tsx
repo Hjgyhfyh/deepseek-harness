@@ -78,6 +78,20 @@ describe('PluginInventorySettingsTab', () => {
     expect(screen.queryByText(en.unobserved)).toBeNull()
   })
 
+  it('Escape collapses an open card and restores header focus', async () => {
+    render(<PluginInventorySettingsTab {...props(async () => SNAPSHOT)} />)
+    const active = await screen.findByRole('button', { name: 'hmr, Mounted, Enabled' })
+    fireEvent.keyDown(active, { key: 'Escape' })
+    expect(active.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(active)
+    expect(active.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.keyDown(active, { key: 'Escape' })
+    expect(active.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(active)
+    expect(screen.queryByText('8a1b2c3d')).toBeNull()
+  })
+
   it('filters by module name or Loader entry id', async () => {
     render(<PluginInventorySettingsTab {...props(async () => SNAPSHOT)} />)
     const search = await screen.findByRole('searchbox', { name: en.search })

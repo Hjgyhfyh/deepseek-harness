@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { PluginInventorySnapshot } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   IconChevronDownOutline14,
@@ -143,12 +143,23 @@ export function PluginInventorySettingsTab({ list, t }: PluginInventorySettingsT
                 const configuration = t(entry.enabled ? 'enabledTag' : 'disabledTag')
                 const open = expanded === entry.entryId
                 const detailId = `${catalogId}-details-${encodeURIComponent(entry.entryId)}`
+                // In-flow disclosure inside Settings: Escape only while this
+                // card holds focus, so the settings overlay still wins when
+                // the card is closed.
+                const collapseFromEscape = (event: KeyboardEvent<HTMLLIElement>): void => {
+                  if (event.key !== 'Escape' || !open) return
+                  event.preventDefault()
+                  setExpanded(null)
+                  const header = event.currentTarget.querySelector('button')
+                  if (header instanceof HTMLButtonElement) header.focus()
+                }
                 return (
                   <li
                     className={css.card}
                     key={entry.entryId}
                     data-plugin-entry={entry.entryId}
                     data-open={open ? 'true' : undefined}
+                    onKeyDown={collapseFromEscape}
                   >
                     <button
                       className={css.cardContent}

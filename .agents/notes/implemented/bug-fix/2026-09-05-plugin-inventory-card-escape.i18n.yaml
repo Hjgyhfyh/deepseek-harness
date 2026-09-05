@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-plugin-inventory-card-escape.md
+2026-09-05-plugin-inventory-card-escape.md: b712a1318f987802e7359d6d10e5202ee55df248
+2026-09-05-plugin-inventory-card-escape.zh.md: ddfa79432b9cffb690795ce912bd80ab6537e3c3
