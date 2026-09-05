@@ -30,9 +30,9 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
       openFile,
       inspectCall,
       forkAt,
-      continueAgent,
       loadImage,
       fileMentions,
+      ...continueAgent === undefined ? {} : { continueAgent },
     }, [node, selectedCallId, cwd, openFile, inspectCall, forkAt, continueAgent, loadImage, fileMentions])
   if (routedNode === undefined || owner === null) return null
   // Runtime dispatch owns the correlation: every Node's discriminant is the

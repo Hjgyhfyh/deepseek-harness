@@ -307,7 +307,7 @@ export const TurnErrorNodeView = memo(function TurnErrorNodeView({
     <TurnErrorItem
       node={node.data}
       t={t}
-      continueAgent={running ? undefined : continueAgent}
+      {...(running || continueAgent === undefined ? {} : { continueAgent })}
     />
   )
 })
@@ -317,7 +317,7 @@ export const TurnMaxTokensNodeView = memo(function TurnMaxTokensNodeView({
   t, continueAgent, useSession,
 }: ChatNodeViewProps<'turn-max-tokens'>) {
   const running = useSession(s => s.running) ?? false
-  return <TurnMaxTokensItem t={t} continueAgent={running ? undefined : continueAgent} />
+  return <TurnMaxTokensItem t={t} {...(running || continueAgent === undefined ? {} : { continueAgent })} />
 })
 
 /** Explicit unknown-surface keyed Chat renderer. */
