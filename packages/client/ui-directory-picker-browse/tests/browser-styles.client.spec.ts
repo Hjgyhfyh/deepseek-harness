@@ -30,4 +30,14 @@ describe('DirectoryBrowser.module.css keyboard chrome', () => {
     expect(declarations('.showHiddenToggle:focus-visible')?.get('box-shadow')).toBe(ring)
     expect(declarations('.createInput:focus-visible')?.get('box-shadow')).toBe(ring)
   })
+
+  it('paints show-hidden and rows to match hover on keyboard focus', () => {
+    expect(declarations('.showHiddenToggle:hover')?.get('color')).toBe('var(--dsw-alias-label-primary)')
+    expect(declarations('.showHiddenToggle:focus-visible')?.get('color')).toBe('var(--dsw-alias-label-primary)')
+    expect(declarations('.row:hover')?.get('background')).toBe('var(--dsw-alias-interactive-bg-hover)')
+    expect(declarations('.row:focus-visible')?.get('background')).toBe('var(--dsw-alias-interactive-bg-hover)')
+    expect(declarations('.rowSelected:focus-visible')?.get('background')).toBe(
+      'var(--dsw-alias-interactive-bg-active, var(--dsw-alias-interactive-bg-hover))',
+    )
+  })
 })

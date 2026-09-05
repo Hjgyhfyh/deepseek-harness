@@ -34,7 +34,7 @@
  * the crumbs name where the walk ended, and Open's fallback target follows
  * them.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import {
   Button, IconCheckOutline16, IconChevronRightOutline14, IconEditOutline16, IconFolderClose16, IconFolderOpen16,
@@ -246,6 +246,23 @@ function LevelColumn({ entries, selectedPath, busy, onPick, showHidden, filterPr
               // this very column, so focusing the clicked node here would
               // still fall to body.
               onClick={() => { onPick(entry) }}
+              onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => {
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+                const list = event.currentTarget.closest('[role="list"]')
+                /* v8 ignore next -- the handler is on a row that always sits in its column list */
+                if (!(list instanceof HTMLElement)) return
+                const buttons = [...list.querySelectorAll<HTMLButtonElement>(':scope > [role="listitem"] > button')]
+                const index = buttons.indexOf(event.currentTarget)
+                /* v8 ignore next -- the focused row is one of those buttons */
+                if (index < 0) return
+                const next = buttons[index + (event.key === 'ArrowDown' ? 1 : -1)]
+                if (next === undefined) return
+                /* v8 ignore next -- rows disable together while a listing is in flight */
+                if (next.disabled) return
+                event.preventDefault()
+                next.focus()
+                next.click()
+              }}
             >
               {selected
                 ? <IconFolderOpen16 size={16} className={css.rowIconSelected} />

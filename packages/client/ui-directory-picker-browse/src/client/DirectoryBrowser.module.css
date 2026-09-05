@@ -257,7 +257,8 @@
   cursor: pointer;
 }
 
-.row:hover {
+.row:hover,
+.row:focus-visible {
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
@@ -268,7 +269,8 @@
 
 /* Selection: pill fill + the open-folder glyph in the info accent. */
 .rowSelected,
-.rowSelected:hover {
+.rowSelected:hover,
+.rowSelected:focus-visible {
   background: var(--dsw-alias-interactive-bg-active, var(--dsw-alias-interactive-bg-hover));
 }
 
@@ -368,7 +370,8 @@
   white-space: nowrap;
 }
 
-.showHiddenToggle:hover {
+.showHiddenToggle:hover,
+.showHiddenToggle:focus-visible {
   color: var(--dsw-alias-label-primary);
 }
 

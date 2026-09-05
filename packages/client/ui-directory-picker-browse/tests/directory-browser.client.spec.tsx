@@ -156,6 +156,29 @@ describe('DirectoryBrowser', () => {
     expect(screen.queryByText('.config')).toBeNull()
   })
 
+  it('ArrowDown and ArrowUp move selection within a column', async () => {
+    mount()
+    await waitFor(() => { expect(screen.getByRole('listitem')).toBeTruthy() })
+    fireEvent.click(screen.getByRole('button', { name: 'browser.showHidden' }))
+    const columnRow = (name: string): HTMLButtonElement =>
+      rowButton(within(columns()[0]!).getByText(name).closest('[role="listitem"]') as HTMLElement)
+    const hidden = columnRow('.config')
+    hidden.focus()
+    fireEvent.keyDown(hidden, { key: 'Enter' })
+    expect(document.activeElement).toBe(hidden)
+    fireEvent.keyDown(hidden, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(hidden)
+    fireEvent.keyDown(hidden, { key: 'ArrowDown' })
+    const docs = columnRow('Documents')
+    expect(document.activeElement).toBe(docs)
+    await waitFor(() => { expect(docs.getAttribute('aria-current')).toBe('true') })
+    fireEvent.keyDown(docs, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(docs)
+    fireEvent.keyDown(docs, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(columnRow('.config'))
+    await waitFor(() => { expect(columnRow('.config').getAttribute('aria-current')).toBe('true') })
+  })
+
   it('selects a row into the two-pane view: children preview right, crumbs follow the selection', async () => {
     const b = mount()
     await waitFor(() => { expect(screen.getByRole('listitem')).toBeTruthy() })
