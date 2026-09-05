@@ -510,7 +510,7 @@ describe('WorkflowRunPanel', () => {
     ['not in ordinary list', listState({ ids: [PARENT_ID] }), 'running'],
     ['remote row', listState({ byId: {
       ...listState().byId,
-      [CHILD_ID]: { ...listState().byId[CHILD_ID]!, origin: undefined },
+      [CHILD_ID]: (({ origin: _origin, ...row }) => row)(listState().byId[CHILD_ID]!),
     } }), 'running'],
     ['wrong parent', listState({ byId: {
       ...listState().byId,

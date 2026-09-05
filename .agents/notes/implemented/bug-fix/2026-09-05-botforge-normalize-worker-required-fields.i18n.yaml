@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-botforge-normalize-worker-required-fields.md
-2026-09-05-botforge-normalize-worker-required-fields.md: 35451a64c9b9bcefc6feb58214c4791688e1feed
-2026-09-05-botforge-normalize-worker-required-fields.zh.md: 724c706436c44b0c637796899bfa1bc88d12b0af
+2026-09-05-botforge-normalize-worker-required-fields.md: 54e1ed394f21968a49987da944686486b0a1a546
+2026-09-05-botforge-normalize-worker-required-fields.zh.md: a0863b5b608072b2ca74e1d3a6865283d6827521

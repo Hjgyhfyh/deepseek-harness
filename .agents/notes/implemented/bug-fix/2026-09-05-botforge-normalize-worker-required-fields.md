@@ -10,7 +10,7 @@ English | [中文](2026-09-05-botforge-normalize-worker-required-fields.zh.md)
 
 ## Decision
 
-`normalizeWorker` assigns every required field and does not spread `raw`. Omitted `name`, `role`, `roleDescription`, `hint`, `systemPrompt`, and `avatar` become `''`. `skills` and `triggers` copy from the source or `[]`. `mcp` maps through `normalizeMcp`. `enabled` is true unless the source is exactly `false`. `avatarSeed` falls back to `id`.
+`normalizeWorker` assigns every required field and does not spread `raw`. Omitted `name` falls back to `id` (same as the client roster helper). Omitted `role`, `roleDescription`, `hint`, `systemPrompt`, and `avatar` become `''`. `skills` and `triggers` copy from the source or `[]`. `mcp` maps through `normalizeMcp`. `enabled` is true unless the source is exactly `false`. `avatarSeed` falls back to `id`.
 
 ## Alternatives considered
 
@@ -24,7 +24,7 @@ A sparse `{ id }` row is a complete `BotForgeWorkerConfig`. Callers still must s
 
 ## Testing
 
-`packages/botforge/botforge/tests/config.spec.ts` pins `{ id: 'x' }` to the full defaulted row. `packages/botforge/botforge/tests/prompt.spec.ts` omits `origin` on a top-level header instead of passing `origin: undefined`.
+`packages/botforge/botforge/tests/config.spec.ts` pins `{ id: 'x' }` to the full defaulted row (`name` equals `id`). `packages/botforge/botforge/tests/prompt.spec.ts` omits `origin` on a top-level header instead of passing `origin: undefined`. `packages/client/ui-workflow-run/tests/workflow-run.client.spec.tsx` drops `origin` from a remote row the same way.
 
 ## Related
 

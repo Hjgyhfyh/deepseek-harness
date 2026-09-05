@@ -10,7 +10,7 @@ Status: implemented
 
 ## Decision
 
-`normalizeWorker` 为每个必填字段赋值，不展开 `raw`。省略的 `name`、`role`、`roleDescription`、`hint`、`systemPrompt`、`avatar` 变成 `''`。`skills` 与 `triggers` 从源复制或为 `[]`。`mcp` 经 `normalizeMcp` 映射。`enabled` 在源不是恰好 `false` 时为 true。`avatarSeed` 回退到 `id`。
+`normalizeWorker` 为每个必填字段赋值，不展开 `raw`。省略的 `name` 回退到 `id`（与客户端花名册辅助函数相同）。省略的 `role`、`roleDescription`、`hint`、`systemPrompt`、`avatar` 变成 `''`。`skills` 与 `triggers` 从源复制或为 `[]`。`mcp` 经 `normalizeMcp` 映射。`enabled` 在源不是恰好 `false` 时为 true。`avatarSeed` 回退到 `id`。
 
 ## Alternatives considered
 
@@ -24,7 +24,7 @@ Status: implemented
 
 ## Testing
 
-`packages/botforge/botforge/tests/config.spec.ts` 把 `{ id: 'x' }` 钉成完整默认行。`packages/botforge/botforge/tests/prompt.spec.ts` 在顶层 header 上省略 `origin`，而不是传入 `origin: undefined`。
+`packages/botforge/botforge/tests/config.spec.ts` 把 `{ id: 'x' }` 钉成完整默认行（`name` 等于 `id`）。`packages/botforge/botforge/tests/prompt.spec.ts` 在顶层 header 上省略 `origin`，而不是传入 `origin: undefined`。`packages/client/ui-workflow-run/tests/workflow-run.client.spec.tsx` 同样从远程行去掉 `origin`。
 
 ## Related
 

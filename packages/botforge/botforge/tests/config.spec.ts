@@ -69,7 +69,7 @@ describe('botforge config', () => {
     expect(idOnly).toEqual({
       id: 'x',
       enabled: true,
-      name: '',
+      name: 'x',
       role: '',
       roleDescription: '',
       skills: [],

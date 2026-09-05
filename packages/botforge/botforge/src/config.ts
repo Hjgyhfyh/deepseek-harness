@@ -192,7 +192,7 @@ export function normalizeWorker(
   return {
     id: raw.id,
     enabled: raw.enabled !== false,
-    name: raw.name ?? '',
+    name: raw.name ?? raw.id,
     role: raw.role ?? '',
     roleDescription: raw.roleDescription ?? '',
     skills: [...(raw.skills ?? [])],
