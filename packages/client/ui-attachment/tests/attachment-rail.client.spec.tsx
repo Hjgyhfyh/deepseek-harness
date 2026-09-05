@@ -170,4 +170,32 @@ describe('AttachmentRail', () => {
     // Removal keeps the position; only growth jumps to the end.
     expect(rail.scrollLeft).toBe(200)
   })
+
+  it('ArrowLeft and ArrowRight move focus along the rail', () => {
+    const view = render(
+      <AttachmentRail items={[item('a'), item('b'), item('c')]} labels={labels} onOpen={vi.fn()} onRemove={vi.fn()} />,
+    )
+    const thumbs = view.getAllByTitle('查看原图')
+    const first = thumbs[0]!
+    const second = thumbs[1]!
+    const third = thumbs[2]!
+    first.focus()
+    fireEvent.keyDown(first, { key: 'Enter' })
+    expect(document.activeElement).toBe(first)
+    fireEvent.keyDown(first, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(first)
+    fireEvent.keyDown(first, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(second)
+    fireEvent.keyDown(second, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(third)
+    fireEvent.keyDown(third, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(third)
+    fireEvent.keyDown(third, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(second)
+    const removeA = view.getByRole('button', { name: '移除图片 a.png' })
+    const removeB = view.getByRole('button', { name: '移除图片 b.png' })
+    removeA.focus()
+    fireEvent.keyDown(removeA, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(removeB)
+  })
 })

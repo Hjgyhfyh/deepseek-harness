@@ -1,7 +1,7 @@
 /** Draft-attachment thumbnail rail: scrollbar-less horizontal overflow paged
  * by edge arrows, hover-revealed per-item remove, single-click open. */
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import {
   IconChevronLeftOutline14, IconChevronRightOutline14, IconCloseFill14,
@@ -44,6 +44,35 @@ function pageBehavior(): ScrollBehavior {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
 }
 
+/** ArrowLeft/ArrowRight on a thumbnail or remove control move to the same
+ * control on the previous or next item. End of the rail ignores the key. */
+function moveRailFocus(event: KeyboardEvent<HTMLButtonElement>, which: 'first' | 'last'): void {
+  if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+  const seat = event.currentTarget.closest('[data-rail-item]')
+  /* v8 ignore next -- the handler is on a control that always sits in its item seat */
+  if (!(seat instanceof HTMLElement)) return
+  const rail = seat.parentElement
+  /* v8 ignore next -- seats always sit in the rail group */
+  if (rail === null) return
+  const seats = [...rail.querySelectorAll<HTMLElement>(':scope > [data-rail-item]')]
+  const index = seats.indexOf(seat)
+  /* v8 ignore next -- the focused control's seat is one of those */
+  if (index < 0) return
+  const next = seats[index + (event.key === 'ArrowRight' ? 1 : -1)]
+  if (next === undefined) return
+  const button = next.querySelector<HTMLButtonElement>(
+    which === 'first' ? ':scope > button:first-of-type' : ':scope > button:last-of-type',
+  )
+  /* v8 ignore next -- every seat renders the thumbnail and the remove control */
+  if (button === null) return
+  event.preventDefault()
+  button.focus()
+  // jsdom (the unit lane) implements no scrollIntoView; browsers reveal an
+  // off-screen neighbor after ArrowLeft/ArrowRight.
+  // oxlint-disable-next-line typescript/no-unnecessary-condition
+  button.scrollIntoView?.({ inline: 'nearest', block: 'nearest' })
+}
+
 /**
  * Horizontal thumbnail rail over the caller's draft attachments.
  *
@@ -55,7 +84,9 @@ function pageBehavior(): ScrollBehavior {
  * newly added item is revealed at the rail's end while a rail that mounts
  * over an existing draft keeps its start position, and each thumbnail opens
  * on a single click while its remove control sits inside the card and
- * reveals on hover or focus. The owner decides mounting; it renders the rail
+ * reveals on hover or focus. ArrowLeft and ArrowRight on a focused thumbnail
+ * or remove control move focus to the same control on the previous or next
+ * item and scroll it into view. The owner decides mounting; it renders the rail
  * only while items exist.
  *
  * @param props.items - resolved thumbnails in draft order.
@@ -165,12 +196,13 @@ export function AttachmentRail<T extends AttachmentRailItem>({ items, labels, on
         onScroll={updateEdges}
       >
         {items.map(item => (
-          <div key={item.id} className={css.item}>
+          <div key={item.id} className={css.item} data-rail-item="">
             <button
               type="button"
               className={css.thumbnail}
               title={labels.open}
               onClick={() => { onOpen(item) }}
+              onKeyDown={(event) => { moveRailFocus(event, 'first') }}
             >
               <img src={item.previewUrl} alt={item.alt} />
             </button>
@@ -179,6 +211,7 @@ export function AttachmentRail<T extends AttachmentRailItem>({ items, labels, on
               className={css.remove}
               aria-label={item.removeLabel}
               onClick={() => { onRemove(item) }}
+              onKeyDown={(event) => { moveRailFocus(event, 'last') }}
             >
               <IconCloseFill14 size={12} />
             </button>

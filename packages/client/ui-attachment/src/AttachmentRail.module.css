@@ -43,6 +43,11 @@
   cursor: zoom-in;
 }
 
+.thumbnail:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .thumbnail img {
   display: block;
   width: 100%;
@@ -110,7 +115,8 @@
   transform: translateY(-50%);
 }
 
-.arrow:hover {
+.arrow:hover,
+.arrow:focus-visible {
   background: var(--dsw-alias-interactive-bg-hover-solid);
 }
 
