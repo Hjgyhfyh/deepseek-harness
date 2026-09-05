@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-json-block-escape.md
+2026-09-05-json-block-escape.md: 16b1e83afd933efc172009cf6d551c3f5ba1fa71
+2026-09-05-json-block-escape.zh.md: ccb7e21827a9db26bb87905fc4a9b5d46b27c8f6

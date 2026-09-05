@@ -515,4 +515,33 @@ describe('JsonBlock', () => {
     expect(body.length).toBeLessThan(30_000)
     expect(body).toContain('截断')
   })
+
+  it('Escape collapses an open block and restores toggle focus', () => {
+    render(<JsonBlock label="args" payload={{ a: 1 }} />)
+    const toggle = screen.getByRole('button', { name: /args/ })
+    toggle.focus()
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.keyDown(toggle, { key: 'a' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByText(/"a": 1/)).toBeDefined()
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(toggle)
+    expect(screen.queryByText(/"a": 1/)).toBeNull()
+  })
+
+  it('Escape that a nested field already handled leaves the block open', () => {
+    render(<JsonBlock label="args" payload={{ a: 1 }} defaultOpen />)
+    const toggle = screen.getByRole('button', { name: /args/ })
+    toggle.focus()
+    toggle.addEventListener('keydown', (event) => { event.preventDefault() }, true)
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByText(/"a": 1/)).toBeDefined()
+    expect(document.activeElement).toBe(toggle)
+  })
 })

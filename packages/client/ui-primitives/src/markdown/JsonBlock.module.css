@@ -13,7 +13,8 @@
   border-radius: 6px;
 }
 
-.toggle:hover {
+.toggle:hover,
+.toggle:focus-visible {
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
