@@ -387,7 +387,8 @@ describe('image draft rail', () => {
     const { view } = bench({ attachments: [attachment] })
     fireEvent.click(view.getByTitle('查看原图'))
     expect(view.getByRole('dialog', { name: '原图预览' })).toBeTruthy()
-    fireEvent.keyDown(window, { key: 'Escape' })
+    // ImageLightbox listens on document via the overlay Escape stack.
+    fireEvent.keyDown(document, { key: 'Escape' })
     expect(view.queryByRole('dialog', { name: '原图预览' })).toBeNull()
   })
 

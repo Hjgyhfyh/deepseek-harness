@@ -4,16 +4,18 @@
 // pending, this panel occupies the composer slot in place of the InputBar:
 // an amber "Waiting for approval" strip on the card top, the model's
 // justification as the headline, the paired command in muted code text, and
-// a right-aligned refuse/allow action row. Justification and command are
-// unbounded model text, so they scroll inside the card at the shared composer
-// cap (`data-approval-scroll`) and the action row stays outside it — the
+// a right-aligned refuse/allow action row. Escape refuses the wait (the
+// Reject outcome, never Allow) through the overlay stack so a later dialog
+// still wins the first key. Justification and command are unbounded model
+// text, so they scroll inside the card at the shared composer cap
+// (`data-approval-scroll`) and the action row stays outside it — the
 // buttons must be reachable no matter how long the command is.
 // One-shot: the buttons disable
-// after a click and the panel leaves (the InputBar returns) on the broadcast
-// resolved frame.
+// after a click (and the stack unsubscribes) and the panel leaves (the
+// InputBar returns) on the broadcast resolved frame.
 
 import { useMemo, useState } from 'react'
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, useOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { RunningToolCall } from '@deepseek-ai/dsh-client-runtime/client'
 import { PendingApproval, type ApprovalComposerProps } from '../contract/slots.ts'
 import { rootToolCall } from '../chat/tool-node-reader.ts'
@@ -62,6 +64,8 @@ function ApprovalFlow({ pending, command, t }: {
     setAnswered(true)
     void pending.answer(outcome).catch(() => { setAnswered(false) })
   }
+  // Reject is the dialog-cancel analog; Allow is never an Escape outcome.
+  useOverlayEscape(!answered, () => { answer('rejected') })
   return (
     <div className={css.root} data-approval-key={pending.key}>
       <div className={css.card}>

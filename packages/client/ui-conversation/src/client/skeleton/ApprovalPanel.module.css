@@ -67,6 +67,11 @@
   padding: 12px 16px 0;
 }
 
+.body:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 /* The model's justification is the panel's message, not a footnote. */
 .headline {
   color: var(--dsw-alias-label-primary);
