@@ -167,8 +167,8 @@
 }
 
 .retrySummary:focus-visible {
-  outline: 1.5px solid var(--dsw-alias-button-info-fill);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .retryText {

@@ -115,6 +115,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.item:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .denseList .item {
   min-height: 34px;
   padding-block: 5px;

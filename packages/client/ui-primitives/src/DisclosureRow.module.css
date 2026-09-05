@@ -39,6 +39,16 @@ button.leading {
   cursor: pointer;
 }
 
+.row:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
+button.leading:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .iconIdle {
   display: inline-flex;
   opacity: 1;

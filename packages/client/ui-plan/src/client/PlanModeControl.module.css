@@ -27,8 +27,8 @@
 }
 
 .chip:focus-visible {
-  outline: 2px solid var(--dsw-alias-state-warn-label);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .chip:disabled {

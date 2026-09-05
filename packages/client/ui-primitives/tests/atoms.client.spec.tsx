@@ -89,6 +89,61 @@ describe('Menu', () => {
     expect(onClose).toHaveBeenCalledTimes(2)
   })
 
+  it('opening focuses the selected enabled row; ArrowUp/Down skip disabled', () => {
+    render(
+      <Menu
+        open
+        anchor={<span>trigger</span>}
+        items={[
+          { id: 'a', label: 'Alpha' },
+          { id: 'b', label: 'Beta', disabled: true },
+          { id: 'c', label: 'Gamma' },
+        ]}
+        selectedId="c"
+        onSelect={() => {}}
+        onClose={() => {}}
+      />)
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Gamma' }))
+    fireEvent.keyDown(document, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Alpha' }))
+    fireEvent.keyDown(document, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Gamma' }))
+    fireEvent.keyDown(document, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Alpha' }))
+  })
+
+  it('ArrowUp with no focused row lands on the last enabled item; a label-only list is a no-op', () => {
+    const { rerender } = render(
+      <Menu
+        open
+        anchor={<span>trigger</span>}
+        items={[
+          { id: 'a', label: 'Alpha' },
+          { id: 'c', label: 'Gamma' },
+        ]}
+        selectedId="missing"
+        onSelect={() => {}}
+        onClose={() => {}}
+      />)
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Alpha' }))
+    ;(document.activeElement as HTMLElement).blur()
+    fireEvent.keyDown(document, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Alpha' }))
+    ;(document.activeElement as HTMLElement).blur()
+    fireEvent.keyDown(document, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Gamma' }))
+    rerender(
+      <Menu
+        open
+        anchor={<span>trigger</span>}
+        items={[{ type: 'label', id: 'h', text: 'Empty' }]}
+        onSelect={() => {}}
+        onClose={() => {}}
+      />)
+    fireEvent.keyDown(document, { key: 'ArrowDown' })
+    expect(screen.queryByRole('menuitem')).toBeNull()
+  })
+
   it('inside pointerdown does not close', () => {
     const onClose = vi.fn()
     render(
@@ -310,6 +365,7 @@ describe('Menu', () => {
         onClose={() => {}}
       />)
     expect(screen.queryByRole('menu')).toBeNull()
+    fireEvent.keyDown(document, { key: 'ArrowDown' })
   })
 
   it('portal mode renders the list under body, positions it fixed, and still closes on outside pointerdown', () => {

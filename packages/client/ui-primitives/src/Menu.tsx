@@ -2,8 +2,10 @@
 // Default: pure CSS positioning relative to the anchor wrapper — no popper.
 // Opt-in `portal` renders the list into document.body, fixed-positioned from
 // the anchor rect, for anchors inside overflow-clipping containers (sidebar).
-// The owner controls `open`; outside-click closing uses one document listener
-// active only while open. Submenus open on hover/focus inside the same root.
+// The owner controls `open`. While open, one document listener handles Escape,
+// outside pointerdown, and ArrowUp/Down among enabled menuitems. Opening moves
+// focus into the selected enabled row (or the first enabled row). Submenus
+// open on hover/focus inside the same root.
 // Entries also cover non-interactive `label` headings and `danger` rows.
 // Lists keep 12px clearance to the viewport's top/bottom edges and scroll
 // internally past that; submenu-bearing menus are exempt (see .scrollable).
@@ -177,7 +179,20 @@ export function Menu({ open, anchor, items, selectedId, selectedIds, onSelect, o
       onClose()
     }
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+      const buttons = [...(listRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]:not([disabled])') ?? [])]
+      if (buttons.length === 0) return
+      e.preventDefault()
+      const index = buttons.findIndex((el) => el === document.activeElement)
+      const delta = e.key === 'ArrowDown' ? 1 : -1
+      const next = index === -1
+        ? (e.key === 'ArrowDown' ? buttons[0] : buttons[buttons.length - 1])
+        : buttons[(index + delta + buttons.length) % buttons.length]
+      next?.focus()
     }
     document.addEventListener('pointerdown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
@@ -186,6 +201,15 @@ export function Menu({ open, anchor, items, selectedId, selectedIds, onSelect, o
       document.removeEventListener('keydown', onKeyDown)
     }
   }, [open, onClose])
+
+  useEffect(() => {
+    if (!open) return
+    const buttons = [...(listRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]:not([disabled])') ?? [])]
+    const preferred = selectedId === undefined
+      ? undefined
+      : buttons.find((el) => el.dataset.menuId === selectedId)
+    ;(preferred ?? buttons[0])?.focus()
+  }, [open, selectedId])
 
   // A close from selection/Escape/outside click outruns a pending grace close;
   // left armed it would shut a list reopened inside the grace window. Its own
@@ -220,6 +244,7 @@ export function Menu({ open, anchor, items, selectedId, selectedIds, onSelect, o
           type="button"
           role="menuitem"
           className={clsx(css.item, selected && css.selected, entry.danger === true && css.danger)}
+          data-menu-id={entry.id}
           disabled={entry.disabled}
           aria-haspopup={hasSub ? 'menu' : undefined}
           aria-expanded={hasSub ? subOpen : undefined}
@@ -245,6 +270,7 @@ export function Menu({ open, anchor, items, selectedId, selectedIds, onSelect, o
                 type="button"
                 role="menuitem"
                 className={css.item}
+                data-menu-id={sub.id}
                 disabled={sub.disabled}
                 onClick={() => { onSelect(sub.id) }}
               >
