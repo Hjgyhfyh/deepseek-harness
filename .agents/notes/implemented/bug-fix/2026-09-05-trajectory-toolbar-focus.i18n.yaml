@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-trajectory-toolbar-focus.md
+2026-09-05-trajectory-toolbar-focus.md: 70fc2da317b47773c76352fb2b1ca4aa9a824cc2
+2026-09-05-trajectory-toolbar-focus.zh.md: 533e1446fd7b693a0b8a18fe1bcbe1f8b8e2ee0f

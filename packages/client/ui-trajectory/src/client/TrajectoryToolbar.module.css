@@ -41,7 +41,8 @@
   font: var(--dsw-font-xxs-12);
 }
 
-.toggle:hover {
+.toggle:hover,
+.toggle:focus-visible {
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-interactive-bg-hover);
 }
@@ -149,7 +150,8 @@
   font: var(--dsw-font-xxs-12);
 }
 
-.action:hover {
+.action:hover,
+.action:focus-visible {
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-interactive-bg-hover);
 }
@@ -162,6 +164,11 @@
 .actionIcon {
   color: var(--dsw-alias-label-tertiary);
   font: 14px/14px var(--ds-font-family-code);
+}
+
+.action:hover .actionIcon,
+.action:focus-visible .actionIcon {
+  color: inherit;
 }
 
 .search {

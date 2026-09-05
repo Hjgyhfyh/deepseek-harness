@@ -576,16 +576,17 @@ describe('TrajectoryToolbar', () => {
     return { ...render(<TrajectoryToolbar {...props} />), props }
   }
 
-  it('Escape clears a non-empty search; a second Escape blurs the field', () => {
+  it('Escape clears a non-empty search then blurs the field without yielding the key', () => {
     const onSearchQueryChange = vi.fn()
     const { rerender, props } = renderToolbar({ searchQuery: 'bash', onSearchQueryChange })
     const input = screen.getByRole('searchbox', { name: t('toolbar.search') })
     input.focus()
-    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(fireEvent.keyDown(input, { key: 'Escape' })).toBe(false)
     expect(onSearchQueryChange).toHaveBeenCalledWith('')
     expect(document.activeElement).toBe(input)
     rerender(<TrajectoryToolbar {...props} searchQuery="" onSearchQueryChange={onSearchQueryChange} />)
-    fireEvent.keyDown(input, { key: 'Escape' })
+    input.focus()
+    expect(fireEvent.keyDown(input, { key: 'Escape' })).toBe(false)
     expect(document.activeElement).not.toBe(input)
   })
 
