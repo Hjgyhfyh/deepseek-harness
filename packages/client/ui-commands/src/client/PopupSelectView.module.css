@@ -51,6 +51,7 @@
 
 .rowActive {
   background: var(--dsw-alias-interactive-bg-hover);
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .label {

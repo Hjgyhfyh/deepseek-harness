@@ -198,11 +198,7 @@
 
 .memberButton:focus-visible {
   outline: none;
-}
-
-.memberButton:focus-visible .memberLabelWrap {
-  outline: 2px solid var(--dsw-alias-state-business-primary);
-  outline-offset: -1px;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .memberLabelWrap {
