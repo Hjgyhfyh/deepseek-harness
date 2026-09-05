@@ -74,6 +74,11 @@
   opacity: 1;
 }
 
+.remove:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 /* Touch surfaces have no hover to reveal the control. */
 @media (pointer: coarse) {
   .remove {
@@ -107,6 +112,11 @@
 
 .arrow:hover {
   background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+.arrow:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .arrowLeft {

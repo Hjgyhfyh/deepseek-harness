@@ -64,6 +64,12 @@
   color: inherit;
   cursor: pointer;
   font: inherit;
+  border-radius: 6px;
+}
+
+.copyButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .block :where(pre) {

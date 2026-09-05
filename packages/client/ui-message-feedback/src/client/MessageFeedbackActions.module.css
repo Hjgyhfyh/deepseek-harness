@@ -21,6 +21,11 @@
   color: var(--dsw-alias-label-secondary);
 }
 
+.action:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .action:disabled {
   cursor: default;
   opacity: 0.4;
@@ -52,6 +57,11 @@
   color: var(--dsw-alias-label-secondary);
 }
 
+.noteOpen:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .noteEditor {
   display: inline-flex;
   align-items: flex-start;
@@ -68,6 +78,11 @@
   font: inherit;
   font-size: 13px;
   resize: vertical;
+}
+
+.noteInput:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .noteSave,
@@ -88,6 +103,12 @@
 .noteSave:disabled {
   cursor: default;
   opacity: 0.4;
+}
+
+.noteSave:focus-visible,
+.noteCancel:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .noteCancel {

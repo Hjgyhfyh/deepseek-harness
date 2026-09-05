@@ -30,6 +30,7 @@ export function MessageFeedbackActions({ messageId, ensure, rate, toggle, clearN
   // The controls mount for every settled message in the transcript, so the
   // Session's feedback is read once on first hover/focus rather than on mount.
   const seeded = useRef(false)
+  const restoreNoteFocusRef = useRef(false)
   const seed = useCallback(() => {
     if (seeded.current) return
     seeded.current = true
@@ -72,7 +73,10 @@ export function MessageFeedbackActions({ messageId, ensure, rate, toggle, clearN
       : rate(messageId, current, trimmed)
     void settled.then((result) => {
       settle(result)
-      if (result.ok && alive.current) setNoteOpen(false)
+      if (result.ok && alive.current) {
+        restoreNoteFocusRef.current = true
+        setNoteOpen(false)
+      }
     })
   }, [clearNote, draft, messageId, rate, settle])
 
@@ -80,6 +84,11 @@ export function MessageFeedbackActions({ messageId, ensure, rate, toggle, clearN
     setDraft(item?.note ?? '')
     setNoteOpen(true)
   }, [item?.note])
+
+  const closeNote = (): void => {
+    restoreNoteFocusRef.current = true
+    setNoteOpen(false)
+  }
 
   const likeLabel = rating === 'positive' ? t('action.likeActive') : t('action.like')
   const dislikeLabel = rating === 'negative' ? t('action.dislikeActive') : t('action.dislike')
@@ -117,7 +126,16 @@ export function MessageFeedbackActions({ messageId, ensure, rate, toggle, clearN
         </button>
       </Tooltip>
       {rating !== undefined && !noteOpen && (
-        <button type="button" className={css.noteOpen} onClick={openNote}>
+        <button
+          ref={(el) => {
+            if (el === null || !restoreNoteFocusRef.current) return
+            restoreNoteFocusRef.current = false
+            el.focus()
+          }}
+          type="button"
+          className={css.noteOpen}
+          onClick={openNote}
+        >
           {item?.note === undefined ? t('note.open') : item.note}
         </button>
       )}
@@ -129,7 +147,13 @@ export function MessageFeedbackActions({ messageId, ensure, rate, toggle, clearN
             placeholder={t('note.placeholder')}
             value={draft}
             rows={2}
+            autoFocus
             onChange={(event) => { setDraft(event.target.value) }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Escape') return
+              event.preventDefault()
+              closeNote()
+            }}
           />
           <button
             type="button"
@@ -139,7 +163,7 @@ export function MessageFeedbackActions({ messageId, ensure, rate, toggle, clearN
           >
             {t('note.save')}
           </button>
-          <button type="button" className={css.noteCancel} onClick={() => { setNoteOpen(false) }}>
+          <button type="button" className={css.noteCancel} onClick={closeNote}>
             {t('note.cancel')}
           </button>
         </span>

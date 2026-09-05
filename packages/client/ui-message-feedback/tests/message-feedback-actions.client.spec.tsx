@@ -133,6 +133,7 @@ describe('MessageFeedbackActions', () => {
 
     await waitFor(() => { expect(ui.rate).toHaveBeenCalledWith(MSG, 'positive', 'precise and short') })
     await waitFor(() => { expect(ui.queryByLabelText(zh['note.aria'])).toBeNull() })
+    expect(document.activeElement).toBe(ui.getByText(zh['note.open']))
   })
 
   it('clears the note when the editor is emptied', async () => {
@@ -150,10 +151,23 @@ describe('MessageFeedbackActions', () => {
 
     fireEvent.click(ui.getByText('old note'))
     expect((ui.getByLabelText(zh['note.aria']) as HTMLTextAreaElement).value).toBe('old note')
+    fireEvent.keyDown(ui.getByLabelText(zh['note.aria']), { key: 'Enter' })
+    expect(ui.getByLabelText(zh['note.aria'])).toBeTruthy()
 
     fireEvent.click(ui.getByText(zh['note.cancel']))
     expect(ui.queryByLabelText(zh['note.aria'])).toBeNull()
     expect(ui.rate).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(ui.getByText('old note'))
+  })
+
+  it('Escape closes the note editor and restores focus to the opener', () => {
+    const ui = mount({ current: item({ rating: 'positive', note: 'old note' }) })
+
+    fireEvent.click(ui.getByText('old note'))
+    fireEvent.keyDown(ui.getByLabelText(zh['note.aria']), { key: 'Escape' })
+    expect(ui.queryByLabelText(zh['note.aria'])).toBeNull()
+    expect(ui.rate).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(ui.getByText('old note'))
   })
 
   it('offers no note editor before a rating is recorded', () => {

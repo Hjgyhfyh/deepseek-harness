@@ -107,6 +107,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.crumb:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .crumbCurrent {
   font-weight: 500;
   color: var(--dsw-alias-label-primary);
@@ -175,6 +180,12 @@
 
 .tabActive::after {
   background: var(--dsw-alias-state-business-primary);
+}
+
+.tab:focus-visible {
+  outline: none;
+  border-radius: 6px;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .viewArea {

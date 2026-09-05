@@ -49,6 +49,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.themeCube:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 /* Selected cube: #F5F6F7 fill + #ADB2B8 border (static token — the bluish-400
  * step has no alias-layer name). */
 .selected {

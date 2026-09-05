@@ -51,6 +51,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.selector:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .selector:disabled {
   cursor: default;
 }

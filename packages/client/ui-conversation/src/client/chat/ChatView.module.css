@@ -146,6 +146,11 @@
   opacity: 0.6;
 }
 
+.older button:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 /* Back-to-bottom: zero-height sticky slot so the control does not extend
    scrollHeight; the button translates up into the viewport. Under the
    conversation host, clearance sits above the sticky composer stack. */
@@ -189,4 +194,9 @@
 
 .toBottom:hover {
   background: var(--dsw-alias-button-floating-hover);
+}
+
+.toBottom:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
