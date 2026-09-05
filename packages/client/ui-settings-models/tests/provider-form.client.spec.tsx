@@ -628,6 +628,28 @@ describe('provider rows', () => {
     expect(rowOf('openai').textContent).not.toContain(en.customTag)
   })
 
+  it('Escape collapses an open customized fold and restores summary focus', async () => {
+    await mountSection({ providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY' } } })
+    const row = screen.getByText('openai').closest('li')
+    if (row === null) throw new Error('no row for openai')
+    fireEvent.click(within_(row, en.edit))
+    const summary = document.querySelector('summary')
+    if (summary === null) throw new Error('no customized fold')
+    const details = summary.closest('details')
+    if (details === null) throw new Error('no customized details')
+
+    fireEvent.keyDown(summary, { key: 'Escape' })
+    expect(details.open).toBe(false)
+
+    fireEvent.click(summary)
+    expect(details.open).toBe(true)
+    const base = screen.getByLabelText(en.baseUrl)
+    base.focus()
+    fireEvent.keyDown(base, { key: 'Escape' })
+    expect(details.open).toBe(false)
+    expect(document.activeElement).toBe(summary)
+  })
+
   it('shows no tag when the adapter draws no catalog distinction', async () => {
     const scripted = scriptedFace({ providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY' } } })
     scripted.face.llm.providers = vi.fn(() => Promise.resolve(ok({

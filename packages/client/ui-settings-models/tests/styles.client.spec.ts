@@ -89,4 +89,10 @@ describe('ModelsSection theme styles', () => {
     // branch, and a literal here is a single colour for both themes.
     expect(css).not.toMatch(/var\(--dsw-[a-z0-9-]+\s*,\s*(?:#|rgb|rgba|hsl|hsla)/)
   })
+
+  it('paints the customized summary primary on keyboard focus, matching hover', () => {
+    expect(css).toMatch(
+      /\.customizedSummary:hover,\s*\.customizedSummary:focus-visible\s*\{[^}]*color: var\(--dsw-alias-label-primary\)/,
+    )
+  })
 })

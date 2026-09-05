@@ -390,7 +390,8 @@
   transform: rotate(45deg) translate(-1px, -1px);
 }
 
-.customizedSummary:hover {
+.customizedSummary:hover,
+.customizedSummary:focus-visible {
   color: var(--dsw-alias-label-primary);
 }
 

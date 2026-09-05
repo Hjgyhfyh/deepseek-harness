@@ -21,8 +21,8 @@
  * see instead of rebuilding the whole subtree from a partial descriptor.
  */
 
-import { useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import type { CredentialView, IApiClient, SettingsNamespaceView, SettingsPathOpView } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   deletePath, getPath, hasPath, nodeAtPath, rehydrateSchema, setPath, validateDraft,
@@ -170,6 +170,18 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
     () => layout === 'pi-ai' ? protocolChoices(namespace) : [],
     [layout, namespace],
   )
+  const customizedRef = useRef<HTMLDetailsElement>(null)
+  const customizedSummaryRef = useRef<HTMLElement>(null)
+  // In-flow disclosure inside Settings: Escape only while this fold holds
+  // focus (summary or a nested field), so the settings overlay still wins
+  // when the fold is closed.
+  const collapseCustomizedFromEscape = (event: KeyboardEvent<HTMLDetailsElement>): void => {
+    const details = customizedRef.current
+    if (event.key !== 'Escape' || details === null || !details.open) return
+    event.preventDefault()
+    details.open = false
+    customizedSummaryRef.current?.focus()
+  }
 
   useEffect(() => {
     let stale = false
@@ -376,8 +388,12 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
           />
           {shownKeyFailure === undefined ? null : <p className={styles['error']}>{t(shownKeyFailure)}</p>}
         </div>
-        {props.credentialOnly === true ? null : <details className={styles['customized']}>
-          <summary className={styles['customizedSummary']}>{t('customized')}</summary>
+        {props.credentialOnly === true ? null : <details
+          ref={customizedRef}
+          className={styles['customized']}
+          onKeyDown={collapseCustomizedFromEscape}
+        >
+          <summary ref={customizedSummaryRef} className={styles['customizedSummary']}>{t('customized')}</summary>
           <div className={styles['customizedBody']}>
             {/* The name and the protocol are the create card's two remaining
                 profile fields; a route the adapter ships defaults both from
