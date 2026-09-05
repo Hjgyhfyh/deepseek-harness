@@ -466,7 +466,8 @@
   margin-top: 0;
 }
 
-.sessionOverflowButton:hover {
+.sessionOverflowButton:hover,
+.sessionOverflowButton:focus-visible {
   background: transparent;
   color: var(--dsw-alias-label-secondary);
 }

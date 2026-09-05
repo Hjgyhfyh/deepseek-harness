@@ -251,6 +251,28 @@ describe('WorkspaceBrowser', () => {
     expect(screen.getByRole('button', { name: '展开其余 2 个会话' })).toBeTruthy()
   })
 
+  it('Escape collapses show-all sessions without closing the Workspace', () => {
+    const items = Array.from({ length: 7 }, (_, index) => summary(`session-${index + 1}`, 7 - index))
+    mount({
+      useSessions: hook(sessionState(items)),
+      useWorkspaces: hook(workspaceState([workspace('alpha', items.map(item => item.id))])),
+    })
+    fireEvent.click(screen.getByText('alpha'))
+    const more = screen.getByRole('button', { name: '展开其余 2 个会话' })
+    fireEvent.keyDown(more, { key: 'Escape' })
+    expect(screen.queryByText('session-6')).toBeNull()
+    expect(screen.getByText('session-1')).toBeTruthy()
+
+    fireEvent.click(more)
+    expect(screen.getByText('session-6')).toBeTruthy()
+    const less = screen.getByRole('button', { name: '收起' })
+    less.focus()
+    fireEvent.keyDown(less, { key: 'Escape' })
+    expect(screen.queryByText('session-6')).toBeNull()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '展开其余 2 个会话' }))
+    expect(screen.getByText('session-1')).toBeTruthy()
+  })
+
   it('shares one editable order across modes and promotes only while Last updated is active', async () => {
     const initial = sessionState([summary('one', 3), summary('two', 2)])
     const b = mount({

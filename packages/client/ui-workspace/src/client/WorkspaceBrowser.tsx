@@ -9,7 +9,7 @@
  * menu in between; the flow and its error dialog live in WorkspacePicker
  * (same package — direct composition, no slot between them).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import {
   Button, IconCloseFill14, IconPersonalizationOutline16,
@@ -543,6 +543,16 @@ function SessionTree({
                   className={css.sessionOverflowButton}
                   aria-expanded={expandedSessionGroups.includes(group.key)}
                   onClick={() => { setExpandedSessionGroups(keys => toggled(keys, group.key)) }}
+                  onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => {
+                    // In-flow remainder disclosure: Escape only while extra
+                    // sessions are shown, so search and overlays still win
+                    // when the list is capped at five.
+                    if (event.key !== 'Escape' || event.defaultPrevented) return
+                    if (!expandedSessionGroups.includes(group.key)) return
+                    event.preventDefault()
+                    setExpandedSessionGroups(keys => keys.filter(key => key !== group.key))
+                    event.currentTarget.focus()
+                  }}
                 >
                   {expandedSessionGroups.includes(group.key)
                     ? t('sessions.collapse')
