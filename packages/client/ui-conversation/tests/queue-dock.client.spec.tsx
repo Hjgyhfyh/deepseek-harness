@@ -126,6 +126,35 @@ describe('QueueDock', () => {
     expect(view.queryByText('one')).toBeNull()
   })
 
+  it('Escape collapses an open queue without cancelling an in-progress edit', () => {
+    const snap = snapshotWith([row('i-1', 'one'), row('i-2', 'two')])
+    const source = liveSession(snap)
+    const updateQueue = vi.fn(() => Promise.resolve())
+    const view = render(<QueueDock {...kitFor(snap, { updateQueue })} useSession={source.useSession} />)
+    const header = view.getByRole('button', { name: '2 条排队消息' })
+
+    fireEvent.keyDown(header, { key: 'Escape' })
+    expect(header.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(header)
+    const edit = view.getAllByLabelText('编辑排队消息')[0]
+    if (edit === undefined) throw new Error('no edit action')
+    edit.focus()
+    fireEvent.keyDown(edit, { key: 'Escape' })
+    expect(view.queryByText('one')).toBeNull()
+    expect(header.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(header)
+
+    fireEvent.click(header)
+    fireEvent.click(view.getAllByLabelText('编辑排队消息')[0]!)
+    const editor = view.getByRole('textbox', { name: '编辑排队消息' })
+    fireEvent.change(editor, { target: { value: 'draft' } })
+    fireEvent.keyDown(editor, { key: 'Escape' })
+    expect(view.getByText('one')).toBeTruthy()
+    expect(header.getAttribute('aria-expanded')).toBe('true')
+    expect(updateQueue).not.toHaveBeenCalled()
+  })
+
   it('keeps an active single-row editor visible when another item arrives', () => {
     const single = snapshotWith([row('i-edit', 'before')])
     const source = liveSession(single)

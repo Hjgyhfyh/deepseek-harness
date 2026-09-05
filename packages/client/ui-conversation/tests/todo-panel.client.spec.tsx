@@ -84,6 +84,21 @@ describe('TodoPanel', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
   })
 
+  it('Escape collapses an open plan and restores header focus', () => {
+    render(<TodoPanel todos={LIST} t={t} />)
+    const header = screen.getByRole('button', { expanded: false })
+    fireEvent.keyDown(header, { key: 'Escape' })
+    expect(header.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('list')).toBeNull()
+
+    fireEvent.click(header)
+    expect(screen.getByRole('list')).toBeTruthy()
+    fireEvent.keyDown(header, { key: 'Escape' })
+    expect(screen.queryByRole('list')).toBeNull()
+    expect(header.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(header)
+  })
+
   it('marks every parallel active item, and counts them all in the header', () => {
     render(<TodoPanel todos={PARALLEL} t={t} />)
     fireEvent.click(screen.getByRole('button', { expanded: false }))

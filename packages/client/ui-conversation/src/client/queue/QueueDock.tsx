@@ -4,7 +4,7 @@
 // The 'conversation.input.dock' SlotMap declaration lives in
 // ../contract/slots.ts beside the other input-region slots.
 import type { Context } from '@deepseek-ai/cordis'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import {
@@ -38,6 +38,7 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
   const [collapsed, setCollapsed] = useState(true)
   const listId = useId()
   const restoreEditId = useRef<QueueItemId | null>(null)
+  const headerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (queue.length === 0 && !collapsed) setCollapsed(true)
@@ -52,6 +53,17 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
   const interactionActive = queueMutable && (editing !== null || busy !== null)
   const expanded = !collapsed || interactionActive
   const listVisible = queue.length === 1 || expanded
+
+  // In-flow disclosure above the composer: Escape only while the multi-row
+  // list is open and idle, so an overlay still wins when it is closed, and
+  // an editor's own Escape (already preventDefault) still only cancels.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return
+    if (queue.length <= 1 || collapsed || interactionActive) return
+    event.preventDefault()
+    setCollapsed(true)
+    headerRef.current?.focus()
+  }
 
   const applyAction = async (
     itemId: QueueItemId,
@@ -83,10 +95,11 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
   }
 
   return (
-    <div className={css.dock} data-queue-dock="">
+    <div className={css.dock} data-queue-dock="" onKeyDown={collapseFromEscape}>
       <div className={css.panel}>
         {queue.length > 1 && (
           <button
+            ref={headerRef}
             type="button"
             className={css.header}
             aria-controls={listId}

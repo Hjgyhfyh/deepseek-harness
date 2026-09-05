@@ -61,6 +61,11 @@
   box-shadow: var(--dsw-shadow-focus-ring);
 }
 
+.header:hover .chevron,
+.header:focus-visible .chevron {
+  color: var(--dsw-alias-label-primary);
+}
+
 .lead {
   display: grid;
   flex: none;

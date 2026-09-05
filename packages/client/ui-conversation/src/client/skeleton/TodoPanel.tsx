@@ -5,7 +5,7 @@
 // dock adapter does the selecting, so the panel takes the plain list and stays
 // framework-free. Visual: figma 772:51905 / 772:52972 / 772:53419.
 
-import { useId, useState } from 'react'
+import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Context } from '@deepseek-ai/cordis'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 // The domain's client-namespace pure-type outlet: one import edge delivers
@@ -95,12 +95,23 @@ function progressLabel(todos: readonly TodoItem[], t: TodoPanelProps['t']): stri
 export function TodoPanel({ todos, t }: TodoPanelProps) {
   const [collapsed, setCollapsed] = useState(true)
   const listId = useId()
+  const headerRef = useRef<HTMLButtonElement>(null)
   if (todos.length === 0) return null
 
+  // In-flow disclosure above the composer: Escape only while the plan is
+  // open, so an overlay (Settings, a menu) still wins when it is closed.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || collapsed) return
+    event.preventDefault()
+    setCollapsed(true)
+    headerRef.current?.focus()
+  }
+
   return (
-    <section className={css.root} data-testid="todo-panel" aria-label={t('todo.title')}>
+    <section className={css.root} data-testid="todo-panel" aria-label={t('todo.title')} onKeyDown={collapseFromEscape}>
       <div className={css.body}>
         <button
+          ref={headerRef}
           type="button"
           className={css.header}
           aria-controls={listId}

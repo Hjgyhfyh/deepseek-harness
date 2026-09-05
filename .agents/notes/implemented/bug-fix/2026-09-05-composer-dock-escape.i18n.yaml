@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-composer-dock-escape.md
+2026-09-05-composer-dock-escape.md: d0f9e957c9a479e6e38ff5f303c808151975e7cb
+2026-09-05-composer-dock-escape.zh.md: db41099ec211c70530babef6f4b96e04a66b7d74
