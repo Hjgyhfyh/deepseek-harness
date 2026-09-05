@@ -17,6 +17,7 @@ import { QuestionComposer } from '../src/client/QuestionComposer.tsx'
 import { en, zh } from '../src/client/locales.ts'
 import { en as commonEn } from '@deepseek-ai/dsh-client-locale/src/locales/en.ts'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { subscribeOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 
 afterEach(cleanup)
 
@@ -130,6 +131,7 @@ describe('PlanReviewPanel', () => {
     expect(screen.queryByRole('radio')).toBeNull()
     expect(screen.queryByText(zh['action.skip'])).toBeNull()
     expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.getByRole('group', { name: zh['plan.detail.aria'] })).toBeTruthy()
   })
 
   it('answers with the asker\'s approve label and keeps its description as the tooltip', () => {
@@ -167,6 +169,45 @@ describe('PlanReviewPanel', () => {
         error: { code: 'cancelled', message: 'the user closed this question request', details: {} },
       },
     })
+  })
+
+  it('Escape dismisses the review like Chat about it', () => {
+    const { carrier, respond } = wait()
+    render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(respond).toHaveBeenCalledWith({
+      type: 'client-response', rpcId: RpcId('q-1'),
+      result: {
+        ok: false,
+        error: { code: 'cancelled', message: 'the user closed this question request', details: {} },
+      },
+    })
+  })
+
+  it('leaves the review open when a later overlay owns Escape', () => {
+    const { carrier, respond } = wait()
+    render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)
+    const upper = vi.fn()
+    const release = subscribeOverlayEscape(upper)
+    try {
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(upper).toHaveBeenCalledTimes(1)
+      expect(respond).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: zh['plan.approve'] })).toBeTruthy()
+    } finally {
+      release()
+    }
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(respond).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not dismiss on Escape after a decision has been sent', () => {
+    const { carrier, respond } = wait()
+    render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)
+    fireEvent.click(screen.getByRole('button', { name: zh['plan.approve'] }))
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(respond).toHaveBeenCalledTimes(1)
+    expect(respond).toHaveBeenCalledWith(decidedEnvelope('Approve'))
   })
 
   it('omits the tooltip for an option carrying no description', () => {
@@ -225,5 +266,6 @@ describe('PlanReviewPanel', () => {
     expect(screen.getByRole('button', { name: 'Approve' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Refuse' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Chat about it' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Plan text' })).toBeTruthy()
   })
 })

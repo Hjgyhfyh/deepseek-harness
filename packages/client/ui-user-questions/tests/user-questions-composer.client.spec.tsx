@@ -13,6 +13,7 @@ import { QuestionComposer, parseRecommendedLabel } from '../src/client/QuestionC
 import { en, zh } from '../src/client/locales.ts'
 import { en as commonEn } from '@deepseek-ai/dsh-client-locale/src/locales/en.ts'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { subscribeOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 
 afterEach(cleanup)
 
@@ -321,6 +322,41 @@ describe('PendingQuestion domain face', () => {
     expect(screen.getByRole('radiogroup')).toBeTruthy()
     // Expanded again: the toggle reports expanded and the option list is back.
     expect(screen.getByLabelText(zh['nav.minimize']).getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('Escape collapses the card then dismisses the request', () => {
+    const { carrier, respond } = wait()
+    render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('radiogroup')).toBeNull()
+    expect(document.activeElement).toBe(screen.getByLabelText(zh['nav.maximize']))
+    expect(respond).not.toHaveBeenCalled()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(respond).toHaveBeenCalledWith({
+      type: 'client-response', rpcId: RpcId('question-1'),
+      result: {
+        ok: false,
+        error: { code: 'cancelled', message: 'the user closed this question request', details: {} },
+      },
+    })
+  })
+
+  it('leaves the expanded card up when a later overlay owns Escape', () => {
+    const { carrier, respond } = wait()
+    render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)
+    const upper = vi.fn()
+    const release = subscribeOverlayEscape(upper)
+    try {
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(upper).toHaveBeenCalledTimes(1)
+      expect(screen.getByRole('radiogroup')).toBeTruthy()
+      expect(respond).not.toHaveBeenCalled()
+    } finally {
+      release()
+    }
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('radiogroup')).toBeNull()
+    expect(respond).not.toHaveBeenCalled()
   })
 
   it('keeps the collapse toggle out of the cancel path and preserves drafts across collapse', () => {

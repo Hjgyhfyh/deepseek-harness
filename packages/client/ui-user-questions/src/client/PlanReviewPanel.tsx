@@ -14,7 +14,7 @@
 // answer, not an escape hatch.
 
 import { useState } from 'react'
-import { Button, IconEditOutline16, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, IconEditOutline16, MarkdownText, useOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PendingQuestion, PlanReview, QuestionComposerProps } from './contract/slots.ts'
 import css from './PlanReviewPanel.module.css'
 
@@ -54,6 +54,7 @@ export function PlanReviewPanel({ pending, review, t }: PlanReviewPanelProps) {
       setError(cause instanceof Error ? cause.message : String(cause))
     })
   }
+  useOverlayEscape(!busy, () => { settle(() => pending.cancel()) })
   const decide = (label: string): void => {
     settle(() => pending.answer({ answers: [{ id: review.id, selected: [label] }] }))
   }
@@ -66,7 +67,13 @@ export function PlanReviewPanel({ pending, review, t }: PlanReviewPanelProps) {
           <span className={css.dot} />
           {t('plan.header')}
         </div>
-        <div className={css.body} data-plan-review-scroll>
+        <div
+          className={css.body}
+          data-plan-review-scroll
+          tabIndex={0}
+          role="group"
+          aria-label={t('plan.detail.aria')}
+        >
           <MarkdownText text={review.plan} />
         </div>
         <div className={css.footer}>

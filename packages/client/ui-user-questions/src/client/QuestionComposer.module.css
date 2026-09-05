@@ -138,6 +138,11 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.iconButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .iconButton:disabled {
   color: var(--dsw-alias-label-dimmed);
   cursor: default;

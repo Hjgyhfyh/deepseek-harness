@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import {
   Button, IconCheckOutline14, IconChevronDownOutline14, IconChevronLeftOutline14,
   IconChevronRightOutline14, IconChevronUpOutline14, IconCloseOutline16,
-  IconEditOutline16, MarkdownText,
+  IconEditOutline16, MarkdownText, useOverlayEscape,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import {
   PendingQuestion, planReviewOf,
@@ -98,6 +98,21 @@ function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<Questi
       setError({ text: cause instanceof Error ? cause.message : String(cause) })
     })
   }
+  const maximizeRef = useRef<HTMLButtonElement>(null)
+  const restoreMaximize = useRef(false)
+  useOverlayEscape(busy === null, () => {
+    if (!minimized) {
+      restoreMaximize.current = true
+      setMinimized(true)
+      return
+    }
+    cancelFlow()
+  })
+  useEffect(() => {
+    if (!minimized || !restoreMaximize.current) return
+    restoreMaximize.current = false
+    maximizeRef.current?.focus()
+  }, [minimized])
 
   const updateDraft = (update: (current: DraftAnswer) => DraftAnswer): void => {
     setDrafts(current => current.map((item, itemIndex) => itemIndex === index ? update(item) : item))
@@ -212,6 +227,7 @@ function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<Questi
           </div>
           <div className={css.headerActions}>
             <button
+              ref={maximizeRef}
               type="button" className={css.iconButton}
               aria-label={t(minimized ? 'nav.maximize' : 'nav.minimize')}
               title={t(minimized ? 'nav.maximize' : 'nav.minimize')}

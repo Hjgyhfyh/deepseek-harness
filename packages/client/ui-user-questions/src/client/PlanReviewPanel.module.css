@@ -72,6 +72,11 @@
   line-height: 22px;
 }
 
+.body:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .footer {
   display: flex;
   align-items: center;
