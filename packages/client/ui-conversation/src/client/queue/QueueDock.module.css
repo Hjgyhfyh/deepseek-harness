@@ -153,6 +153,10 @@
   border-color: var(--dsw-alias-state-business-primary);
 }
 
+.editor:focus-visible {
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .actions {
   display: flex;
   flex: none;
@@ -179,8 +183,8 @@
 }
 
 .action:focus-visible {
-  outline: 2px solid var(--dsw-alias-label-tertiary);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .action:disabled {

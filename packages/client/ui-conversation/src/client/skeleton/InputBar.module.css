@@ -81,6 +81,10 @@
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
+.card:focus-within {
+  box-shadow: var(--dsw-shadow-lv2), var(--dsw-shadow-focus-ring);
+}
+
 /* No-workspace trigger state: dashed l4 stroke marks the card as a pick-a-
    workspace affordance rather than a live composer; hover answers in the
    business blue to invite the click. Native `dashed` has a fixed browser
@@ -366,6 +370,11 @@
   background: var(--dsw-alias-interactive-bg-hover-solid);
 }
 
+.deliver:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .deliver:disabled {
   opacity: 0.5;
   cursor: default;
@@ -389,6 +398,11 @@
 
 .continue:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+.continue:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .continue:disabled {
@@ -423,6 +437,10 @@
   background-color: var(--dsw-alias-interactive-bg-hover);
 }
 
+.select:focus-visible {
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .select:disabled {
   opacity: 0.5;
   cursor: default;
@@ -455,6 +473,11 @@
   background: var(--dsw-alias-button-info-hover);
 }
 
+.primary:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .primary:disabled {
   opacity: 0.4;
   cursor: default;
@@ -469,6 +492,11 @@
   color: inherit;
   font-size: 12px;
   cursor: pointer;
+}
+
+.retry:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 /* Plain-text reference highlight: a pure range mark over the

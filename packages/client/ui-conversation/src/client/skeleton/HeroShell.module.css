@@ -133,13 +133,18 @@
   min-height: 28px;
   padding: 0 8px;
   border: none;
-  border-radius: 16px;
+  border-radius: var(--dsw-radius-xl);
   background: transparent;
   color: var(--dsw-alias-label-primary);
   font-size: 13px;
   line-height: 20px;
   font-weight: 500;
   cursor: pointer;
+}
+
+.workspace:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .workspace:not(:disabled):hover,

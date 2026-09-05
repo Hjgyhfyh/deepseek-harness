@@ -4,9 +4,9 @@
 // arrow) — visuals and behavior get a proper pass later.
 // The anchor is the child element itself (cloneElement, no wrapper node), so
 // attaching a tooltip never changes the anchor's layout context. The bubble is
-// position:fixed and coordinates come from the anchor's rect at show time, so
-// it escapes ancestor overflow clipping (the sidebar rail clips its column)
-// without a portal.
+// position:fixed at --dsw-z-tooltip and coordinates come from the anchor's
+// rect at show time, so it escapes ancestor overflow clipping (the sidebar
+// rail clips its column) without a portal and stays above modal overlays.
 
 import { cloneElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FocusEventHandler, MouseEventHandler, MutableRefObject, ReactElement, Ref } from 'react'

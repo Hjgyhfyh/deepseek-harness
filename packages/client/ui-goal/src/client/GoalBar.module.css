@@ -89,6 +89,10 @@
   border-color: var(--dsw-alias-state-business-primary);
 }
 
+.objectiveInput:focus-visible {
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .objectiveInput::placeholder {
   color: var(--dsw-alias-label-caption);
 }
@@ -119,6 +123,11 @@
 .iconBtn:hover {
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-secondary);
+}
+
+.iconBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .iconBtn:disabled {

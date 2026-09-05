@@ -8,7 +8,7 @@
   position: absolute;
   bottom: calc(100% + 4px);
   left: 0;
-  z-index: 100;
+  z-index: var(--dsw-z-dropdown);
   min-width: min(260px, 100%);
   /* 537 is the design cap; the 100% clamp keeps the menu inside the composer
      card when a narrow viewport shrinks the card below the cap (the overlay

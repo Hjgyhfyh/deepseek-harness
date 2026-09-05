@@ -23,9 +23,9 @@ export type AppFrameProps =
   & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
   & PropsStore<ReturnType<typeof createLayoutStore>>
 
-/** Center column grid item (session-body building block). */
+/** Center column grid item (session-body building block); the page landmark. */
 function CenterColumn(props: { children?: ReactNode }) {
-  return <div className={css.centerCol}>{props.children}</div>
+  return <main className={css.centerCol}>{props.children}</main>
 }
 
 /** Details column grid item; width 0 keeps the subtree mounted (never unmount on close). */

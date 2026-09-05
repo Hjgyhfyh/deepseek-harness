@@ -12,4 +12,51 @@
   --ds-transition-duration: 0.2s;
   --ds-transition-duration-fast: 0.1s;
   --ds-transition-duration-slow: 0.3s;
+
+  /* Semantic motion scale (additive; consumers may adopt gradually). */
+  --dsw-easing-standard: var(--ds-ease-in-out);
+  --dsw-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --dsw-motion-fast: var(--ds-transition-duration-fast);
+  --dsw-motion-normal: var(--ds-transition-duration);
+  --dsw-motion-slow: var(--ds-transition-duration-slow);
+
+  /* Radius scale (theme-invariant). */
+  --dsw-radius-xs: 4px;
+  --dsw-radius-sm: 6px;
+  --dsw-radius-md: 8px;
+  --dsw-radius-lg: 12px;
+  --dsw-radius-xl: 16px;
+  --dsw-radius-2xl: 20px;
+  --dsw-radius-3xl: 24px;
+  --dsw-radius-pill: 999px;
+
+  /* Elevation extras (base shadows live in gradient-shadow-text.css). */
+  --dsw-shadow-lv1-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --dsw-shadow-focus-ring: 0 0 0 3px rgba(77, 147, 248, 0.32);
+
+  /* Z-index scale: one ladder for sticky/dropdown/overlay/modal/popover/
+     tooltip/toast so components stop out-bidding each other ad hoc. */
+  --dsw-z-sticky: 100;
+  --dsw-z-dropdown: 1000;
+  --dsw-z-overlay: 1100;
+  --dsw-z-modal: 1200;
+  --dsw-z-popover: 1300;
+  --dsw-z-tooltip: 1400;
+  --dsw-z-toast: 1500;
+}
+
+/* One global reduced-motion switch: motion-scale consumers collapse to zero
+   automatically; component-local `animation: none` guards stay as-is. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dsw-motion-fast: 0ms;
+    --dsw-motion-normal: 0ms;
+    --dsw-motion-slow: 0ms;
+  }
+}
+
+/* Dark surfaces need a stronger ring: the light-mode 0.32 alpha reads as a
+   hairline against --dsw-alias-bg-base. */
+body[data-ds-dark-theme] {
+  --dsw-shadow-focus-ring: 0 0 0 3px rgba(77, 147, 248, 0.48);
 }

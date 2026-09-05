@@ -2,7 +2,7 @@
 .root {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--dsw-z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,7 +29,7 @@
   padding: 0 0 24px;
   overflow: hidden;
   border: 1px solid var(--dsw-alias-border-inverted);
-  border-radius: 24px;
+  border-radius: var(--dsw-radius-3xl);
   background: var(--dsw-alias-bg-layer-2);
   box-shadow: var(--dsw-shadow-lv3);
 }
@@ -66,7 +66,7 @@
   width: 28px;
   height: 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--dsw-radius-md);
   background: transparent;
   cursor: pointer;
   color: var(--dsw-alias-label-secondary);
@@ -74,6 +74,11 @@
 
 .close:hover {
   background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 /* Description and body share the 332px content column (24px side pads). */

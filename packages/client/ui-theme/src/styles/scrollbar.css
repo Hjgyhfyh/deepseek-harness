@@ -64,23 +64,32 @@ body {
    selector matching already does. Not inherited either, hence the unscoped
    selectors. */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: var(--dsh-scrollbar-width);
+  height: var(--dsh-scrollbar-width);
 }
 
 /* Track stays transparent so the thumb reads against whatever surface scrolls
-   under it; only the thumb carries a token colour. */
+   under it; only the thumb carries a token colour. The small margin keeps the
+   thumb clear of rounded card corners (same treatment TerminalBlock applies
+   locally to its output pane). */
 ::-webkit-scrollbar-track {
   background: transparent;
+  margin: 2px 0;
 }
 
 ::-webkit-scrollbar-thumb {
-  border-radius: 4px;
-  background: var(--dsh-scrollbar-thumb);
+  border-radius: var(--dsw-radius-xs);
+  /* Transparent border + padding-box clip floats the pill inside the bar so
+     it does not visually stick to rounded container edges. */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  background-color: var(--dsh-scrollbar-thumb);
+  transition: background-color var(--dsw-motion-fast) var(--dsw-easing-standard);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--dsh-scrollbar-thumb-hover);
+  cursor: pointer;
+  background-color: var(--dsh-scrollbar-thumb-hover);
 }
 
 /* Both scrollbars meeting in a corner: no separate token, so the corner

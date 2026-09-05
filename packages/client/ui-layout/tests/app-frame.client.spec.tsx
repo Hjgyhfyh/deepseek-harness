@@ -142,6 +142,11 @@ describe('AppFrame', () => {
     expect(tracks(frame)).toEqual([280, 0])
   })
 
+  it('exposes the conversation column as the main landmark', () => {
+    const { getByRole, getByTestId } = mountFrame()
+    expect(getByRole('main').contains(getByTestId('center-content'))).toBe(true)
+  })
+
   it('renders the session pair with empty owner shares (sessionId is framework-standard)', () => {
     const { slotCalls, getByTestId } = mountFrame()
     expect(getByTestId('center-content')).toBeTruthy()

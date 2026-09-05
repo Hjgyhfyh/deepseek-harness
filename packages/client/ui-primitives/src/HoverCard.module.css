@@ -13,11 +13,11 @@
 .card {
   --dsw-hovercard-bg: #2C2C2E;
   position: fixed;
-  z-index: 100;
+  z-index: var(--dsw-z-popover);
   box-sizing: border-box;
   width: 244px;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--dsw-radius-lg);
   background: var(--dsw-hovercard-bg);
   box-shadow: var(--dsw-shadow-lv3);
 }
@@ -27,8 +27,8 @@
 }
 
 .copyable:focus-visible {
-  outline: 2px solid var(--dsw-alias-state-business-primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .feedback {

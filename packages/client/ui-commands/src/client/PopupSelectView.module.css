@@ -8,7 +8,7 @@
   position: absolute;
   bottom: calc(100% + 4px);
   left: 0;
-  z-index: 100;
+  z-index: var(--dsw-z-dropdown);
   padding: 4px;
   display: flex;
   flex-direction: column;
@@ -25,7 +25,7 @@
   --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
   border: 1px solid var(--dsw-alias-border-inverted);
-  border-radius: 12px;
+  border-radius: var(--dsw-radius-lg);
   background: var(--dsw-specific-menu);
   box-shadow: var(--dsw-shadow-lv3);
   outline: none;
@@ -92,6 +92,10 @@
   outline: none;
 }
 
+.search:focus-visible {
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .error {
   display: flex;
   align-items: center;
@@ -115,4 +119,9 @@
   font-size: 12px;
   color: var(--dsw-alias-label-primary);
   cursor: pointer;
+}
+
+.retry:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }

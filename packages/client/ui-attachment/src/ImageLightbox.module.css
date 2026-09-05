@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--dsw-z-modal);
   display: grid;
   place-items: center;
   padding: 40px;
@@ -22,7 +22,7 @@
   max-width: min(100%, 1600px);
   max-height: calc(100vh - 80px);
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: var(--dsw-radius-lg);
   background: var(--dsw-specific-input-major);
   box-shadow: var(--dsw-shadow-lv3);
 }
@@ -37,8 +37,13 @@
   width: 36px;
   height: 36px;
   border: 1px solid var(--dsw-alias-border-l2-darkmode-thin);
-  border-radius: 999px;
+  border-radius: var(--dsw-radius-pill);
   background: var(--dsw-specific-input-major);
   color: var(--dsw-alias-label-primary);
   cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }

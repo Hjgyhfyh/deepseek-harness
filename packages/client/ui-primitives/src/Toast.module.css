@@ -8,9 +8,9 @@
   position: fixed;
   top: 120px;
   left: 50%;
-  /* Above the 1000 the image lightbox backdrop uses: a failure reported while
-     a preview is open must stay readable. */
-  z-index: 1100;
+  /* Top of the overlay ladder (--dsw-z-toast): a failure reported while a
+     lightbox or dialog is open must stay readable. */
+  z-index: var(--dsw-z-toast);
   /* Purely an announcement: it must never intercept clicks — in particular
      after the CSS fade finished while a throttled background-tab timer has
      not yet unmounted the still-hit-testable fixed element. */
