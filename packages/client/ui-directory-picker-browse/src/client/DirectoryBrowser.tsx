@@ -752,11 +752,10 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
   return (
     <Modal
       open={open}
-      // Escape and mask reach every mounted Modal's document listener; while
-      // the nested create dialog is up only that topmost dialog may close
-      // (its own guard keeps an in-flight creation open), and an in-flight
-      // adoption pins the flow — dismissing it would leave the owner's
-      // createWorkspace to land after an apparent cancel.
+      // Overlay Escape is LIFO: the nested create is the top frame while open.
+      // Its own guard still keeps an in-flight creation from closing, and an
+      // in-flight adoption pins the flow — dismissing it would leave the
+      // owner's createWorkspace to land after an apparent cancel.
       onClose={() => { if (folderDraft === null && !busy) onClose() }}
       title={t('browser.title')}
       className={clsx(css.dialog)}

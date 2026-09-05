@@ -15,6 +15,7 @@ import clsx from 'clsx'
 import {
   IconAgentPresetOutline16, IconCloseOutline16, IconDataOutline16,
   IconPersonalizationOutline16, IconSettingsOutline16,
+  useOverlayEscape,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SettingsRootComponentProps, SettingsSectionRow } from './shell-contract.ts'
 import css from './SettingsRoot.module.css'
@@ -45,14 +46,7 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
   // projection falls back to the first row when the id is gone.
   const active = rows.find(r => r.id === activeId)?.id ?? rows[0]?.id
   const titleId = useId()
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => { document.removeEventListener('keydown', onKeyDown) }
-  }, [onClose])
+  useOverlayEscape(true, onClose)
 
   // Baseline focus management: entering the dialog lands on the close button.
   const closeButton = useRef<HTMLButtonElement | null>(null)
@@ -110,6 +104,17 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
     setOpen(false)
     setActiveId(undefined)
   }, [])
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const restoreTrigger = useRef(false)
+  useEffect(() => {
+    if (open) {
+      restoreTrigger.current = true
+      return
+    }
+    if (!restoreTrigger.current) return
+    restoreTrigger.current = false
+    triggerRef.current?.focus()
+  }, [open])
   const openSection = useCallback((id: string) => {
     setActiveId(id)
     setOpen(true)
@@ -142,6 +147,7 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         className={clsx(css.trigger, !wide && css.rail)}
         aria-haspopup="dialog"

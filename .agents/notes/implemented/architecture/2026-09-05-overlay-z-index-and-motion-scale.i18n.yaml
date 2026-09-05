@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-09-05-overlay-z-index-and-motion-scale.md
-2026-09-05-overlay-z-index-and-motion-scale.md: f486cba4a09c4ba62412939bd0a4503df992fd83
-2026-09-05-overlay-z-index-and-motion-scale.zh.md: 8d6447dd2f3bc8def9f2773ef409105d99cbbe61
+2026-09-05-overlay-z-index-and-motion-scale.md: 68baaafd11744419925d9fcfa4264402e538d847
+2026-09-05-overlay-z-index-and-motion-scale.zh.md: 4b355478f1f897deacf578ebdd0fa9512ff3c11b

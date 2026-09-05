@@ -345,6 +345,11 @@
   background: var(--dsw-alias-interactive-bg-hover-solid);
 }
 
+.add:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .add:disabled {
   opacity: 0.5;
   cursor: default;

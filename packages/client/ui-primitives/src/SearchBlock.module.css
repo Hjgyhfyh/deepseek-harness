@@ -48,6 +48,11 @@
   font: var(--dsw-font-xs-13);
 }
 
+.copyButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .body {
   padding: 8px 14px 12px 0;
   font: var(--dsw-font-markdown-code-block);
@@ -85,6 +90,11 @@
   text-align: left;
 }
 
+.fileHeader:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .filePath {
   min-width: 0;
   font-weight: 600;
@@ -111,6 +121,11 @@
 
 .expand:hover {
   color: var(--dsw-alias-label-secondary);
+}
+
+.expand:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .empty {

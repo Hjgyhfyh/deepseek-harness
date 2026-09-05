@@ -17,6 +17,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .body {
   margin: 4px 0 0;
   padding: 8px;

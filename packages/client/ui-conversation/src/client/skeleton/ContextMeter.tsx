@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { UseProjection } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: the `contextPressure` / `contextBreakdown` projection key merges.
 import type {} from '@deepseek-ai/dsh-token-meter/client'
-import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Tooltip, useOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ComposerBarProps } from '../contract/slots.ts'
 import { contextOccupancy, formatTokens } from '../chat/StatsLine.tsx'
 import css from './ContextMeter.module.css'
@@ -51,24 +51,18 @@ export function ContextMeter({ useProjection, t }: ContextMeterProps) {
     if (!available && open) setOpen(false)
   }, [available, open])
 
-  // Outside click / Escape close, one document listener while open (Menu's pattern).
+  useOverlayEscape(open && available, () => { setOpen(false) })
+
+  // Outside click close while the panel is up (Menu's pointer pattern). Escape
+  // is the overlay stack, so a meter opened over Settings does not dismiss both.
   useEffect(() => {
     if (!open || !available) return
     const onPointerDown = (e: PointerEvent): void => {
       if (e.target instanceof Node && rootRef.current?.contains(e.target) === true) return
       setOpen(false)
     }
-    const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape') return
-      e.preventDefault()
-      setOpen(false)
-    }
     document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
+    return () => { document.removeEventListener('pointerdown', onPointerDown) }
   }, [available, open])
 
   if (context === null) return null

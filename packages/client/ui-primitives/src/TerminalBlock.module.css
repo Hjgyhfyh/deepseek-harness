@@ -155,6 +155,11 @@
   line-height: var(--dsl-terminal-line-height);
 }
 
+.copyButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 /* Vertical scrolling lives on the OUTPUT, not the card root: a root scroller
    would run its scrollbar over the banner (and the copy control), while here
    the banner stays pinned and the bar sits inside the output's right padding.
@@ -202,6 +207,11 @@
 
 .expand:hover {
   color: var(--dsw-alias-label-secondary);
+}
+
+.expand:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .empty {

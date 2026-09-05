@@ -26,6 +26,11 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+.seat:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .seat:disabled {
   cursor: default;
   color: var(--dsw-alias-label-quaternary);

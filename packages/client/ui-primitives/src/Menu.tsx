@@ -2,8 +2,9 @@
 // Default: pure CSS positioning relative to the anchor wrapper — no popper.
 // Opt-in `portal` renders the list into document.body, fixed-positioned from
 // the anchor rect, for anchors inside overflow-clipping containers (sidebar).
-// The owner controls `open`. While open, one document listener handles Escape,
-// outside pointerdown, and ArrowUp/Down among enabled menuitems. Opening moves
+// The owner controls `open`. While open, the overlay Escape stack owns
+// dismiss, and one document listener handles outside pointerdown and
+// ArrowUp/Down among enabled menuitems. Opening moves
 // focus into the selected enabled row (or the first enabled row). Submenus
 // open on hover/focus inside the same root.
 // Entries also cover non-interactive `label` headings and `danger` rows.
@@ -16,6 +17,7 @@ import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import { IconCheckOutline16 } from './icons/index.tsx'
 import { usePointerGrace } from './pointer-grace.ts'
+import { useOverlayEscape } from './useOverlayEscape.ts'
 import css from './Menu.module.css'
 
 /** Selectable row (optionally with a nested submenu). */
@@ -112,6 +114,10 @@ export function Menu({ open, anchor, items, selectedId, selectedIds, onSelect, o
   const [openSubmenuId, setOpenSubmenuId] = useState<string | null>(null)
   const [fixedPos, setFixedPos] = useState<CSSProperties | null>(null)
   const { arm: armClose, cancel: cancelClose } = usePointerGrace(onClose)
+  useOverlayEscape(open, () => {
+    onClose()
+    rootRef.current?.querySelector<HTMLElement>('button:not([role="menuitem"])')?.focus()
+  })
 
   // Portal mode: fixed-position the list from the anchor rect before paint;
   // track the anchor while open (capture-phase scroll catches nested panes).
@@ -179,10 +185,6 @@ export function Menu({ open, anchor, items, selectedId, selectedIds, onSelect, o
       onClose()
     }
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-        return
-      }
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
       const buttons = [...(listRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]:not([disabled])') ?? [])]
       if (buttons.length === 0) return

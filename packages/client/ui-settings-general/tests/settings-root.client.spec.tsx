@@ -143,9 +143,11 @@ describe('SettingsPanel close paths', () => {
 
   it('closes via document-level Escape and unhooks the listener with the panel', () => {
     mount()
+    const trigger = screen.getByRole('button', { name: 'Settings' })
     openPanel()
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(trigger)
     // Ignored while closed (listener removed with the panel) and non-Escape
     // keys are ignored while open.
     fireEvent.keyDown(document, { key: 'Escape' })

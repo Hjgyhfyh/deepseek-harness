@@ -69,6 +69,11 @@
   font: var(--dsw-font-xs-13);
 }
 
+.copyButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .body {
   padding: 12px 0;
   font: var(--dsw-font-markdown-code-block);
@@ -114,4 +119,9 @@
 
 .expand:hover {
   color: var(--dsw-alias-label-secondary);
+}
+
+.expand:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
