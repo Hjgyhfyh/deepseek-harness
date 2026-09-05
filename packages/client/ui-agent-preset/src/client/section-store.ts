@@ -298,6 +298,19 @@ export class AgentPresetSectionController {
   }
 
   /**
+   * Hide one revealed directory path. The row keeps its location action;
+   * Settings can take the next Escape.
+   * @param id - the preset whose path the row is showing.
+   */
+  hideLocation(id: string): void {
+    const revealed = this.store.getSnapshot().revealedPaths
+    if (revealed[id] === undefined) return
+    this.set({
+      revealedPaths: Object.fromEntries(Object.entries(revealed).filter(([key]) => key !== id)),
+    })
+  }
+
+  /**
    * Ask for confirmation before deleting one preset.
    * @param id - the preset to delete, or null to dismiss the confirmation.
    */

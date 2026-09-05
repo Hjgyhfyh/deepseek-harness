@@ -56,6 +56,7 @@ function renderSection(
     setCopyName: vi.fn(),
     confirmCopy: vi.fn(() => Promise.resolve()),
     openLocation: vi.fn(() => Promise.resolve()),
+    hideLocation: vi.fn(),
     confirmDelete: vi.fn(),
     remove: vi.fn(() => Promise.resolve()),
     makeDefault: vi.fn(() => Promise.resolve()),
@@ -223,6 +224,26 @@ describe('the preset list', () => {
     expect(within(mine).getByText(en.revealedPathLabel)).toBeTruthy()
     // The reveal belongs to its row alone.
     expect(within(rowFor('standard')).queryByText(en.revealedPathLabel)).toBeNull()
+  })
+
+  it('Escape hides a revealed path and restores location focus', () => {
+    const actions = renderSection({
+      hasDocument: false,
+      revealedPaths: { mine: '/home/user/.dsh/.agent-presets/mine' },
+    })
+    const location = within(rowFor('mine')).getByRole('button', { name: `${en.showLocation}: mine` })
+    location.focus()
+    expect(fireEvent.keyDown(location, { key: 'Escape' })).toBe(false)
+    expect(actions.hideLocation).toHaveBeenCalledWith('mine')
+    expect(document.activeElement).toBe(location)
+  })
+
+  it('Escape on a row without a revealed path leaves Settings to take the key', () => {
+    const actions = renderSection()
+    const location = within(rowFor('mine')).getByRole('button', { name: `${en.openLocation}: mine` })
+    location.focus()
+    fireEvent.keyDown(location, { key: 'Escape' })
+    expect(actions.hideLocation).not.toHaveBeenCalled()
   })
 
   it('routes the row actions to the controller', () => {

@@ -10,8 +10,7 @@
  * mounted once at session creation and nothing re-reads the file.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import {
   Button, IconBrowseOutline16, IconCopyOutline16, IconFolderOpenOutline16, IconPlusOutline16, IconTrashOutline16, Modal, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -45,6 +44,8 @@ export interface AgentPresetSectionInjected {
   confirmCopy: () => Promise<void>
   /** Open one preset's directory, or reveal its path where there is no desktop. */
   openLocation: (id: string) => Promise<void>
+  /** Hide one revealed directory path. */
+  hideLocation: (id: string) => void
   /**
    * Stage the self-referential preset and start a new session on it — the
    * guided way to author a preset, beside copying. Absent when the surface
@@ -246,12 +247,25 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
             <h3 className={css.groupHead}>{heading}</h3>
             {group.length === 0 ? null : (
               <ul className={css.cards}>
-                {group.map(({ row, text }) => (
+                {group.map(({ row, text }) => {
+                  const pathVisible = state.revealedPaths[row.id] !== undefined
+                  // In-flow path disclosure inside Settings: Escape only while
+                  // this row shows a revealed directory, so the settings overlay
+                  // still wins when the path is hidden.
+                  const hidePathFromEscape = (event: KeyboardEvent<HTMLLIElement>): void => {
+                    if (event.key !== 'Escape' || event.defaultPrevented || !pathVisible) return
+                    event.preventDefault()
+                    props.hideLocation(row.id)
+                    const location = event.currentTarget.querySelector<HTMLButtonElement>('[data-preset-location]')
+                    location?.focus()
+                  }
+                  return (
                   <li
                     key={row.id}
                     className={row.broken !== undefined
                       ? `${css.card} ${css.cardBroken}`
                       : row.isDefault ? `${css.card} ${css.cardActive}` : css.card}
+                    onKeyDown={hidePathFromEscape}
                   >
                     {/* The card body IS the control: picking a preset is the
                       common act, so it should not hide behind a small button.
@@ -312,6 +326,7 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
                           <button
                             type="button"
                             className={css.iconButton}
+                            data-preset-location=""
                             data-tip={state.hasDocument ? t('openLocation') : t('showLocation')}
                             aria-label={`${state.hasDocument ? t('openLocation') : t('showLocation')}: ${text.name}`}
                             onClick={() => { void props.openLocation(row.id) }}
@@ -354,7 +369,8 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
                         </p>
                       )}
                   </li>
-                ))}
+                  )
+                })}
               </ul>
             )}
             {tail}

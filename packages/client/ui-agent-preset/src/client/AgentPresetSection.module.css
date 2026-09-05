@@ -216,7 +216,8 @@
   cursor: default;
 }
 
-.iconButton:hover:not(:disabled) {
+.iconButton:hover:not(:disabled),
+.iconButton:focus-visible:not(:disabled) {
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-primary);
 }
@@ -249,7 +250,8 @@
   opacity: 1;
 }
 
-.iconDanger:hover:not(:disabled) {
+.iconDanger:hover:not(:disabled),
+.iconDanger:focus-visible:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover-danger);
   color: var(--dsw-alias-state-error-primary);
 }
@@ -379,7 +381,8 @@
   color: var(--dsw-alias-state-error-primary);
 }
 
-.deleteConfirm:hover:not(:disabled) {
+.deleteConfirm:hover:not(:disabled),
+.deleteConfirm:focus-visible:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover-danger);
 }
 

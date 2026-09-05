@@ -438,6 +438,17 @@ describe('the location action', () => {
     expect(controller.store.getSnapshot().revealedPaths).toEqual({ mine: '/presets/mine' })
   })
 
+  it('hides a revealed path and ignores a row that is not showing one', async () => {
+    const { controller } = harness({ hasDocument: false })
+    await controller.load()
+    await controller.openLocation('mine')
+
+    controller.hideLocation('mine')
+    expect(controller.store.getSnapshot().revealedPaths).toEqual({})
+    controller.hideLocation('mine')
+    expect(controller.store.getSnapshot().revealedPaths).toEqual({})
+  })
+
   it('drops a revealed path once its preset leaves the roster', async () => {
     const { controller, presets } = harness({ hasDocument: false })
     await controller.load()

@@ -242,6 +242,7 @@ describe('ui-agent-preset apply', () => {
     section.closeView()
     section.confirmDelete('mine')
     await Promise.all([section.openLocation('mine'), section.remove()])
+    section.hideLocation('mine')
 
     // One controller behind every action: the copy the dialog named is the
     // one the roster re-read reflects, and the delete the section confirmed

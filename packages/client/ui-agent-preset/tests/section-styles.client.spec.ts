@@ -33,4 +33,25 @@ describe('agent preset leftover keyboard chrome', () => {
     expect(declarationsFrom(css, '.creatorButton:focus-visible:not(:disabled)')?.get('box-shadow')).toBe(ring)
     expect(declarationsFrom(css, '.secondaryButton:focus-visible')?.get('box-shadow')).toBe(ring)
   })
+
+  it('paints row actions primary on keyboard focus, matching hover', () => {
+    expect(declarationsFrom(css, '.iconButton:hover:not(:disabled)')?.get('color')).toBe(
+      'var(--dsw-alias-label-primary)',
+    )
+    expect(declarationsFrom(css, '.iconButton:focus-visible:not(:disabled)')?.get('color')).toBe(
+      'var(--dsw-alias-label-primary)',
+    )
+    expect(declarationsFrom(css, '.iconButton:focus-visible')?.get('box-shadow')).toBe(
+      'var(--dsw-shadow-focus-ring)',
+    )
+  })
+
+  it('paints the delete action danger on keyboard focus, matching hover', () => {
+    expect(declarationsFrom(css, '.iconDanger:hover:not(:disabled)')?.get('color')).toBe(
+      'var(--dsw-alias-state-error-primary)',
+    )
+    expect(declarationsFrom(css, '.iconDanger:focus-visible:not(:disabled)')?.get('color')).toBe(
+      'var(--dsw-alias-state-error-primary)',
+    )
+  })
 })

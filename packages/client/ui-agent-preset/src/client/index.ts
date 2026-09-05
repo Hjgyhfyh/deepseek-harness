@@ -198,6 +198,7 @@ export function apply(ctx: ClientContext): void {
     setCopyName: (name: string) => { section.setCopyName(name) },
     confirmCopy: () => section.confirmCopy(),
     openLocation: (id: string) => section.openLocation(id),
+    hideLocation: (id: string) => { section.hideLocation(id) },
     ...creatorDraft === undefined ? {} : { startCreatorDraft: creatorDraft },
     confirmDelete: (id: string | null) => { section.confirmDelete(id) },
     remove: () => section.remove(),
