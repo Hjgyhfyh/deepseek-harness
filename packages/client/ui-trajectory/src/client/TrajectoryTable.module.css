@@ -1384,7 +1384,8 @@
   transform: rotate(90deg);
 }
 
-.thinkingToggle:hover {
+.thinkingToggle:hover,
+.thinkingToggle:focus-visible {
   color: var(--dsw-alias-label-secondary);
 }
 

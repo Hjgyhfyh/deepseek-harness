@@ -1,7 +1,7 @@
 /** Turn-aware trajectory event ledger with a local record inspector. */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import {
   IconChevronRightOutline14,
@@ -1375,11 +1375,20 @@ function MarkdownRecordContent({
     }
     return (
       <div className={`${css.assistantContent} ${css.assistantContentRendered}`}>
-        <div className={
-          preview && !record.cell.outputDetail
-            ? `${css.thinkingQuote} ${css.thinkingQuoteOnlyPreview}`
-            : css.thinkingQuote
-        }
+        <div
+          className={
+            preview && !record.cell.outputDetail
+              ? `${css.thinkingQuote} ${css.thinkingQuoteOnlyPreview}`
+              : css.thinkingQuote
+          }
+          onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+            // In-flow disclosure in the inspector: Escape only while thinking
+            // is open, so the ledger and overlays still win when it is closed.
+            if (event.key !== 'Escape' || event.defaultPrevented || !thinkingExpanded) return
+            event.preventDefault()
+            onThinkingExpandedChange(false)
+            event.currentTarget.querySelector<HTMLButtonElement>('[aria-expanded="true"]')?.focus()
+          }}
         >
           <button
             type="button"

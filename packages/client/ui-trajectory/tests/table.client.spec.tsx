@@ -169,6 +169,37 @@ describe('TrajectoryTable', () => {
     expect(toggle.parentElement?.textContent?.length).toBeGreaterThan(thinking.length)
   })
 
+  it('Escape collapses open thinking and restores toggle focus', () => {
+    const thinking = 'private chain '.repeat(1_000)
+    const turns: readonly TrajectoryTurnModel[] = [{
+      turn: 1,
+      groups: [{
+        title: 'Step 1',
+        cells: [{
+          index: 1,
+          kind: 'message',
+          text: 'private chain…',
+          thinkingDetail: thinking,
+          timeSeconds: 1,
+        }],
+      }],
+    }]
+    render(<TrajectoryTable turns={turns} {...FOLD_PROPS} />)
+
+    fireEvent.click(screen.getByRole('row', { name: /ASSISTANT/ }))
+    const toggle = screen.getByRole('button', { name: 'Thinking' })
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByText(thinking)).toBeNull()
+
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.keyDown(toggle, { key: 'Escape' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByText(thinking)).toBeNull()
+    expect(document.activeElement).toBe(toggle)
+  })
+
   it('keeps raw HTML tags in a Markdown-derived context preview', () => {
     const html = [
       '<background-job-complete id="trajectory-ui-watch">',
