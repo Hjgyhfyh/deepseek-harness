@@ -257,6 +257,15 @@
   cursor: pointer;
 }
 
+.continue:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.continue:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .turnErrorCode {
   color: var(--dsw-alias-label-tertiary);
   font: var(--dsw-font-markdown-code-block-small);

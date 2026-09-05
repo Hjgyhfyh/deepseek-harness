@@ -3,8 +3,8 @@
 // assistant answers), pending steering (copy only), context injection,
 // compaction marker, retry disclosure, and unknown-surface JSON rows.
 
-import { memo, useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import type {
   ModelRetryNode, TurnErrorNode, UserMessageNode,
 } from '@deepseek-ai/dsh-client-runtime/client'
@@ -91,10 +91,26 @@ function ModelRetryItem({ node, active, t }: {
         ? t('message.retry.started')
         : t('message.retry.scheduled')
   const seconds = active ? remainingSeconds : scheduledSeconds
+  const detailsRef = useRef<HTMLDetailsElement>(null)
+  const summaryRef = useRef<HTMLElement>(null)
+  // In-flow disclosure, not an overlay: Escape only while this row holds
+  // focus, so a later dialog still wins the first key. Closed rows ignore it.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLDetailsElement>): void => {
+    const details = detailsRef.current
+    if (event.key !== 'Escape' || details === null || !details.open) return
+    event.preventDefault()
+    details.open = false
+    summaryRef.current?.focus()
+  }
 
   return (
-    <details className={css.retryRow} data-active={active || undefined}>
-      <summary className={css.retrySummary}>
+    <details
+      ref={detailsRef}
+      className={css.retryRow}
+      data-active={active || undefined}
+      onKeyDown={collapseFromEscape}
+    >
+      <summary ref={summaryRef} className={css.retrySummary}>
         <span className={css.retryText} role="status">
           {t('message.retry.status', { label, retry: node.retry, maximum, seconds })}
         </span>

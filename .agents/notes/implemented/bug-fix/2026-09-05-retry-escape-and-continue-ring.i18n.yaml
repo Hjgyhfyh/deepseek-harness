@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-retry-escape-and-continue-ring.md
+2026-09-05-retry-escape-and-continue-ring.md: c6a033ea338770e08d2f0a3c53126bbcaee9422c
+2026-09-05-retry-escape-and-continue-ring.zh.md: 8868409606193cb9859b96754ba6acbb203e14a2
