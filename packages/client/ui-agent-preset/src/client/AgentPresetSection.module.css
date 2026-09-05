@@ -288,9 +288,13 @@
   cursor: pointer;
 }
 
-
 .secondaryButton:hover:not(:disabled) {
   background: var(--dsw-alias-bg-layer-1);
+}
+
+.secondaryButton:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .secondaryButton:disabled {
@@ -402,6 +406,13 @@
 
 .creatorButton:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover);
+  border-color: var(--dsw-alias-state-business-primary);
+}
+
+.creatorButton:focus-visible:not(:disabled) {
+  outline: none;
+  border-color: var(--dsw-alias-state-business-primary);
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .creatorButton:disabled {
