@@ -120,7 +120,8 @@
   cursor: pointer;
 }
 
-.iconBtn:hover {
+.iconBtn:hover,
+.iconBtn:focus-visible {
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-secondary);
 }

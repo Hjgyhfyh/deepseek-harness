@@ -8,7 +8,7 @@
  * the injected face.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { GoalSnapshot } from '@deepseek-ai/dsh-goal/client'
 import {
   IconCheckOutline16, IconCloseOutline16, IconEditOutline16, IconGoalOutline16,
@@ -85,8 +85,15 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
   if (goal === undefined || goal === null || goal.phase === 'complete' || goal.id === clearedGoalId) return null
 
   if (editing) {
+    // In-flow strip above the composer: Escape only while the edit form is
+    // open, so an overlay still wins when the icons are idle.
+    const cancelEditFromEscape = (event: KeyboardEvent<HTMLDivElement>): void => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      event.preventDefault()
+      leaveEdit()
+    }
     return (
-      <div className={css.dock} data-goal-bar>
+      <div className={css.dock} data-goal-bar onKeyDown={cancelEditFromEscape}>
         <div className={css.bar}>
           <input
             className={css.objectiveInput}

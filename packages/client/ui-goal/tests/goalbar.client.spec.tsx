@@ -109,6 +109,42 @@ describe('GoalBar', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: '编辑目标' }))
   })
 
+  it('Escape from save or cancel exits the form without calling onEdit', () => {
+    const actions = makeActions()
+    render(<GoalBar goal={makeGoal()} {...actions} t={t} />)
+    fireEvent.click(screen.getByRole('button', { name: '编辑目标' }))
+    const save = screen.getByRole<HTMLButtonElement>('button', { name: '保存目标' })
+    save.focus()
+    fireEvent.keyDown(save, { key: 'Escape' })
+    expect(actions.onEdit).not.toHaveBeenCalled()
+    expect(screen.getByText('进行中的目标')).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '编辑目标' }))
+
+    fireEvent.click(screen.getByRole('button', { name: '编辑目标' }))
+    const cancel = screen.getByRole<HTMLButtonElement>('button', { name: '取消编辑' })
+    cancel.focus()
+    fireEvent.keyDown(cancel, { key: 'Escape' })
+    expect(actions.onEdit).not.toHaveBeenCalled()
+    expect(screen.getByText('进行中的目标')).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '编辑目标' }))
+  })
+
+  it('Escape on idle pause and edit leaves the goal strip open', () => {
+    const actions = makeActions()
+    render(<GoalBar goal={makeGoal()} {...actions} t={t} />)
+    const pause = screen.getByRole<HTMLButtonElement>('button', { name: '暂停目标' })
+    pause.focus()
+    fireEvent.keyDown(pause, { key: 'Escape' })
+    expect(screen.getByText('进行中的目标')).toBeTruthy()
+    expect(actions.onPause).not.toHaveBeenCalled()
+
+    const edit = screen.getByRole<HTMLButtonElement>('button', { name: '编辑目标' })
+    edit.focus()
+    fireEvent.keyDown(edit, { key: 'Escape' })
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.getByText('进行中的目标')).toBeTruthy()
+  })
+
   it('the cancel button exits the form and drops the draft (re-edit starts from the objective)', () => {
     const actions = makeActions()
     render(<GoalBar goal={makeGoal()} {...actions} t={t} />)
