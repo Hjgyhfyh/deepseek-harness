@@ -123,6 +123,8 @@ describe('WorkspaceBrowser.module.css list', () => {
     expect(declarations('.sessionOverflowButton:focus-visible')?.get('box-shadow')).toBe(ring)
     expect(declarations('.renameInput:focus-visible')?.get('box-shadow')).toBe(ring)
     expect(rowDeclarations('.projectRow:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(rowDeclarations('.sessionRow:focus-visible')?.get('box-shadow')).toBe(ring)
+    expect(rowDeclarations('.searchResultRow:focus-visible')?.get('box-shadow')).toBe(ring)
     expect(rowDeclarations('.renameInput:focus-visible')?.get('box-shadow')).toBe(ring)
     expect(rowDeclarations('.iconButton:focus-visible')?.get('box-shadow')).toBe(ring)
   })

@@ -13,6 +13,7 @@ import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { writeClipboard } from './clipboard.ts'
 import { usePointerGrace } from './pointer-grace.ts'
+import { useOverlayEscape } from './useOverlayEscape.ts'
 import css from './HoverCard.module.css'
 
 /**
@@ -66,6 +67,7 @@ export function HoverCard({
     clearCopied()
     setOpen(false)
   }, [clearCopied])
+  useOverlayEscape(open, close)
 
   const { arm: armClose, cancel: cancelClose } = usePointerGrace(close)
 

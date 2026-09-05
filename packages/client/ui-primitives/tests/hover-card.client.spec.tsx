@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { HoverCard } from '@deepseek-ai/dsh-client-ui-primitives'
+import { HoverCard, subscribeOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 import { POINTER_GRACE_MS } from '../src/pointer-grace.ts'
 
 afterEach(cleanup)
@@ -237,7 +237,7 @@ describe('HoverCard', () => {
       fireEvent.pointerEnter(wrapper)
       act(() => { vi.advanceTimersByTime(500) })
       const card = screen.getByRole('button')
-      fireEvent.keyDown(card, { key: 'Escape' })
+      fireEvent.keyDown(card, { key: 'Tab' })
       expect(writeText).not.toHaveBeenCalled()
       await act(async () => { fireEvent.keyDown(card, { key: 'Enter' }) })
       expect(writeText).toHaveBeenCalledOnce()
@@ -247,6 +247,40 @@ describe('HoverCard', () => {
     } finally {
       restoreClipboard()
     }
+  })
+
+  it('Escape dismisses the card without copying', () => {
+    const writeText = vi.fn(async () => {})
+    const restoreClipboard = installClipboard(writeText)
+    try {
+      const { wrapper } = mount({ copyText: 'value' })
+      fireEvent.pointerEnter(wrapper)
+      act(() => { vi.advanceTimersByTime(500) })
+      expect(screen.getByRole('button')).toBeTruthy()
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(writeText).not.toHaveBeenCalled()
+      expect(screen.queryByRole('button')).toBeNull()
+    } finally {
+      restoreClipboard()
+    }
+  })
+
+  it('leaves the card open when a later overlay owns Escape', () => {
+    const { wrapper } = mount()
+    fireEvent.pointerEnter(wrapper)
+    act(() => { vi.advanceTimersByTime(500) })
+    expect(screen.getByText('card body')).toBeTruthy()
+    const upper = vi.fn()
+    const release = subscribeOverlayEscape(upper)
+    try {
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(upper).toHaveBeenCalledTimes(1)
+      expect(screen.getByText('card body')).toBeTruthy()
+    } finally {
+      release()
+    }
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByText('card body')).toBeNull()
   })
 
   it('keeps its content when the clipboard rejects the write', async () => {

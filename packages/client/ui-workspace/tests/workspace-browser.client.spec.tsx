@@ -473,6 +473,7 @@ describe('WorkspaceBrowser', () => {
       fireEvent.click(screen.getByRole('button', { name: '清除搜索' }))
       expect(input.value).toBe('')
       expect(screen.getByRole('tree', { name: '会话' })).toBeTruthy()
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: '搜索会话' }))
       // Clicking the field row focuses the input (wide mode).
       fireEvent.click(input.parentElement as HTMLElement)
       expect(document.activeElement).toBe(input)
@@ -488,6 +489,7 @@ describe('WorkspaceBrowser', () => {
     expect(search.getAttribute('aria-expanded')).toBe('true')
     fireEvent.click(document.body)
     expect(search.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).not.toBe(search)
 
     fireEvent.click(search)
     const input = screen.getByPlaceholderText<HTMLInputElement>('搜索会话…')
@@ -516,6 +518,7 @@ describe('WorkspaceBrowser', () => {
     expect(input.value).toBe('')
     fireEvent.keyDown(input, { key: 'Escape' })
     expect(search.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(search)
   })
 
   it('adds Host content hits with context, shows the result bound, and opens without clearing the query', async () => {

@@ -837,6 +837,10 @@ export function WorkspaceBrowser({
   })
   const searchRoot = useRef<HTMLDivElement | null>(null)
   const searchInput = useRef<HTMLInputElement | null>(null)
+  const searchTriggerRef = useRef<HTMLButtonElement>(null)
+  // Escape-collapse and the clear control put focus back on the chip; click-
+  // outside must not, or a click elsewhere would yank the caret back here.
+  const restoreSearchTrigger = useRef(false)
   // Section-header ＋ opens the picker menu (same popover in wide and rail
   // states; the menu anchors on this button).
   const [wsPickerOpen, setWsPickerOpen] = useState(false)
@@ -860,6 +864,13 @@ export function WorkspaceBrowser({
     if (!wide || !searchExpanded || searchOnExpand) return
     searchInput.current?.focus({ preventScroll: true })
   }, [wide, searchExpanded, searchOnExpand])
+
+  useEffect(() => {
+    if (searchExpanded) return
+    if (!restoreSearchTrigger.current) return
+    restoreSearchTrigger.current = false
+    searchTriggerRef.current?.focus()
+  }, [searchExpanded])
 
   useEffect(() => {
     if (!wide || !searchExpanded) return
@@ -1037,6 +1048,7 @@ export function WorkspaceBrowser({
             >
               <Tooltip label={t('search')} side="bottom" delayMs={500} disabled={searchExpanded}>
                 <button
+                  ref={searchTriggerRef}
                   type="button"
                   className={css.searchButton}
                   aria-label={t('search.sessions.aria')}
@@ -1065,6 +1077,7 @@ export function WorkspaceBrowser({
                     setQuery('')
                     return
                   }
+                  restoreSearchTrigger.current = true
                   setSearchExpanded(false)
                 }}
               />
@@ -1076,6 +1089,7 @@ export function WorkspaceBrowser({
                   onClick={(e) => {
                     e.stopPropagation()
                     setQuery('')
+                    restoreSearchTrigger.current = true
                     setSearchExpanded(false)
                   }}
                 >
