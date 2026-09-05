@@ -101,4 +101,13 @@ describe('ModelsSection theme styles', () => {
       /\.iconButton:hover:not\(:disabled\),\s*\.iconButton:focus-visible:not\(:disabled\)\s*\{[^}]*color: var\(--dsw-alias-label-primary\)/,
     )
   })
+
+  it('paints row Remove and delete-confirm danger fill on keyboard focus, matching hover', () => {
+    expect(css).toMatch(
+      /\.dangerButton:hover:not\(:disabled\),\s*\.dangerButton:focus-visible:not\(:disabled\)\s*\{[^}]*background: var\(--dsw-alias-interactive-bg-hover-danger\)/,
+    )
+    expect(css).toMatch(
+      /\.deleteConfirm:hover:not\(:disabled\),\s*\.deleteConfirm:focus-visible:not\(:disabled\)\s*\{[^}]*background: var\(--dsw-alias-interactive-bg-hover-danger\)/,
+    )
+  })
 })

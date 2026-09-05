@@ -187,7 +187,8 @@
   cursor: pointer;
 }
 
-.dangerButton:hover:not(:disabled) {
+.dangerButton:hover:not(:disabled),
+.dangerButton:focus-visible:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover-danger);
 }
 
@@ -636,7 +637,8 @@ select.input {
   color: var(--dsw-alias-state-error-primary);
 }
 
-.deleteConfirm:hover:not(:disabled) {
+.deleteConfirm:hover:not(:disabled),
+.deleteConfirm:focus-visible:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover-danger);
 }
 

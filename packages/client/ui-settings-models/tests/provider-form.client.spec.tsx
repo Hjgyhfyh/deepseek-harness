@@ -675,6 +675,25 @@ describe('provider rows', () => {
     expect(document.activeElement).toBe(summary)
   })
 
+  it('Escape that a nested field already handled leaves the customized fold open', async () => {
+    await mountSection({ providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY' } } })
+    const row = screen.getByText('openai').closest('li')
+    if (row === null) throw new Error('no row for openai')
+    fireEvent.click(within_(row, en.edit))
+    const summary = document.querySelector('summary')
+    if (summary === null) throw new Error('no customized fold')
+    const details = summary.closest('details')
+    if (details === null) throw new Error('no customized details')
+    fireEvent.click(summary)
+    expect(details.open).toBe(true)
+    const base = screen.getByLabelText(en.baseUrl)
+    base.focus()
+    base.addEventListener('keydown', (event) => { event.preventDefault() }, true)
+    fireEvent.keyDown(base, { key: 'Escape' })
+    expect(details.open).toBe(true)
+    expect(document.activeElement).toBe(base)
+  })
+
   it('shows no tag when the adapter draws no catalog distinction', async () => {
     const scripted = scriptedFace({ providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY' } } })
     scripted.face.llm.providers = vi.fn(() => Promise.resolve(ok({

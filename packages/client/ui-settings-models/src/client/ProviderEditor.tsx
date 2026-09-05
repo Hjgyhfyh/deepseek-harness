@@ -174,10 +174,11 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
   const customizedSummaryRef = useRef<HTMLElement>(null)
   // In-flow disclosure inside Settings: Escape only while this fold holds
   // focus (summary or a nested field), so the settings overlay still wins
-  // when the fold is closed.
+  // when the fold is closed. A nested control that already handled the key
+  // (`preventDefault`) keeps the fold open — same skip as plugin cards.
   const collapseCustomizedFromEscape = (event: KeyboardEvent<HTMLDetailsElement>): void => {
     const details = customizedRef.current
-    if (event.key !== 'Escape' || details === null || !details.open) return
+    if (event.key !== 'Escape' || event.defaultPrevented || details === null || !details.open) return
     event.preventDefault()
     details.open = false
     customizedSummaryRef.current?.focus()
