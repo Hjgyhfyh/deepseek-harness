@@ -84,6 +84,11 @@
   cursor: pointer;
 }
 
+.root[data-expandable]:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .root {
   position: relative; /* sweep-glare overlay anchor */
   overflow: hidden;
@@ -148,11 +153,13 @@
   transition: opacity 100ms ease;
 }
 
-.root:hover .iconIdle {
+.root:hover .iconIdle,
+.root:focus-visible .iconIdle {
   opacity: 0;
 }
 
-.root:hover .chevronHover {
+.root:hover .chevronHover,
+.root:focus-visible .chevronHover {
   opacity: 1;
 }
 
@@ -217,8 +224,14 @@
 }
 
 .card:hover .inspectButton,
+.card:focus-within .inspectButton {
+  opacity: 1;
+}
+
 .inspectButton:focus-visible {
   opacity: 1;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 /* Solid hover fill: the pill floats over terminal output, so a translucent

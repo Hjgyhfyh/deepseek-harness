@@ -7,13 +7,13 @@
 // settle without terminal material use the bounded generic IN/OUT fallback —
 // both are expand-gated exactly like
 // ToolRow's unified interaction: collapsed by default, the whole summary row
-// is the toggle (click / Enter / Space, icon→chevron hover preview; the
-// summary stays inline while open),
+// is the toggle (click / Enter / Space / Escape, icon→chevron hover and
+// keyboard-focus preview; the summary stays inline while open),
 // and the expanded card max-height-scrolls inside its own surface with the
 // full output (maxLines Infinity — no middle collapse). An error row's
 // collapsed summary is the failure's first line in the error color.
 
-import { useState, type KeyboardEvent } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import type { Context } from '@deepseek-ai/cordis'
 import clsx from 'clsx'
 import {
@@ -66,6 +66,7 @@ export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }:
     : model.state
   const status = stateStatus(state, t)
   const [expanded, setExpanded] = useState(false)
+  const rowRef = useRef<HTMLDivElement>(null)
   // Execution failures (for example cancellation before the process reports a
   // terminal result) use the generic presenter. Keep their recorded args and
   // full error reachable instead of collapsing the row to the first line.
@@ -83,6 +84,14 @@ export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }:
     event.preventDefault()
     toggleExpand()
   }
+  // In-flow disclosure, not an overlay: Escape only while this card holds
+  // focus (header or Inspect), so a later dialog still wins the first key.
+  const collapseFromEscape = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || !open) return
+    event.preventDefault()
+    setExpanded(false)
+    rowRef.current?.focus()
+  }
   const leading = open
     ? <IconChevronDownOutline14 className={css.chevron} />
     : expandable
@@ -94,8 +103,9 @@ export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }:
       )
       : leadingFor(state)
   return (
-    <div className={css.card}>
+    <div className={css.card} onKeyDown={collapseFromEscape}>
       <div
+        ref={rowRef}
         className={css.root}
         data-sample="bash"
         data-variant="bash"

@@ -371,6 +371,31 @@ describe('BashRow terminal card', () => {
     expect(view.getByText('List files')).toBeTruthy()
   })
 
+  it('Escape collapses an open bash row and restores header focus', () => {
+    const inspect = vi.fn()
+    const view = render(<BashRow {...rowProps(settled())} inspect={inspect} />)
+    const row = view.container.querySelector('[data-sample="bash"]')
+    if (row === null) throw new Error('no bash row')
+
+    fireEvent.keyDown(row, { key: 'Escape' })
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+    expect(view.queryByText(/a\.ts/)).toBeNull()
+
+    fireEvent.click(row)
+    expect(row.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.keyDown(row, { key: 'Escape' })
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+    expect(view.queryByText(/a\.ts/)).toBeNull()
+    expect(document.activeElement).toBe(row)
+
+    fireEvent.click(row)
+    const inspectButton = view.getByRole('button', { name: 'Inspect' })
+    inspectButton.focus()
+    fireEvent.keyDown(inspectButton, { key: 'Escape' })
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(row)
+  })
+
   // The row's leading StateDot and the card's run-state dot describe the same
   // command, so a running row whose card claimed 'done' would be a contradiction
   // the reader sees on one line.
