@@ -17,7 +17,7 @@ Status: implemented
 - `--dsw-motion-fast|normal|slow` 与 `--dsw-easing-*`；`@media (prefers-reduced-motion: reduce)` 把动效尺度归零
 - `--dsw-shadow-focus-ring`，深色主题在 `body[data-ds-dark-theme]` 上用更高 alpha
 
-视口浮层消费 z-index 阶梯。文档流内的层叠（时间线、composer 座位、拖动手柄）仍用局部整数。Portal 菜单用 `--dsw-z-popover`，保证仍在 `--dsw-z-modal` 之上。键盘铬（`Button`、`Input` 的 focus-within、对话框/设置/灯箱关闭、侧边栏新建会话、设置触发与导航、composer 发送/Continue/Plan 选择、模型与权限芯片、GoalBar 图标、QueueDock 操作、工作区搜索/行/重命名/溢出、新建工作区与目录创建字段、键盘编辑路径时的目录面包屑栏、BotForge 花名册/坞、提问选项、插件/预设/模型字段、轨迹「更早历史」/轨道/折叠行/源跳转/详情分隔条/关闭与详情页签/概览开关/工具调用行、产出文件芯片、JsonTree 展开、markdown 链接与文件提及、workflow 成员、命令面板当前行、Menu 项、DisclosureRow、重试摘要、Plan 芯片）使用焦点环。AppFrame 的会话栏是 `<main>` 地标。
+视口浮层消费 z-index 阶梯。文档流内的层叠（时间线、composer 座位、拖动手柄）仍用局部整数。Portal 菜单用 `--dsw-z-popover`，保证仍在 `--dsw-z-modal` 之上。键盘铬（`Button`、`Input` 的 focus-within、对话框/设置/灯箱关闭、侧边栏新建会话、设置触发与导航、composer 发送/Continue/Plan 选择、模型与权限芯片、GoalBar 图标、QueueDock 标题与操作、工作区搜索/行/重命名/溢出、新建工作区与目录创建字段、键盘编辑路径时的目录面包屑栏、BotForge 花名册/坞、提问选项、插件/预设/模型字段、插件卡片/页签/清单卡片、轨迹工具栏/「更早历史」/轨道/折叠行/源跳转/详情分隔条/关闭与详情页签/概览开关/工具调用行、产出文件芯片、JsonTree 展开与复制、markdown 链接与文件提及、workflow 运行/阶段/成员、命令面板当前行、Menu 项、DisclosureRow、重试摘要、Plan 芯片、风险确认复选框）使用焦点环。AppFrame 的会话栏是 `<main>` 地标。
 
 ## 考虑过的方案
 

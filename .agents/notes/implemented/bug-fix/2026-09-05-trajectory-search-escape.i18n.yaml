@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-05-trajectory-search-escape.md
+2026-09-05-trajectory-search-escape.md: 0456c8ec19387a85158d96d02cb841310b523102
+2026-09-05-trajectory-search-escape.zh.md: c5b111b3df021e12b180800754fac5c0d477775e

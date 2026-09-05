@@ -3,14 +3,16 @@
  * Trajectory turn chrome and layout fold: expand blocks, usage on Message,
  * tool own-duration, group wall-span descriptions, in-flight rows.
  */
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type {
   ConversationLocation, ConversationSnapshot, RequestView,
 } from '@deepseek-ai/dsh-client-runtime/client'
 import { TrajectoryGroupHeader } from '../src/client/TrajectoryGroupHeader.tsx'
 import { TrajectoryTurn } from '../src/client/TrajectoryTurn.tsx'
 import { TrajectoryTurnHeader } from '../src/client/TrajectoryTurnHeader.tsx'
+import { TrajectoryToolbar } from '../src/client/TrajectoryToolbar.tsx'
+import { zh, type TrajectoryKey } from '../src/client/locales.ts'
 import {
   appendTrajectoryPartialLayout, deriveTrajectoryLayout,
 } from '../src/client/layout.ts'
@@ -548,5 +550,85 @@ describe('run_code sub-dispatch cells', () => {
       'p1:code:1:code:1',
     ])
     expect(cells.map(cell => cell.index)).toEqual([1, 2, 3, 4])
+  })
+})
+
+describe('TrajectoryToolbar', () => {
+  const t = (key: TrajectoryKey): string => zh[key]
+
+  function renderToolbar(
+    overrides: Partial<Parameters<typeof TrajectoryToolbar>[0]> = {},
+  ) {
+    const props = {
+      actualDuration: false,
+      onActualDurationChange: vi.fn(),
+      actualTime: false,
+      onActualTimeChange: vi.fn(),
+      allTurnsCollapsed: false,
+      onToggleAllTurns: vi.fn(),
+      allAssistantsCollapsed: false,
+      onToggleAllAssistants: vi.fn(),
+      searchQuery: '',
+      onSearchQueryChange: vi.fn(),
+      t,
+      ...overrides,
+    }
+    return { ...render(<TrajectoryToolbar {...props} />), props }
+  }
+
+  it('Escape clears a non-empty search; a second Escape blurs the field', () => {
+    const onSearchQueryChange = vi.fn()
+    const { rerender, props } = renderToolbar({ searchQuery: 'bash', onSearchQueryChange })
+    const input = screen.getByRole('searchbox', { name: t('toolbar.search') })
+    input.focus()
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(onSearchQueryChange).toHaveBeenCalledWith('')
+    expect(document.activeElement).toBe(input)
+    rerender(<TrajectoryToolbar {...props} searchQuery="" onSearchQueryChange={onSearchQueryChange} />)
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(document.activeElement).not.toBe(input)
+  })
+
+  it('typing updates the query; other keys and an empty Escape do not clear', () => {
+    const onSearchQueryChange = vi.fn()
+    renderToolbar({ searchQuery: 'bash', onSearchQueryChange })
+    const input = screen.getByRole('searchbox', { name: t('toolbar.search') })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onSearchQueryChange).not.toHaveBeenCalled()
+    fireEvent.change(input, { target: { value: 'grep' } })
+    expect(onSearchQueryChange).toHaveBeenCalledWith('grep')
+  })
+
+  it('toggles duration, the hidden actual-time switch, and both fold controls', () => {
+    const onActualDurationChange = vi.fn()
+    const onActualTimeChange = vi.fn()
+    const onToggleAllTurns = vi.fn()
+    const onToggleAllAssistants = vi.fn()
+    const { rerender, props } = renderToolbar({
+      onActualDurationChange,
+      onActualTimeChange,
+      onToggleAllTurns,
+      onToggleAllAssistants,
+    })
+    fireEvent.click(screen.getByRole('button', { name: t('toolbar.useActualDuration') }))
+    expect(onActualDurationChange).toHaveBeenCalledWith(true)
+    fireEvent.click(screen.getByRole('switch', { hidden: true }))
+    expect(onActualTimeChange).toHaveBeenCalledWith(true)
+    fireEvent.click(screen.getByRole('button', { name: t('toolbar.collapseTurns') }))
+    expect(onToggleAllTurns).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: t('toolbar.collapseCalls') }))
+    expect(onToggleAllAssistants).toHaveBeenCalledTimes(1)
+    rerender(
+      <TrajectoryToolbar
+        {...props}
+        actualDuration
+        actualTime
+        allTurnsCollapsed
+        allAssistantsCollapsed
+      />,
+    )
+    expect(screen.getByRole('button', { name: t('toolbar.useActualDuration') }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: t('toolbar.expandTurns') })).toBeTruthy()
+    expect(screen.getByRole('button', { name: t('toolbar.expandCalls') })).toBeTruthy()
   })
 })

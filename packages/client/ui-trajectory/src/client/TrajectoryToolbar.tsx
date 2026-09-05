@@ -120,6 +120,15 @@ export function TrajectoryToolbar({
             placeholder={t('toolbar.searchPlaceholder')}
             value={searchQuery}
             onChange={(event) => { onSearchQueryChange(event.currentTarget.value) }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Escape') return
+              if (searchQuery !== '') {
+                event.preventDefault()
+                onSearchQueryChange('')
+                return
+              }
+              event.currentTarget.blur()
+            }}
           />
         </div>
       </div>

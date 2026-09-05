@@ -85,8 +85,8 @@
 }
 
 .historyLoadButton:focus-visible {
-  outline: 2px solid var(--dsw-alias-state-business-primary);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .historyLoadButton:disabled {

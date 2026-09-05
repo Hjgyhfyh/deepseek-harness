@@ -56,8 +56,8 @@
 }
 
 .acknowledgement input:focus-visible {
-  outline: 2px solid var(--dsw-alias-border-l4);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .acknowledgement input:disabled {

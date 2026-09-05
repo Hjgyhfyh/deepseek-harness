@@ -52,8 +52,8 @@
 }
 
 .toggle:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .toggleIcon {
@@ -95,8 +95,8 @@
 }
 
 .control:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .control:disabled {
@@ -155,8 +155,8 @@
 }
 
 .action:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .actionIcon {
@@ -186,6 +186,7 @@
 .search:focus-within {
   border-color: var(--dsw-alias-state-business-primary);
   background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .searchIcon {

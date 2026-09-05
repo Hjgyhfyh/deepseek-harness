@@ -163,8 +163,8 @@
 }
 
 .copyButton:focus-visible {
-  outline: 1px solid var(--dsw-alias-state-business-primary);
-  outline-offset: -1px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .copyButton[data-state='failed'] {

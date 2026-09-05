@@ -17,8 +17,8 @@
 }
 
 .runHeader:focus-visible {
-  outline: 2px solid var(--dsw-alias-state-business-primary);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .runLeading {
@@ -80,8 +80,8 @@
 }
 
 .phaseHeader:focus-visible {
-  outline: 2px solid var(--dsw-alias-state-business-primary);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
   border-radius: 4px;
 }
 
