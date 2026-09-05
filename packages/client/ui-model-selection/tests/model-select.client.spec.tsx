@@ -210,6 +210,27 @@ describe('ModelSelect keyboard', () => {
     expect(document.activeElement).toBe(effortRow)
   })
 
+  it('Escape backs out of a drilled pane, then closes and restores the trigger', async () => {
+    render(<ModelSelect
+      locked={false}
+      available
+      directory={createSnapshotStore(state())}
+      load={vi.fn()}
+      select={vi.fn().mockResolvedValue(true)}
+      t={t}
+    />)
+    const trigger = screen.getByRole('button', { name: /选择模型|当前/ })
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('menuitem', { name: /推理等级/ }))
+    expect(screen.getByRole('menuitemradio', { name: /High/ })).toBeTruthy()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.getByRole('menuitem', { name: /模型/ })).toBeTruthy()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('menuitem', { name: /模型/ })).toBeNull()
+    await Promise.resolve()
+    expect(document.activeElement).toBe(trigger)
+  })
+
   it('drilling into the model pane focuses the current radio', () => {
     render(<ModelSelect
       locked={false}

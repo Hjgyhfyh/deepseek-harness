@@ -7,6 +7,7 @@ import {
 } from '@deepseek-ai/dsh-client-runtime/client'
 import {
   IconChevronDownOutline14, IconChevronRightOutline14, IconRefreshOutline14, StateDot,
+  useOverlayEscape,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { NS } from './locales.ts'
@@ -533,6 +534,8 @@ export function SubagentCatalogAction({
     closeAllCatalogs()
   }, [visible, open])
 
+  useOverlayEscape(open && visible, () => { changeOpen(false, true) })
+
   if (!visible) return null
 
   const focusAt = (index: number): void => {
@@ -544,10 +547,7 @@ export function SubagentCatalogAction({
   const navigate = (event: KeyboardEvent<HTMLDivElement>): void => {
     const items = treeItems(rootRef.current)
     const index = items.indexOf(document.activeElement as HTMLElement)
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      changeOpen(false, true)
-    } else if (event.key === 'Home') {
+    if (event.key === 'Home') {
       event.preventDefault()
       focusAt(0)
     } else if (event.key === 'End') {

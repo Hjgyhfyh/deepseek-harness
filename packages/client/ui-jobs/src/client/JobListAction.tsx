@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { JobView } from '@deepseek-ai/dsh-client-runtime/client'
-import { IconChevronDownOutline14, StateDot, useDismissOnOutsidePointer, type StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutline14, StateDot, useDismissOnOutsidePointer, useOverlayEscape, type StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { NS } from './locales.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -102,6 +102,10 @@ export function JobListAction({ sessionId, useSessions, t }: JobListActionProps)
   const liveCount = useMemo(() => jobs.filter(isLive).length, [jobs])
 
   useDismissOnOutsidePointer(rootRef, open, setOpen)
+  useOverlayEscape(open && jobs.length > 0, () => {
+    setOpen(false)
+    triggerRef.current?.focus()
+  })
 
   // The clock only runs while an open list is showing something that moves.
   useEffect(() => {
@@ -124,15 +128,8 @@ export function JobListAction({ sessionId, useSessions, t }: JobListActionProps)
     : (jobs.length === 1 ? 'count.idle.one' : 'count.idle.other')
   const countLabel = t(countKey, { count: liveCount > 0 ? liveCount : jobs.length })
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key !== 'Escape' || !open) return
-    event.preventDefault()
-    setOpen(false)
-    triggerRef.current?.focus()
-  }
-
   return (
-    <div ref={rootRef} className={css.root} onKeyDown={onKeyDown}>
+    <div ref={rootRef} className={css.root}>
       <button
         ref={triggerRef}
         type="button"

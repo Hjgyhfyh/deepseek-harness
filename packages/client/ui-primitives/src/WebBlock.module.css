@@ -68,6 +68,11 @@
   text-decoration: underline;
 }
 
+.sourceLink:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
+}
+
 .snippet {
   margin-top: 2px;
   color: var(--dsw-alias-label-secondary);
@@ -110,6 +115,11 @@
 
 .fetchUrl:hover {
   text-decoration: underline;
+}
+
+.fetchUrl:focus-visible {
+  outline: none;
+  box-shadow: var(--dsw-shadow-focus-ring);
 }
 
 .fetchMeta {

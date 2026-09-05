@@ -19,7 +19,7 @@ import clsx from 'clsx'
 import type { ModelReasoningEffort, ModelSelection } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   IconCheckOutline16, IconChevronDownOutline14, IconChevronRightOutline14,
-  IconWarningOutline16, Toast,
+  IconWarningOutline16, Toast, useOverlayEscape,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelSelectInjected } from './slots.ts'
@@ -124,18 +124,24 @@ export function ModelSelect(
     return () => { document.removeEventListener('mousedown', closeOutside) }
   }, [open])
 
+  const close = (restoreFocus = false): void => {
+    setOpen(false)
+    setPane('root')
+    if (restoreFocus) queueMicrotask(() => { triggerRef.current?.focus() })
+  }
+  // Overlay stack, not the root keydown: Settings also listens on document,
+  // and a bubbled Escape from this menu would dismiss both.
+  useOverlayEscape(open && available, () => {
+    if (pane !== 'root') setPane('root')
+    else close(true)
+  })
+
   if (!available) return null
 
   const show = (): void => {
     setPane('root')
     setOpen(true)
     reload()
-  }
-
-  const close = (restoreFocus = false): void => {
-    setOpen(false)
-    setPane('root')
-    if (restoreFocus) queueMicrotask(() => { triggerRef.current?.focus() })
   }
 
   const enabledItems = (): HTMLButtonElement[] =>
@@ -161,13 +167,6 @@ export function ModelSelect(
   }, [open, pane, state.status, choices.length, effortChoices.length])
 
   const onRootKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key === 'Escape' && open) {
-      event.preventDefault()
-      // Escape backs out of a drilled pane first, then closes.
-      if (pane !== 'root') setPane('root')
-      else close(true)
-      return
-    }
     if (!open) return
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()

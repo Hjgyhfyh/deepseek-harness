@@ -5,6 +5,7 @@ import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import type { SessionId, SessionListState, JobView } from '@deepseek-ai/dsh-client-runtime/client'
 import { JobListAction, type JobListActionProps } from '../src/client/JobListAction.tsx'
 import { zh } from '../src/client/locales.ts'
+import { subscribeOverlayEscape } from '@deepseek-ai/dsh-client-ui-primitives'
 
 // Live rows render `now - startedAt`, so every assertion needs a pinned clock.
 beforeEach(() => {
@@ -184,7 +185,25 @@ describe('JobListAction dismissal', () => {
     fireEvent.click(trigger)
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
 
-    fireEvent.keyDown(trigger, { key: 'Escape' })
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(trigger)
+  })
+
+  it('leaves the list open when a later overlay owns Escape', () => {
+    render(<JobListAction {...props([job()])} />)
+    const trigger = screen.getByRole('button')
+    fireEvent.click(trigger)
+    const upper = vi.fn()
+    const release = subscribeOverlayEscape(upper)
+    try {
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(upper).toHaveBeenCalledTimes(1)
+      expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    } finally {
+      release()
+    }
+    fireEvent.keyDown(document, { key: 'Escape' })
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(document.activeElement).toBe(trigger)
   })
